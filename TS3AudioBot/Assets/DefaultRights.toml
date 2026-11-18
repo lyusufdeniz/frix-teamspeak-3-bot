@@ -1,0 +1,81 @@
+# Frix yetki dosyası / rights file
+# Sözdizimi / syntax: https://github.com/Splamy/TS3AudioBot/wiki/Rights
+# Web panel kullanıcıları bu dosyadan etkilenmez (panelde kendi rolleri vardır).
+# Web panel users are not affected by this file (they have their own roles).
+
+# Herkes / everyone
+"+" = [
+	"cmd.help.*",
+	"cmd.pm",
+	"cmd.version",
+	"cmd.song",
+	"cmd.if",
+	"cmd.print",
+	"cmd.rng",
+	"cmd.take",
+	"cmd.xecute",
+	"cmd.json.*",
+	"cmd.getmy.*",
+	"cmd.rights.can",
+
+	# Frix sohbet komutları / chat commands
+	"cmd.ara",
+	"cmd.link",
+	"cmd.radyo",
+	"cmd.ozelkomut",
+	"cmd.gec",
+	"cmd.skip",
+	"cmd.dur",
+	"cmd.duraklat",
+	"cmd.devam",
+	"cmd.bitir",
+	"cmd.kapat",
+	"cmd.ses",
+	"cmd.calan",
+	"cmd.siradaki",
+	"cmd.temizle",
+	"cmd.yardim",
+	"cmd.kayit",
+	"cmd.liste",
+	"cmd.soz",
+	"cmd.anket",
+	"cmd.oy",
+	"cmd.hava",
+	"cmd.doviz",
+	"cmd.dolar",
+	"cmd.euro",
+	"cmd.zar",
+	"cmd.yazitura",
+	"cmd.sec",
+	"cmd.istatistik",
+	"cmd.top",
+	"cmd.sure",
+
+	# Klasik TS3AudioBot oynatma komutları / classic playback commands
+	"cmd.play",
+	"cmd.pause",
+	"cmd.stop",
+	"cmd.seek",
+	"cmd.volume",
+	"cmd.add",
+	"cmd.clear",
+	"cmd.previous",
+	"cmd.next",
+	"cmd.repeat.*",
+	"cmd.random.*",
+	"cmd.list.list",
+	"cmd.list.show",
+	"cmd.history.last",
+	"cmd.history.play",
+]
+
+# Yönetici kuralı / admin rule
+[[rule]]
+	# Yönetici TeamSpeak sunucu grubu ID'leri / admin server group ids, ör. [ 6 ]
+	groupid = []
+	# Yönetici TeamSpeak benzersiz kimlikleri / admin unique ids
+	useruid = [ "_admin_uid_" ]
+	# Bot sunucusundan (localhost) gelen istekler yöneticidir / localhost is admin
+	ip = [ "127.0.0.1", "::1" ]
+
+	"+" = "*"

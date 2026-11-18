@@ -1,0 +1,100 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<RootNamespace>TS3AudioBot</RootNamespace>
+		<AssemblyName>TS3AudioBot</AssemblyName>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<Version>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/../version.txt').Trim())</Version>
+        
+        <ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<DebugType>embedded</DebugType>
+
+		<ApplicationIcon>Assets\favicon.ico</ApplicationIcon>
+
+		<NeutralLanguage>en</NeutralLanguage>
+
+		<StartupObject>TS3AudioBot.Setup</StartupObject>
+
+		<!-- GC Config -->
+		<ServerGarbageCollection>true</ServerGarbageCollection>
+		<ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+		<!-- SourceLink -->
+		<RepositoryUrl>https://github.com/Splamy/TS3AudioBot.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<!-- Assemblyinfo -->
+		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+		<IncludeSourceRevisionInInformationalVersion>true</IncludeSourceRevisionInInformationalVersion>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+
+		<!-- Trimming-->
+		<PublishTrimmed>false</PublishTrimmed>
+		<TrimMode>partial</TrimMode>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CliWrap" Version="3.10.5" />
+		<PackageReference Include="CommandLineParser" Version="2.9.1" />
+		<PackageReference Include="NLog" Version="6.2.0" />
+		<PackageReference Include="LiteDB" Version="5.0.21" />
+		<PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.3.12" />
+		<PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.3.12" />
+		<PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.3.12" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0">
+			<ExcludeAssets>analyzers</ExcludeAssets>
+		</PackageReference>
+		<PackageReference Include="Nett" Version="0.15.0" />
+		<PackageReference Include="PlaylistsNET" Version="1.4.1" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+		<PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
+		<PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.14" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="Assets\*" />
+		<EmbeddedResource Include="Assets\Fonts\*.ttf" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="lib\x64\libopus.dll">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<PackagePath>.</PackagePath>
+			<Pack>true</Pack>
+		</Content>
+		<Content Include="lib\x86\libopus.dll">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<PackagePath>.</PackagePath>
+			<Pack>true</Pack>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\TSLib\TSLib.csproj" />
+	</ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="TS3AudioBot.Tests" />
+    </ItemGroup>
+    
+	<ItemGroup>
+		<Compile Update="Localization\strings.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>strings.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="Localization\strings.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>strings.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+	</ItemGroup>
+
+	<ItemGroup>
+		<AssemblyMetadata Include="FrixVersion" Value="2.0.0" />
+	</ItemGroup>
+
+</Project>

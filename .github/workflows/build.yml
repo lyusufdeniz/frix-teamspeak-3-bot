@@ -1,0 +1,24 @@
+name: Build
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Build bot
+        run: dotnet build TS3AudioBot/TS3AudioBot.csproj -c Release
+      - name: Check panel JavaScript
+        run: for f in FrixPanel/*.js; do node --check "$f"; done
+      - name: Check shell scripts
+        run: bash -n packaging/package.sh packaging/linux/install.sh packaging/linux/frix.sh
