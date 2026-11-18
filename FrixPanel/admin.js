@@ -388,35 +388,62 @@
         applyFilter();
       } catch (e) { F.fail(e); list.replaceChildren(F.empty('alert', t('err.loadFailed'))); }
     }
+    // list row: key + how the reply looks in TeamSpeak; click opens the editor dialog
     function row(it) {
-      const ta = F.textarea({ value: it.value, rows: 2, 'aria-label': it.key });
-      const prev = h('div', { class: 'bb-preview', 'aria-label': t('texts.bb.preview') });
       const isErr = ['failed', 'stream.error'].includes(it.key);
-      const paintPrev = () => prev.replaceChildren(bbRender(ta.value, isErr ? Object.assign({}, look, { color: look.errorColor }) : look));
-      ta.addEventListener('input', paintPrev);
-      previews.push(paintPrev);
-      paintPrev();
+      const lookFor = () => (isErr ? Object.assign({}, look, { color: look.errorColor }) : look);
+      const prev = h('div', { class: 'text-prev' });
       const badge = F.badge(t('texts.custom'), 'accent');
-      badge.hidden = !it.custom;
-      const reset = F.btn(t('texts.reset'), { kind: 'ghost', icon: 'refresh' });
-      reset.disabled = !it.custom;
-      const save = F.btn(t('common.save'), { kind: 'ghost', icon: 'check' });
-      const put = (value, btn) => F.busy(btn, async () => {
+      const paint = () => {
+        prev.replaceChildren(bbRender(it.value, lookFor()));
+        badge.hidden = !it.custom;
+        el.dataset.search = (it.key + ' ' + it.value + ' ' + it.defaultValue).toLowerCase();
+      };
+      const el = h('button', { type: 'button', class: 'text-item', 'aria-label': t('common.edit') + ': ' + it.key },
+        h('div', { class: 'text-item-head' }, h('code', { class: 'text-key', text: it.key }), badge, h('span', { class: 'text-edit-ic' }, icon('edit', 'sm'))),
+        prev);
+      el.classList.add('text-row');
+      el.addEventListener('click', () => edit(it, lookFor, paint));
+      previews.push(paint);
+      paint();
+      return el;
+    }
+
+    function edit(it, lookFor, paintRow) {
+      const ta = F.textarea({ value: it.value, rows: 5, 'aria-label': it.key, class: 'input text-editor' });
+      const prev = h('div', { class: 'bb-preview' });
+      const paint = () => prev.replaceChildren(bbRender(ta.value, lookFor()));
+      ta.addEventListener('input', paint);
+      paint();
+      const put = async (value) => {
         try {
           await F.api('PUT', 'texts', { lang, key: it.key, value });
           const custom = !!value && value !== it.defaultValue;
           it.custom = custom; it.value = value || it.defaultValue;
-          ta.value = it.value; badge.hidden = !custom; reset.disabled = !custom; paintPrev();
+          paintRow();
           F.toast(custom ? t('common.saved') : t('texts.wasReset'));
           if (it.key.startsWith('avatar.')) bumpAvatar();
-        } catch (e) { F.fail(e); }
+          return true;
+        } catch (e) { F.fail(e); return false; }
+      };
+      const insertVar = (v) => { const i = ta.selectionStart; ta.value = ta.value.slice(0, i) + v + ta.value.slice(ta.selectionEnd); ta.focus(); ta.setSelectionRange(i + v.length, i + v.length); paint(); };
+      const vars = [...new Set((it.defaultValue.match(/\{\w+\}/g) || []))];
+      F.modal({
+        title: [h('code', { class: 'text-key', text: it.key })],
+        size: 'wide',
+        body: h('div', { class: 'text-edit' },
+          bbToolbar(ta), ta,
+          vars.length ? h('div', { class: 'text-vars' }, h('span', { class: 'muted small', text: t('texts.vars') }),
+            vars.map((v) => h('button', { type: 'button', class: 'var-chip', text: v, onclick: () => insertVar(v) }))) : null,
+          h('div', { class: 'label', text: t('texts.bb.preview') }), prev,
+          h('div', { class: 'muted small text-default' }, h('span', { text: t('texts.default') + ': ' }), h('span', { class: 'default-val', text: it.defaultValue }))),
+        actions: [
+          { label: t('texts.reset'), icon: 'refresh', onClick: async () => { const ok = await put(''); return ok; } },
+          { label: t('common.cancel') },
+          { label: t('common.save'), kind: 'primary', primary: true, icon: 'check', onClick: () => put(ta.value) },
+        ],
       });
-      save.addEventListener('click', () => put(ta.value, save));
-      reset.addEventListener('click', () => put('', reset));
-      return h('div', { class: 'text-row', dataset: { search: (it.key + ' ' + it.value + ' ' + it.defaultValue).toLowerCase() } },
-        h('div', { class: 'row gap-s wrap' }, h('code', { class: 'text-key', text: it.key }), badge),
-        bbToolbar(ta), ta, prev,
-        h('div', { class: 'text-foot' }, h('div', { class: 'muted small grow' }, h('span', { text: t('texts.default') + ': ' }), h('span', { class: 'default-val', text: it.defaultValue })), reset, save));
+      setTimeout(() => ta.focus(), 50);
     }
     load();
   }
