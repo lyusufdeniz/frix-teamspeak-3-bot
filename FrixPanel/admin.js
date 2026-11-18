@@ -11,33 +11,76 @@
   const bumpAvatar = () => { F.avatarStamp = Date.now(); document.querySelectorAll('img.avatar-img').forEach((i) => { i.closest('.avatar-box').classList.remove('missing'); i.src = '/panel/api/avatar?t=' + F.avatarStamp; }); };
   F.bumpAvatar = bumpAvatar;
 
-  function tabs(defs, onPick, initial) {
-    const list = h('div', { class: 'tabs', role: 'tablist' });
-    const btns = defs.map((d) => {
-      const b = h('button', { type: 'button', role: 'tab', class: 'tab', 'aria-selected': 'false', id: 'tab-' + d.key }, icon(d.icon), h('span', { text: d.label }));
-      b.addEventListener('click', () => pick(d.key));
-      b.addEventListener('keydown', (e) => {
-        const i = defs.indexOf(d);
-        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-          e.preventDefault();
-          const n = defs[(i + (e.key === 'ArrowRight' ? 1 : defs.length - 1)) % defs.length];
-          pick(n.key); list.querySelector('#tab-' + n.key).focus();
-        }
-      });
-      list.append(b);
-      return b;
-    });
-    function pick(key) {
-      btns.forEach((b, i) => { const on = defs[i].key === key; b.setAttribute('aria-selected', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; b.classList.toggle('on', on); });
-      onPick(key);
-    }
-    setTimeout(() => pick(initial || defs[0].key));
-    return list;
+  function builtinRow(b) {
+    const supported = 'alias' in b;
+    const alias = F.input({ value: b.alias || '', placeholder: b.trigger, maxlength: 32, 'aria-label': t('commands.renameLabel', { trigger: b.trigger }), disabled: !supported });
+    const keep = h('input', { type: 'checkbox', checked: b.keepOld !== false, disabled: !supported });
+    const keepLbl = h('label', { class: 'check' }, keep, h('span', { text: t('commands.keepOld') }));
+    const result = h('code', { class: 'builtin-result' });
+    const paint = () => {
+      const a = (b.alias || '').trim();
+      result.textContent = a ? '!' + b.trigger + ' → !' + a + (b.keepOld ? '  (+ !' + b.trigger + ')' : '') : '!' + b.trigger;
+      result.classList.toggle('renamed', !!a);
+    };
+    paint();
+    const save = F.btn(t('common.save'), { kind: 'ghost', icon: 'check', disabled: !supported });
+    save.addEventListener('click', () => F.busy(save, async () => {
+      const body = { alias: alias.value.trim().replace(/^!/, ''), keepOld: keep.checked };
+      try {
+        await F.api('PUT', 'commands/builtin/' + enc(b.trigger), body);
+        b.alias = body.alias || null; b.keepOld = body.keepOld; alias.value = body.alias; paint();
+        F.toast(body.alias ? t('commands.renamed', { from: b.trigger, to: body.alias }) : t('commands.renameReset', { trigger: b.trigger }));
+        bumpAvatar();
+      } catch (e) { F.fail(e); }
+    }));
+    alias.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save.click(); } });
+    return h('div', { class: 'builtin-row' },
+      h('div', { class: 'builtin-usage-cell' }, h('code', { class: 'builtin-usage', text: b.usage })),
+      h('div', { class: 'input-prefix builtin-alias' }, h('span', { text: '!' }), alias),
+      keepLbl, save, result);
   }
+
+  /** rename rows for the built-in commands that belong to one plugin (or to none: id = null) */
+  function commandsBlock(builtins, id) {
+    const mine = builtins.filter((b) => (id ? (b.plugins || [])[0] === id : !(b.plugins || []).length));
+    if (!mine.length) return null;
+    return h('div', { class: 'plugin-cmds' },
+      h('div', { class: 'plugin-cmds-head' }, icon('terminal'), h('strong', { text: t('plugins.commands') }), h('span', { class: 'muted small', text: t('plugins.commandsHelp') })),
+      h('div', { class: 'builtin-list' }, mine.map(builtinRow)));
+  }
+
+  /** preview of the generated idle avatar (shown in the Avatar plugin) */
+  function avatarPreview() {
+    const img = h('img', { class: 'avatar-img', alt: t('commands.avatarAlt'), src: '/panel/api/avatar?t=' + F.avatarStamp });
+    const box = h('figure', { class: 'avatar-box' }, img, h('figcaption', null, h('span', { class: 'label-inline', text: t('commands.avatar') }),
+      h('span', { class: 'muted small avatar-missing', text: t('commands.avatarNone') }),
+      F.iconBtn('refresh', t('common.refresh'), bumpAvatar, 'sm')));
+    img.tabIndex = 0;
+    img.setAttribute('role', 'button');
+    img.title = t('commands.avatar');
+    const openBig = () => F.modal({ title: t('commands.avatar'), body: h('div', { class: 'avatar-full' }, h('img', { src: '/panel/api/avatar?t=' + F.avatarStamp, alt: t('commands.avatarAlt') })), actions: [{ label: t('common.close') }] });
+    img.addEventListener('click', openBig);
+    img.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBig(); } });
+    img.addEventListener('error', () => box.classList.add('missing'));
+    img.addEventListener('load', () => box.classList.remove('missing'));
+    return box;
+  }
+
+  // icon per plugin (falls back to "box")
+  const PLUGIN_ICONS = {
+    music: 'music', radio: 'radio', npstatus: 'idcard', avatar: 'image', welcome: 'hand', advertisement: 'megaphone', scheduled: 'calendar',
+    alonepause: 'pause', idleradio: 'radio', voteskip: 'vote', djmode: 'headphones', afkmover: 'moon', namefilter: 'filter', channelguard: 'shield',
+    antiflood: 'zap', registration: 'userPlus', tempchannel: 'folderPlus', ranks: 'trophy', supportnotify: 'bell', channelinfo: 'info', fun: 'dice',
+  };
 
   // ================================================================== PLUGINS
   Pages.plugins = function (root) {
+    // /plugins/custom = custom commands, /plugins/texts = bot replies (sidebar sub-menu)
+    const sub = location.pathname.replace(/\/+$/, '').split('/')[2];
+    if (sub === 'custom') { root.append(F.pageHead(t('commands.custom'), t('commands.customSub'))); commandsTab(root); return {}; }
+    if (sub === 'texts') { root.append(F.pageHead(t('commands.tabTexts'), t('commands.textsSub'))); textsTab(root); return {}; }
     let botName = F.state.selected;
+    let builtins = [];
     const sel = h('select', { class: 'input', 'aria-label': t('plugins.bot') });
     sel.addEventListener('change', () => { botName = sel.value; load(); });
     const list = h('div', { class: 'plugin-list' }, F.skeleton(3, 'sk-row'));
@@ -62,9 +105,13 @@
       if (!botName) { list.replaceChildren(F.empty('server', t('bots.none'))); return; }
       list.replaceChildren(...F.skeleton(4, 'sk-row'));
       try {
-        const [pl, rd] = await Promise.all([F.api('GET', 'plugins/' + enc(botName)), F.api('GET', 'radios')]);
+        const [pl, rd, cm] = await Promise.all([F.api('GET', 'plugins/' + enc(botName)), F.api('GET', 'radios'), F.api('GET', 'commands')]);
         radios = rd || [];
+        builtins = (cm && cm.builtin) || [];
         list.replaceChildren(...grouped(pl || []));
+        const general = commandsBlock(builtins, null);
+        if (general) list.append(h('section', { class: 'plugin-group' }, h('div', { class: 'plugin-group-head' }, h('h2', { text: t('plugins.generalCmds') })),
+          h('article', { class: 'card plugin-card open' }, h('div', { class: 'plugin-body' }, general))));
         if (!pl || !pl.length) list.append(F.empty('box', t('plugins.none')));
       } catch (e) { F.fail(e); list.replaceChildren(F.empty('alert', t('err.loadFailed'))); }
     }
@@ -134,13 +181,16 @@
       const saveBtn = F.btn(t('common.save'), { kind: 'primary', icon: 'check' });
       saveBtn.addEventListener('click', () => save(saveBtn, false));
       const toggle = h('button', { type: 'button', class: 'plugin-row', 'aria-expanded': 'false', 'aria-controls': bodyId },
+        h('span', { class: 'plugin-ic' }, icon(PLUGIN_ICONS[p.id] || 'box')),
         h('span', { class: 'plugin-name', text: F.loc(p.name) }),
         h('span', { class: 'plugin-desc', text: F.loc(p.description), title: F.loc(p.description) }),
         h('span', { class: 'plugin-chev' }, icon('chevron')));
       const body = h('div', { class: 'plugin-body', id: bodyId, hidden: true },
         h('p', { class: 'muted small', text: F.loc(p.description) }),
+        p.id === 'avatar' ? avatarPreview() : null,
         fields.length ? h('div', { class: 'form-grid' }, fields) : null,
-        h('div', { class: 'card-foot' }, saveBtn));
+        fields.length ? h('div', { class: 'card-foot' }, saveBtn) : null,
+        commandsBlock(builtins, p.id));
       const lsKey = 'frix.plugin.' + p.id + '.open';
       el.setOpen = (open) => {
         body.hidden = !open;
@@ -159,55 +209,18 @@
   };
 
   // ================================================================== COMMANDS + TEXTS
-  Pages.commands = function (root) {
-    const pane = h('div', { role: 'tabpanel' });
-    const img = h('img', { class: 'avatar-img', alt: t('commands.avatarAlt'), src: '/panel/api/avatar?t=' + F.avatarStamp });
-    const box = h('figure', { class: 'avatar-box' }, img, h('figcaption', null, h('span', { class: 'label-inline', text: t('commands.avatar') }),
-      h('span', { class: 'muted small avatar-missing', text: t('commands.avatarNone') }),
-      F.iconBtn('refresh', t('common.refresh'), bumpAvatar, 'sm')));
-    // küçük önizleme: tıklayınca gerçek boyutta (300 px genişlik) açılır
-    img.tabIndex = 0;
-    img.setAttribute('role', 'button');
-    img.title = t('commands.avatar');
-    const openBig = () => F.modal({ title: t('commands.avatar'), body: h('div', { class: 'avatar-full' }, h('img', { src: '/panel/api/avatar?t=' + F.avatarStamp, alt: t('commands.avatarAlt') })), actions: [{ label: t('common.close') }] });
-    img.addEventListener('click', openBig);
-    img.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBig(); } });
-    img.addEventListener('error', () => box.classList.add('missing'));
-    img.addEventListener('load', () => box.classList.remove('missing'));
-    root.append(h('div', { class: 'commands-head' }, F.pageHead(t('commands.title'), t('commands.sub')), box),
-      tabs([{ key: 'cmd', label: t('commands.tabCommands'), icon: 'terminal' }, { key: 'texts', label: t('commands.tabTexts'), icon: 'text' }],
-        (k) => { pane.setAttribute('aria-labelledby', 'tab-' + k); pane.replaceChildren(); (k === 'cmd' ? commandsTab : textsTab)(pane); }),
-      pane);
-  };
-
   function commandsTab(pane) {
-    const builtin = h('div', { class: 'builtin-list' });
-    // commands whose plugin is off on every bot are hidden (toggle shows them greyed out)
-    let showOff = false;
-    const offNote = h('div', { class: 'callout small off-note', hidden: true });
     const custom = h('div', { class: 'cmd-list' }, F.skeleton(3, 'sk-row'));
     pane.append(
       h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h2', { class: 'card-title' }, icon('terminal'), t('commands.custom')),
         F.btn(t('commands.new'), { kind: 'primary', icon: 'plus', onClick: () => form(null) })),
-      h('p', { class: 'muted small' }, F.rich(t('commands.customHelp'))), custom),
-      h('section', { class: 'card' }, h('h2', { class: 'card-title' }, icon('list'), t('commands.builtin')), h('p', { class: 'muted small' }, F.rich(t('commands.builtinHelp'))),
-        offNote, builtin));
+      h('p', { class: 'muted small' }, F.rich(t('commands.customHelp'))), custom));
     let data = null;
     async function load() {
       try { data = await F.api('GET', 'commands'); render(); }
       catch (e) { F.fail(e); custom.replaceChildren(F.empty('alert', t('err.loadFailed'))); }
     }
     function render() {
-      const all = data.builtin || [];
-      const off = all.filter((b) => b.available === false);
-      builtin.replaceChildren(...all.filter((b) => showOff || b.available !== false).map(builtinRow));
-      offNote.hidden = !off.length;
-      if (off.length) {
-        const names = [...new Set(off.flatMap((b) => b.plugins || []))].map((id) => t('plugin.' + id)).join(', ');
-        offNote.replaceChildren(icon('info'), h('div', { class: 'grow', text: t('commands.hiddenOff', { n: off.length, plugins: names }) }),
-          F.btn(showOff ? t('commands.hideOff') : t('commands.showOff'), { kind: 'ghost', onClick: () => { showOff = !showOff; render(); } }),
-          F.btn(t('commands.openPlugins'), { kind: 'ghost', onClick: () => F.go('/plugins') }));
-      }
       const items = data.custom || [];
       if (!items.length) { custom.replaceChildren(F.empty('terminal', t('commands.none'), t('commands.noneHint'))); return; }
       custom.replaceChildren(...items.map((c) => {
@@ -224,35 +237,6 @@
           h('div', { class: 'cmd-actions' }, sw, F.iconBtn('edit', t('common.edit'), () => form(c)), F.iconBtn('trash', t('common.delete'), () => del(c), 'danger')));
         return row;
       }));
-    }
-    function builtinRow(b) {
-      const supported = 'alias' in b;
-      const alias = F.input({ value: b.alias || '', placeholder: b.trigger, maxlength: 32, 'aria-label': t('commands.renameLabel', { trigger: b.trigger }), disabled: !supported });
-      const keep = h('input', { type: 'checkbox', checked: b.keepOld !== false, disabled: !supported });
-      const keepLbl = h('label', { class: 'check' }, keep, h('span', { text: t('commands.keepOld') }));
-      const result = h('code', { class: 'builtin-result' });
-      const paint = () => {
-        const a = (b.alias || '').trim();
-        result.textContent = a ? '!' + b.trigger + ' → !' + a + (b.keepOld ? '  (+ !' + b.trigger + ')' : '') : '!' + b.trigger;
-        result.classList.toggle('renamed', !!a);
-      };
-      paint();
-      const save = F.btn(t('common.save'), { kind: 'ghost', icon: 'check', disabled: !supported });
-      save.addEventListener('click', () => F.busy(save, async () => {
-        const body = { alias: alias.value.trim().replace(/^!/, ''), keepOld: keep.checked };
-        try {
-          await F.api('PUT', 'commands/builtin/' + enc(b.trigger), body);
-          b.alias = body.alias || null; b.keepOld = body.keepOld; alias.value = body.alias; paint();
-          F.toast(body.alias ? t('commands.renamed', { from: b.trigger, to: body.alias }) : t('commands.renameReset', { trigger: b.trigger }));
-          bumpAvatar();
-        } catch (e) { F.fail(e); }
-      }));
-      alias.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save.click(); } });
-      const needs = (b.plugins || []).map((id) => F.badge(t('plugin.' + id), b.available === false ? '' : 'info'));
-      return h('div', { class: 'builtin-row' + (b.available === false ? ' off' : '') },
-        h('div', { class: 'builtin-usage-cell' }, h('code', { class: 'builtin-usage', text: b.usage }), needs.length ? h('div', { class: 'row gap-s wrap' }, needs) : null),
-        h('div', { class: 'input-prefix builtin-alias' }, h('span', { text: '!' }), alias),
-        keepLbl, save, result);
     }
     async function del(c) {
       if (!(await F.confirm(t('commands.deleteConfirm', { trigger: c.trigger }), { danger: true, ok: t('common.delete') }))) return;
@@ -570,18 +554,14 @@
     { key: 'youtube', icon: 'music' },
     { key: 'updates', icon: 'download' },
     { key: 'maintenance', icon: 'power' },
-    { key: 'audit', icon: 'list' },
   ];
   Pages.settings = function (root) {
     const secKey = () => {
       const k = location.pathname.replace(/\/+$/, '').split('/')[2] || 'general';
       return SETTINGS_SECTIONS.some((x) => x.key === k) ? k : 'general';
     };
-    const links = SETTINGS_SECTIONS.map((sec) => h('a', { href: '/settings/' + sec.key, 'data-link': '', class: 'subnav-item', 'data-key': sec.key },
-      icon(sec.icon), h('span', { text: t('settings.sec.' + sec.key) })));
-    const subnav = h('nav', { class: 'subnav', 'aria-label': t('settings.sections') }, links);
     const body = h('div', { class: 'settings-body' }, F.skeleton(2, 'sk-card'));
-    root.append(F.pageHead(t('settings.title'), t('settings.sub')), h('div', { class: 'settings-layout' }, subnav, body));
+    root.append(F.pageHead(t('settings.sec.' + secKey()), t('settings.secDesc.' + secKey())), body);
     let s = null;
     async function load() {
       try { s = await F.api('GET', 'settings'); render(); }
@@ -589,19 +569,14 @@
     }
     function render() {
       const k = secKey();
-      links.forEach((a) => { if (a.dataset.key === k) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-      const cur = links.find((a) => a.dataset.key === k);
-      if (cur && cur.scrollIntoView && matchMedia('(max-width: 720px)').matches) cur.scrollIntoView({ block: 'nearest', inline: 'center' });
       if (!s) return;
-      const head = h('div', { class: 'section-head' }, h('h2', { text: t('settings.sec.' + k) }), h('p', { class: 'muted small', text: t('settings.secDesc.' + k) }));
       const cards = {
         general: () => [langCard(), cmdCard(), panelCard(), sysCard()],
         youtube: () => [ytdlpCard(), cookieCard()],
         updates: () => [updateCard()],
         maintenance: () => [restartCard()],
-        audit: () => [auditLinkCard()],
       }[k]();
-      body.replaceChildren(head, ...cards);
+      body.replaceChildren(...cards);
       document.title = t('settings.sec.' + k) + ' · ' + t('nav.settings') + ' · frix';
     }
     const card = (ic, title, desc, ...kids) => h('section', { class: 'card set-card' }, h('h3', { class: 'card-title' }, icon(ic), title), desc ? h('p', { class: 'muted small card-desc' }, desc) : null, kids);
@@ -635,7 +610,7 @@
     }
     function cmdCard() {
       return card('terminal', t('nav.commands'), t('settings.cmdHelp'),
-        h('a', { href: '/commands', 'data-link': '', class: 'small link-arrow' }, t('settings.cmdLink'), ' →'));
+        h('a', { href: '/plugins', 'data-link': '', class: 'small link-arrow' }, t('settings.cmdLink'), ' →'));
     }
     function ytdlpCard() {
       const out = h('pre', { class: 'pre' });
@@ -769,10 +744,6 @@
       c.classList.add('danger-zone');
       return c;
     }
-    function auditLinkCard() {
-      return card('list', t('settings.audit'), t('settings.auditHere'),
-        h('div', { class: 'set-row' }, h('a', { href: '/logs?tab=audit', 'data-link': '', class: 'btn btn-ghost' }, icon('list'), h('span', { text: t('settings.auditLink') }))));
-    }
     load();
     return { onSubRoute: render };
   };
@@ -782,11 +753,11 @@
     const pane = h('div', { role: 'tabpanel' });
     let cur = null;
     const kill = () => { if (cur && cur.destroy) { try { cur.destroy(); } catch (_) { /* */ } } cur = null; };
-    root.append(F.pageHead(t('logs.title'), t('logs.sub')),
-      tabs([{ key: 'live', label: t('logs.tabLive'), icon: 'wave' }, { key: 'history', label: t('logs.tabHistory'), icon: 'file' }, { key: 'audit', label: t('settings.sec.audit'), icon: 'list' }],
-        (k) => { kill(); pane.setAttribute('aria-labelledby', 'tab-' + k); pane.replaceChildren(); cur = ({ live: liveLogs, history: historyLogs, audit: auditLog })[k](pane) || {}; },
-        ['live', 'history', 'audit'].includes(new URLSearchParams(location.search).get('tab')) ? new URLSearchParams(location.search).get('tab') : 'live'),
-      pane);
+    let k = location.pathname.replace(/\/+$/, '').split('/')[2] || new URLSearchParams(location.search).get('tab') || 'live';
+    if (!['live', 'history', 'audit'].includes(k)) k = 'live';
+    const titles = { live: t('logs.tabLive'), history: t('logs.tabHistory'), audit: t('settings.sec.audit') };
+    root.append(F.pageHead(titles[k], k === 'audit' ? t('settings.secDesc.audit') : t('logs.sub')), pane);
+    cur = ({ live: liveLogs, history: historyLogs, audit: auditLog })[k](pane) || {};
     return { destroy: kill };
   };
 

@@ -11,12 +11,12 @@
   --line2: #36363f;
   --text: #f1f1f5;
   --muted: #8f8f9d;
-  --accent: #7c6cf6;
-  --accent-2: #a395ff;
-  --accent-hover: #8e80ff;
-  --accent-press: #6655e0;
+  --accent: #10b9a4;
+  --accent-2: #3ddcc4;
+  --accent-hover: #22c9b3;
+  --accent-press: #0c9a89;
   --on-accent: #ffffff;
-  --accent-tint: rgba(124, 108, 246, .16);
+  --accent-tint: rgba(16, 185, 164, .15);
   --ok: #4fd1a1;
   --warn: #f5c451;
   --bad: #f2667a;
@@ -35,12 +35,12 @@
   --line2: #d6d6e2;
   --text: #1b1b22;
   --muted: #6c6c7c;
-  --accent: #6c5ce7;
-  --accent-2: #8b7cf8;
-  --accent-hover: #7d6ef0;
-  --accent-press: #5a4ad6;
+  --accent: #0d9488;
+  --accent-2: #14b8a6;
+  --accent-hover: #0fa596;
+  --accent-press: #0b7d73;
   --on-accent: #ffffff;
-  --accent-tint: rgba(108, 92, 231, .12);
+  --accent-tint: rgba(13, 148, 136, .12);
   --ok: #1f9d6f;
   --warn: #c88a00;
   --bad: #d93a52;
@@ -870,8 +870,8 @@ h2 { font-size: 1.02rem; }
 .page-head h1 { font-size: 1.6rem; }
 .page-head p { color: var(--muted); }
 .btn { border-radius: 10px; font-family: var(--ui); font-weight: 500; }
-.btn-primary { background: linear-gradient(135deg, var(--accent-2), var(--accent)); border-color: transparent; box-shadow: 0 6px 18px rgba(124, 108, 246, .28); }
-.btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #b3a7ff, var(--accent-hover)); border-color: transparent; }
+.btn-primary { background: linear-gradient(135deg, var(--accent-2), var(--accent)); border-color: transparent; box-shadow: 0 6px 18px rgba(16, 185, 164, .28); }
+.btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #5ee9d5, var(--accent-hover)); border-color: transparent; }
 .btn-ghost { border-color: var(--line2); background: transparent; }
 .btn-ghost:hover:not(:disabled) { background: var(--raised); }
 .btn-icon { border-radius: 10px; }
@@ -905,7 +905,7 @@ h2 { font-size: 1.02rem; }
 .side-bot .bot-select { max-width: none; width: 100%; font-family: var(--ui); font-size: .9rem; height: 42px; }
 .side-group-title { font-family: var(--ui); font-weight: 600; font-size: .7rem; letter-spacing: .08em; }
 .side-item { height: 42px; border-radius: 12px; font-family: var(--ui); font-weight: 500; color: color-mix(in srgb, var(--text) 82%, var(--muted)); }
-.side-item[aria-current="page"] { background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: #fff; box-shadow: 0 8px 20px rgba(124, 108, 246, .3); }
+.side-item[aria-current="page"] { background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: #fff; box-shadow: 0 8px 20px rgba(16, 185, 164, .3); }
 .side-item[aria-current="page"] .ic { color: #fff; }
 .side-item[aria-current="page"]::before { display: none; }
 .user-btn { border-radius: 12px; height: 42px; }
@@ -940,14 +940,14 @@ h2 { font-size: 1.02rem; }
 .legend { display: flex; gap: 14px; font-size: .78rem; color: var(--muted); }
 .lg { display: inline-flex; align-items: center; gap: 6px; }
 .lg::before { content: ""; width: 10px; height: 3px; border-radius: 2px; background: var(--accent); }
-.lg.second::before { background: #e6a3e8; }
+.lg.second::before { background: #f5b14c; }
 .chart-box { height: 200px; }
 .chart { width: 100%; height: 100%; display: block; overflow: visible; }
 .chart-grid line { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 5; vector-effect: non-scaling-stroke; }
 .chart-grid text { fill: var(--muted); font: 10px var(--ui); }
 .chart-line { fill: none; stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-linecap: round; }
 .chart-line.main { stroke: var(--accent); }
-.chart-line.second { stroke: #e6a3e8; stroke-width: 1.8; opacity: .9; }
+.chart-line.second { stroke: #f5b14c; stroke-width: 1.8; opacity: .9; }
 .sys-os { font-size: .76rem; }
 .mem-wrap { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 .ring { position: relative; flex: none; }
@@ -1011,3 +1011,29 @@ h2 { font-size: 1.02rem; }
 .card-title::first-letter, .field > label::first-letter, .page-head h1::first-letter, .section-head h2::first-letter { text-transform: uppercase; }
 .btn > span { display: inline-block; }
 .btn > span::first-letter { text-transform: uppercase; }
+
+/* sidebar sub-menus */
+.side-parent { width: 100%; background: none; border: 0; cursor: pointer; text-align: left; font-size: inherit; }
+.side-parent .side-chev { margin-left: auto; display: grid; place-items: center; color: var(--muted); transition: transform .15s; }
+.side-parent .side-chev .ic { width: 14px; height: 14px; }
+.side-parent[aria-expanded="true"] .side-chev { transform: rotate(180deg); }
+.side-parent.active { color: var(--text); background: var(--raised); }
+.side-parent.active .ic { color: var(--accent-2); }
+.side-sub { list-style: none; margin: 4px 0 6px 21px; padding: 0 0 0 12px; border-left: 1px solid var(--line2); display: flex; flex-direction: column; gap: 2px; }
+.side-subitem { display: flex; align-items: center; height: 34px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-size: .88rem; font-weight: 500; position: relative; }
+.side-subitem:hover { background: var(--raised); color: var(--text); text-decoration: none; }
+.side-subitem[aria-current="page"] { color: #fff; background: linear-gradient(135deg, var(--accent-2), var(--accent)); }
+/* plugin icons + commands inside plugin cards */
+.plugin-ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-tint); color: var(--accent-2); flex: none; }
+.plugin-ic .ic { width: 18px; height: 18px; }
+.plugin-card:not(.on) .plugin-ic { background: var(--raised); color: var(--muted); }
+.plugin-row { display: flex !important; align-items: center; gap: 14px; }
+.plugin-row .plugin-desc { flex: 1; min-width: 0; }
+.plugin-cmds { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.plugin-cmds-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.plugin-cmds-head .ic { width: 16px; height: 16px; color: var(--accent-2); }
+.plugin-body .avatar-box { margin: 10px 0 14px; display: inline-flex; }
+.plugin-card { padding: 4px 8px; }
+.plugin-card .plugin-body { padding: 0 12px 14px; }
+.side-subitem > span { display: inline-block; }
+.side-subitem > span::first-letter { text-transform: uppercase; }

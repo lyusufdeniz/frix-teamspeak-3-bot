@@ -115,10 +115,10 @@ Botun geçici kanal oluşturma ve taşıma yetkisi olmalı; Loglar'da "Geçici k
 ### Komutlar, metinler ve dil
 
 **!ara, !gec gibi komutların adını değiştirebilir miyim?**
-Evet: Panel → Komutlar → *Yerleşik komutlar*. Yeni adı yaz (ör. `ara` → `cal`) ve kaydet. *Eski ad da çalışsın* işaretini kaldırırsan eski ad kapanır. Bot cevaplarındaki, yardım metnindeki ve avatardaki komut adları kendiliğinden yeni adı gösterir.
+Evet: Panel → Eklentiler (her eklenti kartının altındaki *Komutlar*). Yeni adı yaz (ör. `ara` → `cal`) ve kaydet. *Eski ad da çalışsın* işaretini kaldırırsan eski ad kapanır. Bot cevaplarındaki, yardım metnindeki ve avatardaki komut adları kendiliğinden yeni adı gösterir.
 
 **Kendi komutumu nasıl eklerim?**
-Panel → Komutlar → *Özel komutlar*. *Metin* türü sabit bir cevap verir (ör. `!discord` → davet linki; `{user}`, `{args}`, `{time}`, `{date}` kullanılabilir). *Yönlendirme* türü başka bir komutu çalıştırır (ör. `!sarki` → `!ara`). Özel komut adı yerleşik bir komutla aynı olamaz.
+Panel → Eklentiler → *Özel komutlar*. *Metin* türü sabit bir cevap verir (ör. `!discord` → davet linki; `{user}`, `{args}`, `{time}`, `{date}` kullanılabilir). *Yönlendirme* türü başka bir komutu çalıştırır (ör. `!sarki` → `!ara`). Özel komut adı yerleşik bir komutla aynı olamaz.
 
 **Müzik ya da radyoyu kapatabilir miyim?**
 Evet: Panel → Eklentiler → *Temel*. *Müzik* kapalıyken `!ara`, `!link`, `!liste`, `!istatistik` çalışmaz; *Radyo* kapalıyken `!radyo` çalışmaz. `!gec`, `!dur`, `!ses` gibi kontroller ikisinden biri açık olduğu sürece çalışır. Kapalı bir özelliğin komutu yazılırsa bot "bu özellik kapalı" der. Komutlar sayfası ve `!yardim` sadece açık eklentilerin komutlarını gösterir.
@@ -133,13 +133,13 @@ Panel → Eklentiler → *Şarkı adı → bot adı/açıklaması*. Ad ve açık
 Panel → Eklentiler → *Avatar*: boşta komut kartı ve çalarken şarkı kapağı ayrı ayrı açılıp kapanır. Eklentiyi tamamen kapatırsan bot avatarı kaldırılır.
 
 **Bot cevaplarını renkli / kalın yapabilir miyim?**
-Evet: Panel → Komutlar → *Bot metinleri*. Üstteki *Mesaj görünümü* kartında tüm cevapların varsayılan rengini, hata rengini ve kalınlığı seçersin. Her cevabın üstündeki araç çubuğuyla seçili yazıyı kalın, italik, altı çizili ya da renkli yaparsın (TeamSpeak BBCode: `[b]`, `[i]`, `[u]`, `[s]`, `[color=#FF0000]`, `[url]`); altındaki önizleme TeamSpeak'te nasıl görüneceğini gösterir. Kendi `[color]` etiketi olan cevaplara varsayılan renk eklenmez.
+Evet: Panel → Eklentiler → *Bot metinleri*. Üstteki *Mesaj görünümü* kartında tüm cevapların varsayılan rengini, hata rengini ve kalınlığı seçersin. Her cevabın üstündeki araç çubuğuyla seçili yazıyı kalın, italik, altı çizili ya da renkli yaparsın (TeamSpeak BBCode: `[b]`, `[i]`, `[u]`, `[s]`, `[color=#FF0000]`, `[url]`); altındaki önizleme TeamSpeak'te nasıl görüneceğini gösterir. Kendi `[color]` etiketi olan cevaplara varsayılan renk eklenmez.
 
 **Botun avatarı neden komut listesi gösteriyor?**
-Bot boştayken avatarı, ayarladığın komutlara göre otomatik çizilir (yeniden adlandırılan komutlar, özel komutlar ve radyo varsa `!radyo`). Açıklamaları Panel → Komutlar → *Metinler* bölümündeki `avatar.*` satırlarından değiştirebilirsin. Şarkı çalarken avatar şarkının kapağı olur. Tamamen kendi resmini kullanmak istersen `bots/<bot-adı>/avatars/` klasörüne `sleep.png` koy.
+Bot boştayken avatarı, ayarladığın komutlara göre otomatik çizilir (yeniden adlandırılan komutlar, özel komutlar ve radyo varsa `!radyo`). Açıklamaları Panel → Eklentiler → *Bot metinleri* bölümündeki `avatar.*` satırlarından değiştirebilirsin. Şarkı çalarken avatar şarkının kapağı olur. Tamamen kendi resmini kullanmak istersen `bots/<bot-adı>/avatars/` klasörüne `sleep.png` koy.
 
 **Dili nasıl değiştiririm?**
-Tek bir dil ayarı var: Panel → Ayarlar → Genel → *Dil* (ilk kurulumda da sorulur). Panel, botun TeamSpeak cevapları ve komut adları hep bu dili kullanır: Türkçe, English, Deutsch, Español, Français, Русский, Português, Polski, Italiano. Dil değişince komutlara verdiğin özel adlar o dilin varsayılanlarına döner; Türkçe adlar her zaman çalışır. Tek tek cevapları Panel → Komutlar → *Bot metinleri* bölümünden düzenleyebilirsin.
+Tek bir dil ayarı var: Panel → Ayarlar → Genel → *Dil* (ilk kurulumda da sorulur). Panel, botun TeamSpeak cevapları ve komut adları hep bu dili kullanır: Türkçe, English, Deutsch, Español, Français, Русский, Português, Polski, Italiano. Dil değişince komutlara verdiğin özel adlar o dilin varsayılanlarına döner; Türkçe adlar her zaman çalışır. Tek tek cevapları Panel → Eklentiler → *Bot metinleri* bölümünden düzenleyebilirsin.
 
 ---
 
@@ -256,10 +256,10 @@ Free services without API keys: open-meteo.com (weather), open.er-api.com (curre
 ### Commands, texts and language
 
 **Can I rename commands like !ara and !gec?**
-Yes: Panel → Commands → *Built-in commands*. Enter a new name (e.g. `ara` → `play`) and save. Untick *keep old name* to disable the original. Command names in replies, the help text and the avatar update automatically.
+Yes: Panel → Plugins (the *Commands* list at the bottom of each plugin card). Enter a new name (e.g. `ara` → `play`) and save. Untick *keep old name* to disable the original. Command names in replies, the help text and the avatar update automatically.
 
 **How do I add my own command?**
-Panel → Commands → *Custom commands*. *Text* replies with fixed text (e.g. `!discord` → invite link; `{user}`, `{args}`, `{time}`, `{date}` are available). *Alias* runs another command (e.g. `!song` → `!ara`). Custom names can't clash with built-in commands.
+Panel → Plugins → *Custom commands*. *Text* replies with fixed text (e.g. `!discord` → invite link; `{user}`, `{args}`, `{time}`, `{date}` are available). *Alias* runs another command (e.g. `!song` → `!ara`). Custom names can't clash with built-in commands.
 
 **Can I turn music or radio off?**
 Yes: Panel → Plugins → *Core*. With *Music* off, `!ara`, `!link`, `!liste` and `!istatistik` don't work; with *Radio* off, `!radyo` doesn't. Controls like `!gec`, `!dur` and `!ses` work while either is on. If someone types a disabled command, the bot says the feature is off. The commands page and `!yardim` only list commands whose plugin is on.
@@ -274,10 +274,10 @@ Panel → Plugins → *Song → bot name/description*. Set the nickname and desc
 Panel → Plugins → *Avatar*: the idle command card and the song cover while playing can be switched separately. Turning the plugin off removes the bot's avatar.
 
 **Can the bot's replies be coloured / bold?**
-Yes: Panel → Commands → *Bot texts*. The *Message look* card sets the default colour, error colour and bold for all replies. The toolbar above each reply makes the selected text bold, italic, underlined or coloured (TeamSpeak BBCode: `[b]`, `[i]`, `[u]`, `[s]`, `[color=#FF0000]`, `[url]`); the preview below shows how it will look in TeamSpeak. Replies with their own `[color]` tag don't get the default colour.
+Yes: Panel → Plugins → *Bot texts*. The *Message look* card sets the default colour, error colour and bold for all replies. The toolbar above each reply makes the selected text bold, italic, underlined or coloured (TeamSpeak BBCode: `[b]`, `[i]`, `[u]`, `[s]`, `[color=#FF0000]`, `[url]`); the preview below shows how it will look in TeamSpeak. Replies with their own `[color]` tag don't get the default colour.
 
 **Why does the bot's avatar show a command list?**
-While idle, the avatar is drawn automatically from your commands (renamed commands, custom commands, and `!radyo` if you have radio stations). Edit the descriptions via the `avatar.*` lines in Panel → Commands → *Texts*. While playing, the avatar shows the song's cover. To use your own image instead, put `sleep.png` into `bots/<bot-name>/avatars/`.
+While idle, the avatar is drawn automatically from your commands (renamed commands, custom commands, and `!radyo` if you have radio stations). Edit the descriptions via the `avatar.*` lines in Panel → Plugins → *Bot texts*. While playing, the avatar shows the song's cover. To use your own image instead, put `sleep.png` into `bots/<bot-name>/avatars/`.
 
 **How do I change the language?**
-There is one language setting: Panel → Settings → General → *Language* (also asked during setup). The panel, the bot's TeamSpeak replies and the command names all use it: Türkçe, English, Deutsch, Español, Français, Русский, Português, Polski, Italiano. Changing it resets custom command names to that language's defaults; the Turkish names always work. Individual replies can be edited in Panel → Commands → *Bot texts*.
+There is one language setting: Panel → Settings → General → *Language* (also asked during setup). The panel, the bot's TeamSpeak replies and the command names all use it: Türkçe, English, Deutsch, Español, Français, Русский, Português, Polski, Italiano. Changing it resets custom command names to that language's defaults; the Turkish names always work. Individual replies can be edited in Panel → Plugins → *Bot texts*.

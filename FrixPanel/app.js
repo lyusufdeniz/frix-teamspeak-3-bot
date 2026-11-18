@@ -82,6 +82,21 @@
     plus: 'p:M12 5v14M5 12h14',
     menu: 'p:M4 7h16M4 12h16M4 17h16',
     clock: 'c:12 12 8.5|p:M12 7.5V12l3 2',
+    idcard: 'r:3 5 18 14 2|c:9 11 2.2|p:M5.5 16.5c.8-1.8 2-2.5 3.5-2.5s2.7.7 3.5 2.5|p:M14 10h4M14 13.5h3',
+    hand: 'p:M8 13V6.5a1.5 1.5 0 0 1 3 0V11|p:M11 10.5v-6a1.5 1.5 0 0 1 3 0v6|p:M14 10.5V6a1.5 1.5 0 0 1 3 0v8a6 6 0 0 1-6 6h-.5a6 6 0 0 1-4.6-2.2L4 14.6a1.5 1.5 0 0 1 2.3-1.9L8 14.5',
+    megaphone: 'p:M4 10v4h3l7 4V6l-7 4z|p:M17 9.5a3 3 0 0 1 0 5|p:M7 14l1 5h2.5l-1-4.5',
+    calendar: 'r:4 5.5 16 14.5 2|p:M8 3.5v4M16 3.5v4M4 10h16|p:M8.5 14h2M13.5 14h2',
+    vote: 'p:M7 10.5V20H4.5v-9.5z|p:M7 11l4-7c1.2 0 2 1 1.7 2.2L12 10h5.6a2 2 0 0 1 2 2.4l-1.3 6A2 2 0 0 1 16.4 20H7',
+    headphones: 'p:M4 15v-3a8 8 0 0 1 16 0v3|r:3.5 14 4 6 1.5|r:16.5 14 4 6 1.5',
+    moon: 'p:M19 14.5A7.5 7.5 0 1 1 9.5 5a6 6 0 0 0 9.5 9.5z',
+    filter: 'p:M4 5h16l-6 7.5V19l-4-2v-4.5z',
+    shield: 'p:M12 3.5l7 3v5.5c0 4.2-3 7.4-7 8.5-4-1.1-7-4.3-7-8.5V6.5z|p:M9 12l2 2 4-4',
+    zap: 'p:M13 3L5 13.5h6L10 21l8-10.5h-6z',
+    userPlus: 'c:10 8 3.5|p:M3.5 19.5c.9-3.4 3.4-5 6.5-5s5.6 1.6 6.5 5|p:M18.5 7.5v5M16 10h5',
+    folderPlus: 'p:M3.5 7a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z|p:M12 10.5v5M9.5 13h5',
+    trophy: 'p:M8 4h8v5a4 4 0 0 1-8 0z|p:M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4|p:M12 13v4M8.5 20h7l-.8-3H9.3z',
+    bell: 'p:M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 1.5H5z|p:M10 20a2 2 0 0 0 4 0',
+    dice: 'r:4 4 16 16 3|c:8.5 8.5 1.1|c:15.5 15.5 1.1|c:15.5 8.5 1.1|c:8.5 15.5 1.1|c:12 12 1.1',
     cpu: 'r:7 7 10 10 1.5|p:M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4',
     memory: 'r:3 7 18 10 1.5|p:M7 10v4M11 10v4M15 10v4|p:M6 17v3M10 17v3M14 17v3M18 17v3',
     arrowUp: 'p:M12 19V5M6 11l6-6 6 6',
@@ -655,11 +670,10 @@
     { path: '/playlists', key: 'playlists', icon: 'playlist' },
     { path: '/radios', key: 'radios', icon: 'radio' },
     { path: '/stats', key: 'stats', icon: 'chart' },
-    { path: '/plugins', key: 'plugins', icon: 'box', admin: true },
-    { path: '/commands', key: 'commands', icon: 'terminal', admin: true },
+    { path: '/plugins', key: 'plugins', icon: 'box', admin: true, sub: true, children: [['/plugins', 'plugins.all'], ['/plugins/custom', 'commands.custom'], ['/plugins/texts', 'commands.tabTexts']] },
     { path: '/users', key: 'users', icon: 'users', admin: true },
-    { path: '/settings', key: 'settings', icon: 'sliders', admin: true, sub: true },
-    { path: '/logs', key: 'logs', icon: 'file', admin: true },
+    { path: '/settings', key: 'settings', icon: 'sliders', admin: true, sub: true, children: [['/settings/general', 'settings.sec.general'], ['/settings/youtube', 'settings.sec.youtube'], ['/settings/updates', 'settings.sec.updates'], ['/settings/maintenance', 'settings.sec.maintenance']] },
+    { path: '/logs', key: 'logs', icon: 'file', admin: true, sub: true, children: [['/logs/live', 'logs.tabLive'], ['/logs/history', 'logs.tabHistory'], ['/logs/audit', 'settings.sec.audit']] },
     { path: '/faq', key: 'faq', icon: 'help' },
   ];
   const ROUTES = NAV.concat([{ path: '/account', key: 'account', icon: 'user' }]);
@@ -729,13 +743,28 @@
     const byKey = (k) => NAV.find((n) => n.key === k);
     const groups = [
       ['music', ['dashboard', 'bots', 'player', 'playlists', 'radios']],
-      ['manage', admin ? ['plugins', 'commands', 'users', 'settings', 'logs'] : []],
+      ['manage', admin ? ['plugins', 'users', 'settings', 'logs'] : []],
       ['other', ['stats', 'faq']],
     ].filter((g) => g[1].length);
+    // items with children open a sub-menu under them (instead of tabs inside the page)
     const link = (k) => {
       const n = byKey(k);
-      return h('li', null, h('a', { href: n.path, 'data-link': '', class: 'side-item', 'data-path': n.path },
-        icon(n.icon), h('span', { text: t('nav.' + n.key) })));
+      if (!n.children) {
+        return h('li', null, h('a', { href: n.path, 'data-link': '', class: 'side-item', 'data-path': n.path },
+          icon(n.icon), h('span', { text: t('nav.' + n.key) })));
+      }
+      const subId = F.uid('sub');
+      const subList = h('ul', { class: 'side-sub', id: subId, hidden: true },
+        n.children.map(([path, key]) => h('li', null, h('a', { href: path, 'data-link': '', class: 'side-subitem', 'data-sub': path }, h('span', { text: t(key) })))));
+      const btn = h('button', { type: 'button', class: 'side-item side-parent', 'data-parent': n.path, 'aria-expanded': 'false', 'aria-controls': subId },
+        icon(n.icon), h('span', { text: t('nav.' + n.key) }), h('span', { class: 'side-chev' }, icon('chevron', 'sm')));
+      btn.addEventListener('click', () => {
+        const open = btn.getAttribute('aria-expanded') !== 'true';
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        subList.hidden = !open;
+        if (open && !location.pathname.startsWith(n.path)) F.go(n.children[0][0]);
+      });
+      return h('li', { class: 'side-has-sub' }, btn, subList);
     };
     const side = h('aside', { class: 'sidebar', id: 'sidebar', 'aria-label': t('nav.main') },
       h('div', { class: 'side-brand' }, h('a', { href: '/', 'data-link': '', class: 'brand', 'aria-label': 'frix' }, F.brand(true))),
@@ -808,6 +837,7 @@
     if (F.page && F.page.destroy) { try { F.page.destroy(); } catch (e) { console.error(e); } }
     F.page = null;
     const path = location.pathname.replace(/\/+$/, '') || '/';
+    if (path === '/commands') { history.replaceState(null, '', '/plugins/custom'); return renderRoute(); }
     let r = ROUTES.find((x) => x.path === path || (x.sub && path.startsWith(x.path + '/')));
     if (!r) { history.replaceState(null, '', '/'); r = ROUTES[0]; }
     F.curRoute = r;
@@ -815,6 +845,16 @@
     document.querySelectorAll('.sidenav [data-path]').forEach((a) => {
       if (a.dataset.path === r.path) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
+    // sub-menus: open the one of the current page, mark the current child
+    document.querySelectorAll('.sidenav .side-parent').forEach((b) => {
+      const mine = b.dataset.parent === r.path;
+      b.classList.toggle('active', mine);
+      if (mine) { b.setAttribute('aria-expanded', 'true'); b.nextElementSibling.hidden = false; }
+    });
+    const subs = [...document.querySelectorAll('.sidenav [data-sub]')];
+    const best = subs.filter((a) => path === a.dataset.sub || path.startsWith(a.dataset.sub + '/')).sort((x, y) => y.dataset.sub.length - x.dataset.sub.length)[0]
+      || subs.find((a) => r.children && a.dataset.sub === r.children[0][0] && (path === r.path));
+    subs.forEach((a) => { if (a === best) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     const tt = F.$('#top-title'); if (tt) tt.textContent = t('nav.' + r.key);
     closeDrawer();
     const main = F.$('#main');
