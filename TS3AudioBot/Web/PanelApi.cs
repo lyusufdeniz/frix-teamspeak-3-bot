@@ -663,6 +663,7 @@ public static class PanelApi
 		if (!AllConfigs().Any(c => c.Name == bot)) throw NotFound("bot_not_found");
 		var config = body["config"] as JsonObject ?? [];
 		FrixPluginHost.Save(bot, id, body.Bool("enabled") ?? false, (JsonObject)config.DeepClone());
+		FrixAvatar.Invalidate();
 		return new { ok = true };
 	}
 
@@ -670,16 +671,16 @@ public static class PanelApi
 
 	private static object ListCommands()
 	{
-		var builtin = new[]
-		{
-			("ara", "!ara <şarkı/link>"), ("link", "!link <link>"), ("radyo", "!radyo <isim>"), ("gec", "!gec"), ("dur", "!dur"),
-			("devam", "!devam"), ("bitir", "!bitir"), ("ses", "!ses <0-100>"), ("calan", "!calan"), ("siradaki", "!siradaki"),
-			("temizle", "!temizle"), ("yardim", "!yardim"),
-		};
+		var bots = AllConfigs().Select(c => c.Name).Where(n => n != null).Cast<string>().ToArray();
 		return new
 		{
 			custom = FrixCommands.List(),
-			builtin = FrixCommands.BuiltinList().Select(b => new { trigger = b.Name, usage = b.Usage, alias = b.Alias, keepOld = b.KeepOld }),
+			builtin = FrixCommands.BuiltinList().Select(b => new
+			{
+				trigger = b.Name, usage = b.Usage, alias = b.Alias, keepOld = b.KeepOld,
+				plugins = FrixCommands.Requirements.GetValueOrDefault(b.Name)?.Select(r => r.Split(':')[0]).Distinct().ToArray(),
+				available = FrixCommands.IsAvailableAny(b.Name, bots),
+			}),
 		};
 	}
 
@@ -770,6 +771,7 @@ public static class PanelApi
 			lang = FrixText.Language,
 			languages = FrixText.Languages,
 			commandLang = FrixDb.GetMeta("cmd_names_lang") ?? "en",
+			chat = new { color = FrixChat.DefaultColor, errorColor = FrixChat.ErrorColor, bold = FrixChat.Bold },
 			version = FrixUpdater.CurrentVersion,
 			updateRepo = FrixUpdater.Repo,
 			os = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
@@ -781,6 +783,17 @@ public static class PanelApi
 	private static object SaveSettings(JsonObject body)
 	{
 		if (body.Str("lang") is { } lang) { FrixText.SetLanguage(lang); FrixAvatar.Invalidate(); }
+		if (body["chat"] is JsonObject chat)
+		{
+			foreach (var (key, meta) in new[] { ("color", "chat_color"), ("errorColor", "chat_error_color") })
+				if (chat.Str(key) is { } c)
+				{
+					c = c.Trim();
+					if (c.Length > 0 && !FrixChat.IsValidColor(c)) throw Bad("bad_color");
+					FrixDb.SetMeta(meta, c.Length == 0 ? null : c);
+				}
+			if (chat.Bool("bold") is { } bold) FrixDb.SetMeta("chat_bold", bold ? "1" : "0");
+		}
 		if (body.Str("updateRepo") is { } repo)
 		{
 			repo = repo.Trim().Replace("https://github.com/", "").Trim('/');

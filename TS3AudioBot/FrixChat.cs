@@ -26,16 +26,36 @@ public static class FrixChat
 		return Names.TryGetValue(uid.Value.Value, out var n) ? n : FrixText.Raw("user.unknown");
 	}
 
-	/// <summary>Kendi rengi olmayan mesajları yeşil ve kalın yapar.</summary>
-	public static string Colorize(string message)
+	// Panel → Komutlar → Bot cevapları → Görünüm ayarları (meta tablosu)
+	public static string DefaultColor => Meta("chat_color", Green);
+	public static string ErrorColor => Meta("chat_error_color", Red);
+	public static bool Bold => Meta("chat_bold", "1") != "0";
+
+	private static readonly Regex ColorValue = new(@"^(#[0-9A-Fa-f]{3}|#[0-9A-Fa-f]{6}|[A-Za-z]{3,20})$", RegexOptions.Compiled);
+	public static bool IsValidColor(string c) => ColorValue.IsMatch(c);
+
+	private static string Meta(string key, string fallback)
+	{
+		try { return Frix.FrixDb.GetMeta(key) is { Length: > 0 } v ? v : fallback; }
+		catch { return fallback; }
+	}
+
+	/// <summary>
+	/// Mesajı varsayılan renk/kalınlıkla sarar. Metin kendi [color] etiketini içeriyorsa
+	/// (panelden BBCode ile düzenlenmişse) olduğu gibi gönderilir. Varsayılan renk "none" ise renk eklenmez.
+	/// </summary>
+	public static string Colorize(string message) => Color(message, DefaultColor);
+
+	/// <summary>Mesajı renklendirir. Değişkenler FrixText.Get içinde zaten etkisizleştirilir.</summary>
+	public static string Color(string message, string color = Green)
 	{
 		if (string.IsNullOrWhiteSpace(message) || message.Contains("[color", System.StringComparison.OrdinalIgnoreCase))
 			return message;
-		return $"[b][color={Green}]{message}[/color][/b]";
+		if (color == Green) color = DefaultColor;
+		else if (color == Red) color = ErrorColor;
+		var body = color.Equals("none", System.StringComparison.OrdinalIgnoreCase) ? message : $"[color={color}]{message}[/color]";
+		return Bold && !message.Contains("[b]", System.StringComparison.OrdinalIgnoreCase) ? $"[b]{body}[/b]" : body;
 	}
-
-	public static string Color(string message, string color = Green)
-		=> $"[b][color={color}]{Escape(message)}[/color][/b]";
 
 	private static readonly Regex YtId = new(@"(?:youtube\.com/(?:watch\?(?:.*&)?v=|shorts/|live/|embed/)|youtu\.be/|music\.youtube\.com/watch\?(?:.*&)?v=)([A-Za-z0-9_-]{11})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 

@@ -116,7 +116,6 @@ window.I18N = {
 
     'texts.lang': 'Dil', 'texts.filter': 'Ara', 'texts.custom': 'Özelleştirildi', 'texts.reset': 'Varsayılana dön',
     'texts.default': 'Varsayılan', 'texts.wasReset': 'Varsayılana döndürüldü',
-    'texts.help': 'Botun TeamSpeak\'te yazdığı cevapları buradan değiştirebilirsin. `{title}` gibi değişkenleri silme.',
 
     'users.title': 'Kullanıcılar', 'users.sub': 'Panele kimlerin girebileceğini yönet.', 'users.new': 'Yeni kullanıcı',
     'users.name': 'Kullanıcı adı', 'users.role': 'Rol', 'users.created': 'Oluşturma', 'users.lastLogin': 'Son giriş', 'users.never': 'Hiç',
@@ -233,6 +232,7 @@ window.I18N = {
     'plugins.group.welcome': 'Karşılama & duyuru', 'plugins.group.music': 'Müzik', 'plugins.group.moderation': 'Moderasyon',
     'plugins.group.server': 'Sunucu yönetimi', 'plugins.group.fun': 'Eğlence', 'plugins.group.other': 'Diğer',
     'plugins.groupCount': '{on}/{n} açık', 'plugin.registration': 'Kayıt', 'plugin.tempchannel': 'Geçici kanal',
+    "plugins.group.core": "Temel", "plugin.music": "Müzik", "plugin.radio": "Radyo", "plugin.npstatus": "Şarkı → bot adı", "plugin.avatar": "Avatar", "commands.hiddenOff": "{n} komut gizli: bağlı eklentileri ({plugins}) hiçbir botta açık değil.", "commands.showOff": "Gizlileri göster", "commands.hideOff": "Gizle", "commands.openPlugins": "Eklentilere git", "texts.bb.bold": "Kalın", "texts.bb.italic": "İtalik", "texts.bb.underline": "Altı çizili", "texts.bb.strike": "Üstü çizili", "texts.bb.link": "Link", "texts.bb.color": "Renk", "texts.bb.clear": "Biçimi temizle (seçili ya da tümü)", "texts.bb.preview": "Önizleme", "texts.look.title": "Mesaj görünümü", "texts.look.help": "Kendi `[color]` etiketi olmayan cevaplar bu renk ve kalınlıkla gönderilir. Tek tek cevapları aşağıda BBCode ile renklendirebilirsin.", "texts.look.color": "Varsayılan renk", "texts.look.none": "Renksiz", "texts.look.errorColor": "Hata rengi", "texts.look.bold": "Kalın yaz", "texts.look.sample": "🎵 Şimdi çalıyor: Tarkan - Kuzu Kuzu", "texts.look.sampleErr": "❌ Çalınamadı: örnek hata", "texts.help": "Botun TeamSpeak'te yazdığı cevapları buradan değiştirebilirsin. Seçip araç çubuğuyla kalın, renkli vb. yapabilirsin (BBCode: `[b]`, `[i]`, `[u]`, `[color=#FF0000]`). `{title}` gibi değişkenleri silme.", "err.bad_color": "Geçersiz renk. Örn: #00FF00 ya da red",
     'plugin.ranks': 'Aktiflik rütbeleri', 'plugin.channelguard': 'Kanal koruma', 'plugin.antiflood': 'Flood koruması',
     'plugin.voteskip': 'Oylamayla geç', 'plugin.djmode': 'DJ modu', 'plugin.scheduled': 'Zamanlı duyuru',
     'plugin.fun': 'Eğlence',
@@ -353,7 +353,6 @@ window.I18N = {
 
     'texts.lang': 'Language', 'texts.filter': 'Search', 'texts.custom': 'Customised', 'texts.reset': 'Reset to default',
     'texts.default': 'Default', 'texts.wasReset': 'Reset to default',
-    'texts.help': 'Change what the bot writes in TeamSpeak. Keep variables like `{title}`.',
 
     'users.title': 'Users', 'users.sub': 'Manage who can access the panel.', 'users.new': 'New user',
     'users.name': 'Username', 'users.role': 'Role', 'users.created': 'Created', 'users.lastLogin': 'Last login', 'users.never': 'Never',
@@ -470,6 +469,7 @@ window.I18N = {
     'plugins.group.welcome': 'Welcome & announcements', 'plugins.group.music': 'Music', 'plugins.group.moderation': 'Moderation',
     'plugins.group.server': 'Server management', 'plugins.group.fun': 'Fun', 'plugins.group.other': 'Other',
     'plugins.groupCount': '{on}/{n} on', 'plugin.registration': 'Registration', 'plugin.tempchannel': 'Temporary channels',
+    "plugins.group.core": "Core", "plugin.music": "Music", "plugin.radio": "Radio", "plugin.npstatus": "Song → bot name", "plugin.avatar": "Avatar", "commands.hiddenOff": "{n} commands hidden: their plugins ({plugins}) are off on every bot.", "commands.showOff": "Show hidden", "commands.hideOff": "Hide", "commands.openPlugins": "Go to plugins", "texts.bb.bold": "Bold", "texts.bb.italic": "Italic", "texts.bb.underline": "Underline", "texts.bb.strike": "Strikethrough", "texts.bb.link": "Link", "texts.bb.color": "Colour", "texts.bb.clear": "Clear formatting (selection or all)", "texts.bb.preview": "Preview", "texts.look.title": "Message look", "texts.look.help": "Replies without their own `[color]` tag are sent with this colour and weight. You can colour single replies below with BBCode.", "texts.look.color": "Default colour", "texts.look.none": "No colour", "texts.look.errorColor": "Error colour", "texts.look.bold": "Bold text", "texts.look.sample": "🎵 Now playing: Artist - Song", "texts.look.sampleErr": "❌ Could not play: sample error", "texts.help": "Change what the bot writes in TeamSpeak. Select text and use the toolbar for bold, colours etc. (BBCode: `[b]`, `[i]`, `[u]`, `[color=#FF0000]`). Keep variables like `{title}`.", "err.bad_color": "Invalid colour. E.g. #00FF00 or red",
     'plugin.ranks': 'Activity ranks', 'plugin.channelguard': 'Channel guard', 'plugin.antiflood': 'Anti-flood',
     'plugin.voteskip': 'Vote skip', 'plugin.djmode': 'DJ mode', 'plugin.scheduled': 'Scheduled messages',
     'plugin.fun': 'Fun & tools',
@@ -590,7 +590,6 @@ window.I18N = {
 
     'texts.lang': 'Sprache', 'texts.filter': 'Suchen', 'texts.custom': 'Angepasst', 'texts.reset': 'Auf Standard zurücksetzen',
     'texts.default': 'Standard', 'texts.wasReset': 'Auf Standard zurückgesetzt',
-    'texts.help': 'Ändere, was der Bot in TeamSpeak schreibt. Behalte Variablen wie `{title}` bei.',
 
     'users.title': 'Benutzer', 'users.sub': 'Verwalte, wer Zugriff auf das Panel hat.', 'users.new': 'Neuer Benutzer',
     'users.name': 'Benutzername', 'users.role': 'Rolle', 'users.created': 'Erstellt', 'users.lastLogin': 'Letzte Anmeldung', 'users.never': 'Nie',
@@ -707,6 +706,7 @@ window.I18N = {
     'plugins.group.welcome': 'Begrüßung & Ankündigungen', 'plugins.group.music': 'Musik', 'plugins.group.moderation': 'Moderation',
     'plugins.group.server': 'Serververwaltung', 'plugins.group.fun': 'Spaß', 'plugins.group.other': 'Sonstiges',
     'plugins.groupCount': '{on}/{n} aktiv', 'plugin.registration': 'Registrierung', 'plugin.tempchannel': 'Temporäre Kanäle',
+    "plugins.group.core": "Basis", "plugin.music": "Musik", "plugin.radio": "Radio", "plugin.npstatus": "Song → Botname", "plugin.avatar": "Avatar", "commands.hiddenOff": "{n} Befehle ausgeblendet: ihre Plugins ({plugins}) sind bei keinem Bot aktiv.", "commands.showOff": "Ausgeblendete zeigen", "commands.hideOff": "Ausblenden", "commands.openPlugins": "Zu den Plugins", "texts.bb.bold": "Fett", "texts.bb.italic": "Kursiv", "texts.bb.underline": "Unterstrichen", "texts.bb.strike": "Durchgestrichen", "texts.bb.link": "Link", "texts.bb.color": "Farbe", "texts.bb.clear": "Formatierung entfernen (Auswahl oder alles)", "texts.bb.preview": "Vorschau", "texts.look.title": "Nachrichtenstil", "texts.look.help": "Antworten ohne eigenes `[color]`-Tag werden in dieser Farbe und Stärke gesendet. Einzelne Antworten kannst du unten mit BBCode färben.", "texts.look.color": "Standardfarbe", "texts.look.none": "Keine Farbe", "texts.look.errorColor": "Fehlerfarbe", "texts.look.bold": "Fett schreiben", "texts.look.sample": "🎵 Läuft gerade: Künstler - Song", "texts.look.sampleErr": "❌ Abspielen fehlgeschlagen: Beispielfehler", "texts.help": "Ändere, was der Bot in TeamSpeak schreibt. Markiere Text und nutze die Leiste für fett, Farben usw. (BBCode: `[b]`, `[i]`, `[u]`, `[color=#FF0000]`). Behalte Variablen wie `{title}` bei.", "err.bad_color": "Ungültige Farbe. Z. B. #00FF00 oder red",
     'plugin.ranks': 'Aktivitätsränge', 'plugin.channelguard': 'Kanalschutz', 'plugin.antiflood': 'Anti-Flood',
     'plugin.voteskip': 'Skip-Abstimmung', 'plugin.djmode': 'DJ-Modus', 'plugin.scheduled': 'Geplante Nachrichten',
     'plugin.fun': 'Spaß & Tools',
@@ -828,7 +828,6 @@ window.I18N = {
 
     'texts.lang': 'Idioma', 'texts.filter': 'Buscar', 'texts.custom': 'Personalizado', 'texts.reset': 'Restablecer',
     'texts.default': 'Predeterminado', 'texts.wasReset': 'Restablecido',
-    'texts.help': 'Cambia lo que el bot escribe en TeamSpeak. Mantén variables como `{title}`.',
 
     'users.title': 'Usuarios', 'users.sub': 'Gestiona quién puede acceder al panel.', 'users.new': 'Nuevo usuario',
     'users.name': 'Usuario', 'users.role': 'Rol', 'users.created': 'Creado', 'users.lastLogin': 'Último acceso', 'users.never': 'Nunca',
@@ -945,6 +944,7 @@ window.I18N = {
     'plugins.group.welcome': 'Bienvenida y anuncios', 'plugins.group.music': 'Música', 'plugins.group.moderation': 'Moderación',
     'plugins.group.server': 'Gestión del servidor', 'plugins.group.fun': 'Diversión', 'plugins.group.other': 'Otros',
     'plugins.groupCount': '{on}/{n} activados', 'plugin.registration': 'Registro', 'plugin.tempchannel': 'Canales temporales',
+    "plugins.group.core": "Básico", "plugin.music": "Música", "plugin.radio": "Radio", "plugin.npstatus": "Canción → nombre del bot", "plugin.avatar": "Avatar", "commands.hiddenOff": "{n} comandos ocultos: sus plugins ({plugins}) están desactivados en todos los bots.", "commands.showOff": "Mostrar ocultos", "commands.hideOff": "Ocultar", "commands.openPlugins": "Ir a plugins", "texts.bb.bold": "Negrita", "texts.bb.italic": "Cursiva", "texts.bb.underline": "Subrayado", "texts.bb.strike": "Tachado", "texts.bb.link": "Enlace", "texts.bb.color": "Color", "texts.bb.clear": "Quitar formato (selección o todo)", "texts.bb.preview": "Vista previa", "texts.look.title": "Aspecto de los mensajes", "texts.look.help": "Las respuestas sin su propia etiqueta `[color]` se envían con este color y grosor. Abajo puedes colorear respuestas sueltas con BBCode.", "texts.look.color": "Color predeterminado", "texts.look.none": "Sin color", "texts.look.errorColor": "Color de error", "texts.look.bold": "Negrita", "texts.look.sample": "🎵 Sonando: Artista - Canción", "texts.look.sampleErr": "❌ No se pudo reproducir: error de ejemplo", "texts.help": "Cambia lo que el bot escribe en TeamSpeak. Selecciona texto y usa la barra para negrita, colores, etc. (BBCode: `[b]`, `[i]`, `[u]`, `[color=#FF0000]`). Mantén variables como `{title}`.", "err.bad_color": "Color no válido. Ej.: #00FF00 o red",
     'plugin.ranks': 'Rangos de actividad', 'plugin.channelguard': 'Guardia de canal', 'plugin.antiflood': 'Antiflood',
     'plugin.voteskip': 'Saltar por votos', 'plugin.djmode': 'Modo DJ', 'plugin.scheduled': 'Mensajes programados',
     'plugin.fun': 'Diversión y utilidades',
@@ -1066,7 +1066,6 @@ window.I18N = {
 
     'texts.lang': 'Langue', 'texts.filter': 'Rechercher', 'texts.custom': 'Personnalisé', 'texts.reset': 'Rétablir par défaut',
     'texts.default': 'Par défaut', 'texts.wasReset': 'Rétabli par défaut',
-    'texts.help': 'Modifie ce que le bot écrit dans TeamSpeak. Garde les variables comme `{title}`.',
 
     'users.title': 'Utilisateurs', 'users.sub': 'Gère qui peut accéder au panneau.', 'users.new': 'Nouvel utilisateur',
     'users.name': 'Nom d\'utilisateur', 'users.role': 'Rôle', 'users.created': 'Créé le', 'users.lastLogin': 'Dernière connexion', 'users.never': 'Jamais',
@@ -1183,6 +1182,7 @@ window.I18N = {
     'plugins.group.welcome': 'Bienvenue et annonces', 'plugins.group.music': 'Musique', 'plugins.group.moderation': 'Modération',
     'plugins.group.server': 'Gestion du serveur', 'plugins.group.fun': 'Divertissement', 'plugins.group.other': 'Autres',
     'plugins.groupCount': '{on}/{n} activés', 'plugin.registration': 'Enregistrement', 'plugin.tempchannel': 'Canaux temporaires',
+    "plugins.group.core": "Base", "plugin.music": "Musique", "plugin.radio": "Radio", "plugin.npstatus": "Titre → nom du bot", "plugin.avatar": "Avatar", "commands.hiddenOff": "{n} commandes masquées : leurs plugins ({plugins}) sont désactivés sur tous les bots.", "commands.showOff": "Afficher", "commands.hideOff": "Masquer", "commands.openPlugins": "Aller aux plugins", "texts.bb.bold": "Gras", "texts.bb.italic": "Italique", "texts.bb.underline": "Souligné", "texts.bb.strike": "Barré", "texts.bb.link": "Lien", "texts.bb.color": "Couleur", "texts.bb.clear": "Effacer la mise en forme (sélection ou tout)", "texts.bb.preview": "Aperçu", "texts.look.title": "Apparence des messages", "texts.look.help": "Les réponses sans balise `[color]` sont envoyées avec cette couleur et cette graisse. Tu peux colorer chaque réponse ci-dessous en BBCode.", "texts.look.color": "Couleur par défaut", "texts.look.none": "Sans couleur", "texts.look.errorColor": "Couleur d'erreur", "texts.look.bold": "Écrire en gras", "texts.look.sample": "🎵 En cours : Artiste - Titre", "texts.look.sampleErr": "❌ Lecture impossible : erreur d'exemple", "texts.help": "Modifie ce que le bot écrit dans TeamSpeak. Sélectionne du texte et utilise la barre pour le gras, les couleurs, etc. (BBCode : `[b]`, `[i]`, `[u]`, `[color=#FF0000]`). Garde les variables comme `{title}`.", "err.bad_color": "Couleur invalide. Ex. : #00FF00 ou red",
     'plugin.ranks': 'Rangs d\'activité', 'plugin.channelguard': 'Garde de canal', 'plugin.antiflood': 'Anti-flood',
     'plugin.voteskip': 'Vote pour passer', 'plugin.djmode': 'Mode DJ', 'plugin.scheduled': 'Messages programmés',
     'plugin.fun': 'Fun et outils',
@@ -1304,7 +1304,6 @@ window.I18N = {
 
     'texts.lang': 'Язык', 'texts.filter': 'Поиск', 'texts.custom': 'Изменено', 'texts.reset': 'Сбросить по умолчанию',
     'texts.default': 'По умолчанию', 'texts.wasReset': 'Сброшено по умолчанию',
-    'texts.help': 'Измени то, что бот пишет в TeamSpeak. Сохраняй переменные вроде `{title}`.',
 
     'users.title': 'Пользователи', 'users.sub': 'Управляй доступом к панели.', 'users.new': 'Новый пользователь',
     'users.name': 'Имя пользователя', 'users.role': 'Роль', 'users.created': 'Создан', 'users.lastLogin': 'Последний вход', 'users.never': 'Никогда',
@@ -1421,6 +1420,7 @@ window.I18N = {
     'plugins.group.welcome': 'Приветствие и объявления', 'plugins.group.music': 'Музыка', 'plugins.group.moderation': 'Модерация',
     'plugins.group.server': 'Управление сервером', 'plugins.group.fun': 'Развлечения', 'plugins.group.other': 'Другое',
     'plugins.groupCount': 'вкл.: {on}/{n}', 'plugin.registration': 'Регистрация', 'plugin.tempchannel': 'Временные каналы',
+    "plugins.group.core": "Основное", "plugin.music": "Музыка", "plugin.radio": "Радио", "plugin.npstatus": "Трек → имя бота", "plugin.avatar": "Аватар", "commands.hiddenOff": "Скрыто команд: {n} — их плагины ({plugins}) выключены у всех ботов.", "commands.showOff": "Показать скрытые", "commands.hideOff": "Скрыть", "commands.openPlugins": "К плагинам", "texts.bb.bold": "Жирный", "texts.bb.italic": "Курсив", "texts.bb.underline": "Подчёркнутый", "texts.bb.strike": "Зачёркнутый", "texts.bb.link": "Ссылка", "texts.bb.color": "Цвет", "texts.bb.clear": "Убрать форматирование (выделение или всё)", "texts.bb.preview": "Предпросмотр", "texts.look.title": "Вид сообщений", "texts.look.help": "Ответы без своего тега `[color]` отправляются этим цветом и толщиной. Отдельные ответы ниже можно раскрасить BBCode.", "texts.look.color": "Цвет по умолчанию", "texts.look.none": "Без цвета", "texts.look.errorColor": "Цвет ошибок", "texts.look.bold": "Жирный текст", "texts.look.sample": "🎵 Сейчас играет: Исполнитель - Трек", "texts.look.sampleErr": "❌ Не удалось воспроизвести: пример ошибки", "texts.help": "Измени то, что бот пишет в TeamSpeak. Выдели текст и используй панель для жирного, цветов и т. д. (BBCode: `[b]`, `[i]`, `[u]`, `[color=#FF0000]`). Сохраняй переменные вроде `{title}`.", "err.bad_color": "Неверный цвет. Напр.: #00FF00 или red",
     'plugin.ranks': 'Ранги активности', 'plugin.channelguard': 'Охрана каналов', 'plugin.antiflood': 'Антифлуд',
     'plugin.voteskip': 'Пропуск голосованием', 'plugin.djmode': 'Режим DJ', 'plugin.scheduled': 'Сообщения по расписанию',
     'plugin.fun': 'Развлечения и утилиты',
@@ -1542,7 +1542,6 @@ window.I18N = {
 
     'texts.lang': 'Idioma', 'texts.filter': 'Buscar', 'texts.custom': 'Personalizado', 'texts.reset': 'Restaurar padrão',
     'texts.default': 'Padrão', 'texts.wasReset': 'Padrão restaurado',
-    'texts.help': 'Altere o que o bot escreve no TeamSpeak. Mantenha variáveis como `{title}`.',
 
     'users.title': 'Usuários', 'users.sub': 'Gerencie quem pode acessar o painel.', 'users.new': 'Novo usuário',
     'users.name': 'Usuário', 'users.role': 'Função', 'users.created': 'Criado em', 'users.lastLogin': 'Último acesso', 'users.never': 'Nunca',
@@ -1659,6 +1658,7 @@ window.I18N = {
     'plugins.group.welcome': 'Boas-vindas e anúncios', 'plugins.group.music': 'Música', 'plugins.group.moderation': 'Moderação',
     'plugins.group.server': 'Gerenciamento do servidor', 'plugins.group.fun': 'Diversão', 'plugins.group.other': 'Outros',
     'plugins.groupCount': '{on}/{n} ativos', 'plugin.registration': 'Registro', 'plugin.tempchannel': 'Canais temporários',
+    "plugins.group.core": "Básico", "plugin.music": "Música", "plugin.radio": "Rádio", "plugin.npstatus": "Música → nome do bot", "plugin.avatar": "Avatar", "commands.hiddenOff": "{n} comandos ocultos: os plugins ({plugins}) estão desligados em todos os bots.", "commands.showOff": "Mostrar ocultos", "commands.hideOff": "Ocultar", "commands.openPlugins": "Ir para plugins", "texts.bb.bold": "Negrito", "texts.bb.italic": "Itálico", "texts.bb.underline": "Sublinhado", "texts.bb.strike": "Riscado", "texts.bb.link": "Link", "texts.bb.color": "Cor", "texts.bb.clear": "Limpar formatação (seleção ou tudo)", "texts.bb.preview": "Pré-visualização", "texts.look.title": "Aparência das mensagens", "texts.look.help": "Respostas sem a própria tag `[color]` são enviadas com esta cor e espessura. Abaixo você pode colorir respostas individuais com BBCode.", "texts.look.color": "Cor padrão", "texts.look.none": "Sem cor", "texts.look.errorColor": "Cor de erro", "texts.look.bold": "Negrito", "texts.look.sample": "🎵 Tocando agora: Artista - Música", "texts.look.sampleErr": "❌ Não foi possível tocar: erro de exemplo", "texts.help": "Altere o que o bot escreve no TeamSpeak. Selecione texto e use a barra para negrito, cores etc. (BBCode: `[b]`, `[i]`, `[u]`, `[color=#FF0000]`). Mantenha variáveis como `{title}`.", "err.bad_color": "Cor inválida. Ex.: #00FF00 ou red",
     'plugin.ranks': 'Ranks de atividade', 'plugin.channelguard': 'Guarda de canal', 'plugin.antiflood': 'Anti-flood',
     'plugin.voteskip': 'Votar para pular', 'plugin.djmode': 'Modo DJ', 'plugin.scheduled': 'Mensagens agendadas',
     'plugin.fun': 'Diversão e ferramentas',
@@ -1780,7 +1780,6 @@ window.I18N = {
 
     'texts.lang': 'Język', 'texts.filter': 'Szukaj', 'texts.custom': 'Zmienione', 'texts.reset': 'Przywróć domyślne',
     'texts.default': 'Domyślny', 'texts.wasReset': 'Przywrócono domyślne',
-    'texts.help': 'Zmień, co bot pisze w TeamSpeak. Zachowaj zmienne, np. `{title}`.',
 
     'users.title': 'Użytkownicy', 'users.sub': 'Zarządzaj dostępem do panelu.', 'users.new': 'Nowy użytkownik',
     'users.name': 'Nazwa użytkownika', 'users.role': 'Rola', 'users.created': 'Utworzono', 'users.lastLogin': 'Ostatnie logowanie', 'users.never': 'Nigdy',
@@ -1897,6 +1896,7 @@ window.I18N = {
     'plugins.group.welcome': 'Powitania i ogłoszenia', 'plugins.group.music': 'Muzyka', 'plugins.group.moderation': 'Moderacja',
     'plugins.group.server': 'Zarządzanie serwerem', 'plugins.group.fun': 'Rozrywka', 'plugins.group.other': 'Inne',
     'plugins.groupCount': 'włączone: {on}/{n}', 'plugin.registration': 'Rejestracja', 'plugin.tempchannel': 'Kanały tymczasowe',
+    "plugins.group.core": "Podstawowe", "plugin.music": "Muzyka", "plugin.radio": "Radio", "plugin.npstatus": "Utwór → nazwa bota", "plugin.avatar": "Awatar", "commands.hiddenOff": "Ukryte polecenia: {n} — ich wtyczki ({plugins}) są wyłączone na wszystkich botach.", "commands.showOff": "Pokaż ukryte", "commands.hideOff": "Ukryj", "commands.openPlugins": "Przejdź do wtyczek", "texts.bb.bold": "Pogrubienie", "texts.bb.italic": "Kursywa", "texts.bb.underline": "Podkreślenie", "texts.bb.strike": "Przekreślenie", "texts.bb.link": "Link", "texts.bb.color": "Kolor", "texts.bb.clear": "Usuń formatowanie (zaznaczenie lub całość)", "texts.bb.preview": "Podgląd", "texts.look.title": "Wygląd wiadomości", "texts.look.help": "Odpowiedzi bez własnego tagu `[color]` są wysyłane w tym kolorze i grubości. Poniżej możesz pokolorować pojedyncze odpowiedzi BBCode.", "texts.look.color": "Kolor domyślny", "texts.look.none": "Bez koloru", "texts.look.errorColor": "Kolor błędów", "texts.look.bold": "Pogrubiony tekst", "texts.look.sample": "🎵 Teraz gra: Wykonawca - Utwór", "texts.look.sampleErr": "❌ Nie można odtworzyć: przykładowy błąd", "texts.help": "Zmień, co bot pisze w TeamSpeak. Zaznacz tekst i użyj paska do pogrubienia, kolorów itd. (BBCode: `[b]`, `[i]`, `[u]`, `[color=#FF0000]`). Zachowaj zmienne, np. `{title}`.", "err.bad_color": "Nieprawidłowy kolor. Np. #00FF00 lub red",
     'plugin.ranks': 'Rangi aktywności', 'plugin.channelguard': 'Ochrona kanałów', 'plugin.antiflood': 'Antyflood',
     'plugin.voteskip': 'Pomijanie głosowaniem', 'plugin.djmode': 'Tryb DJ', 'plugin.scheduled': 'Zaplanowane wiadomości',
     'plugin.fun': 'Rozrywka i narzędzia',
@@ -2018,7 +2018,6 @@ window.I18N = {
 
     'texts.lang': 'Lingua', 'texts.filter': 'Cerca', 'texts.custom': 'Personalizzato', 'texts.reset': 'Ripristina predefinito',
     'texts.default': 'Predefinito', 'texts.wasReset': 'Ripristinato al predefinito',
-    'texts.help': 'Cambia ciò che il bot scrive su TeamSpeak. Mantieni le variabili come `{title}`.',
 
     'users.title': 'Utenti', 'users.sub': 'Gestisci chi può accedere al pannello.', 'users.new': 'Nuovo utente',
     'users.name': 'Nome utente', 'users.role': 'Ruolo', 'users.created': 'Creato', 'users.lastLogin': 'Ultimo accesso', 'users.never': 'Mai',
@@ -2135,6 +2134,7 @@ window.I18N = {
     'plugins.group.welcome': 'Benvenuto e annunci', 'plugins.group.music': 'Musica', 'plugins.group.moderation': 'Moderazione',
     'plugins.group.server': 'Gestione server', 'plugins.group.fun': 'Divertimento', 'plugins.group.other': 'Altro',
     'plugins.groupCount': '{on}/{n} attivi', 'plugin.registration': 'Registrazione', 'plugin.tempchannel': 'Canali temporanei',
+    "plugins.group.core": "Base", "plugin.music": "Musica", "plugin.radio": "Radio", "plugin.npstatus": "Brano → nome del bot", "plugin.avatar": "Avatar", "commands.hiddenOff": "{n} comandi nascosti: i loro plugin ({plugins}) sono disattivati su tutti i bot.", "commands.showOff": "Mostra nascosti", "commands.hideOff": "Nascondi", "commands.openPlugins": "Vai ai plugin", "texts.bb.bold": "Grassetto", "texts.bb.italic": "Corsivo", "texts.bb.underline": "Sottolineato", "texts.bb.strike": "Barrato", "texts.bb.link": "Link", "texts.bb.color": "Colore", "texts.bb.clear": "Rimuovi formattazione (selezione o tutto)", "texts.bb.preview": "Anteprima", "texts.look.title": "Aspetto dei messaggi", "texts.look.help": "Le risposte senza un proprio tag `[color]` sono inviate con questo colore e spessore. Sotto puoi colorare le singole risposte con BBCode.", "texts.look.color": "Colore predefinito", "texts.look.none": "Nessun colore", "texts.look.errorColor": "Colore errori", "texts.look.bold": "Grassetto", "texts.look.sample": "🎵 In riproduzione: Artista - Brano", "texts.look.sampleErr": "❌ Impossibile riprodurre: errore di esempio", "texts.help": "Cambia ciò che il bot scrive su TeamSpeak. Seleziona il testo e usa la barra per grassetto, colori ecc. (BBCode: `[b]`, `[i]`, `[u]`, `[color=#FF0000]`). Mantieni le variabili come `{title}`.", "err.bad_color": "Colore non valido. Es.: #00FF00 o red",
     'plugin.ranks': 'Ranghi attività', 'plugin.channelguard': 'Guardia canali', 'plugin.antiflood': 'Anti-flood',
     'plugin.voteskip': 'Voto per saltare', 'plugin.djmode': 'Modalità DJ', 'plugin.scheduled': 'Messaggi programmati',
     'plugin.fun': 'Svago e strumenti',

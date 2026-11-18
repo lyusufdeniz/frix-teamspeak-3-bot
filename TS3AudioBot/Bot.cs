@@ -213,6 +213,8 @@ public sealed class Bot
 			Player = player,
 			Playlist = Injector.GetModuleOrThrow<PlaylistManager>(),
 			RunOnBot = f => Scheduler.InvokeAsync(f),
+			BaseNickname = () => config.Connect.Name.Value,
+			RefreshAvatar = () => GenerateStatusImage(playManager.IsPlaying, playManager.CurrentPlayData),
 		});
 		ts3FullClient.OnEachClientEnterView += (s, e) =>
 		{
@@ -455,6 +457,18 @@ public sealed class Bot
 		var session = sessionManager.GetOrCreateSession(textMessage.InvokerId);
 		var info = CreateExecInfo(invoker, session);
 
+		// Frix: bağlı eklentisi kapalı yerleşik komutlar
+		{
+			var msg = textMessage.Message;
+			var sp = msg.IndexOf(' ');
+			var cmdName = sp < 0 ? msg[1..] : msg[1..sp];
+			if (!Frix.FrixCommands.IsAvailable(cmdName, config.Name))
+			{
+				await info.Write(FrixChat.Colorize(FrixText.Get("plugin.off"))).CatchToLog(Log);
+				return;
+			}
+		}
+
 		// check if the user has an open request
 		if (session.ResponseProcessor != null)
 		{
@@ -540,6 +554,9 @@ public sealed class Bot
 
 		if (!config.SetStatusDescription)
 			return;
+		// Frix: "şarkı adı → açıklama" eklentisi açıksa açıklamayı o yönetir
+		if (config.Name is { } fn && Frix.FrixPluginHost.Enabled<Frix.NowPlayingStatusPlugin>(fn) is { HandlesDescription: true })
+			return;
 
 		string? setString;
 		if (playManager.IsPlaying)
@@ -603,6 +620,17 @@ public sealed class Bot
 		avatarRequest?.Cancel();
 		avatarRequest = cts;
 
+		// Frix: avatar eklentisi kapalıysa avatar kaldırılır; seçeneklere göre kapak / komut kartı
+		var avatarPlugin = config.Name is { } an ? Frix.FrixPluginHost.Enabled<Frix.AvatarPlugin>(an) : null;
+		if (plugins != null && avatarPlugin is null)
+		{
+			if (!playing) (await ts3FullClient.DeleteAvatar()).UnwrapToLog(Log);
+			if (avatarRequest == cts) avatarRequest = null;
+			return;
+		}
+		if (playing && avatarPlugin is { SongCover: false })
+			playing = false;
+
 		Stream? setStream = null;
 		if (playing)
 		{
@@ -623,8 +651,11 @@ public sealed class Bot
 		else
 		{
 			setStream ??= GetRandomFile(config.LocalConfigDir, "sleep*");
-			setStream ??= Frix.FrixAvatar.IdleStream();
-			setStream ??= Util.GetEmbeddedFile("TS3AudioBot.Assets.SleepingKitty.png");
+			if (avatarPlugin is null or { IdleAuto: true })
+			{
+				setStream ??= Frix.FrixAvatar.IdleStream();
+				setStream ??= Util.GetEmbeddedFile("TS3AudioBot.Assets.SleepingKitty.png");
+			}
 		}
 
 		if (setStream != null)

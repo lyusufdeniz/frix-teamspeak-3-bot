@@ -33,7 +33,8 @@ The bot connects to your TeamSpeak server by itself and streams audio directly w
 - First-run setup wizard (you choose the admin username & password)
 - Dashboard with live status of **multiple bots** (e.g. one music bot + one welcome bot)
 - Player with search results, "adding song" progress, queue move/remove, seek, volume
-- **17 plugins**, each enabled and configured per bot:
+- **21 plugins**, each enabled and configured per bot:
+  - *Core:* music, radio (turn either off to disable its commands), song title as the bot's nickname/description, avatar (idle command card, song cover)
   - *Welcome & announcements:* welcome message, announcements/ads, scheduled messages
   - *Music:* pause when alone, idle radio, vote skip, DJ mode & queue limit
   - *Moderation:* AFK mover, nickname filter, channel guard, anti-flood
@@ -41,7 +42,8 @@ The bot connects to your TeamSpeak server by itself and streams audio directly w
   - *Fun & tools:* polls, dice, coin flip, pick, weather, currency, lyrics
 - **Playlists** (`!liste`) and **statistics** (most played songs, top requesters, most active users)
 - Rename any built-in command, add custom commands; command names follow the language chosen at setup
-- **Custom commands** (text replies or aliases) and editable bot replies
+- **Custom commands** (text replies or aliases) and editable bot replies with a **BBCode editor** (bold, italic, colours, live preview) and a default message colour
+- The commands page only lists commands whose plugin is on
 - **Users & roles**: admin / DJ / viewer
 - Live logs, audit log, yt-dlp updater, YouTube cookie upload, **one-click updates from GitHub Releases**
 

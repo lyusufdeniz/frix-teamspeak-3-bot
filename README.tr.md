@@ -33,7 +33,8 @@ sunucularda ekransız çalışır.
 - İlk kurulum sihirbazı (yönetici kullanıcı adını ve şifreyi sen belirlersin)
 - **Birden fazla botun** canlı durumu (ör. bir müzik botu + bir karşılama botu)
 - Arama sonuçları, "şarkı ekleniyor" ilerleme çubuğu, kuyruk taşıma/silme, sarma, ses ayarlı oynatıcı
-- Her bot için ayrı açılıp ayarlanan **17 eklenti**:
+- Her bot için ayrı açılıp ayarlanan **21 eklenti**:
+  - *Temel:* müzik, radyo (kapatınca komutları da kapanır), çalan şarkıyı bot adı/açıklaması yapma, avatar (boşta komut kartı, şarkı kapağı)
   - *Karşılama ve duyuru:* karşılama mesajı, duyuru/reklam, zamanlı duyuru
   - *Müzik:* yalnızken duraklat, boştayken radyo, oylamayla geç, DJ yetkisi ve kuyruk limiti
   - *Moderasyon:* AFK taşıyıcı, isim filtresi, kanal koruma, flood koruması

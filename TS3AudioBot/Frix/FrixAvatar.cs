@@ -82,18 +82,21 @@ public static class FrixAvatar
 	private static List<(string cmd, string desc)> Rows()
 	{
 		static string N(string b) => "!" + FrixCommands.Display(b);
-		var rows = new List<(string, string)>
-		{
-			(N("ara"), FrixText.Raw("avatar.ara")),
-		};
-		if (FrixRadio.List().Count > 0)
+		var bots = FrixPluginHost.RunningBots;
+		bool On(string b) => FrixCommands.IsAvailableAny(b, bots);
+		var rows = new List<(string, string)>();
+		if (On("ara")) rows.Add((N("ara"), FrixText.Raw("avatar.ara")));
+		if (On("radyo") && FrixRadio.List().Count > 0)
 			rows.Add((N("radyo"), FrixText.Raw("avatar.radyo")));
-		rows.Add((N("gec"), FrixText.Raw("avatar.gec")));
-		rows.Add((N("dur"), FrixText.Raw("avatar.dur")));
-		rows.Add((N("bitir"), FrixText.Raw("avatar.bitir")));
-		rows.Add((N("ses") + " 50", FrixText.Raw("avatar.ses")));
-		rows.Add((N("calan"), FrixText.Raw("avatar.calan")));
-		rows.Add((N("siradaki"), FrixText.Raw("avatar.siradaki")));
+		if (On("gec"))
+		{
+			rows.Add((N("gec"), FrixText.Raw("avatar.gec")));
+			rows.Add((N("dur"), FrixText.Raw("avatar.dur")));
+			rows.Add((N("bitir"), FrixText.Raw("avatar.bitir")));
+			rows.Add((N("ses") + " 50", FrixText.Raw("avatar.ses")));
+			rows.Add((N("calan"), FrixText.Raw("avatar.calan")));
+			rows.Add((N("siradaki"), FrixText.Raw("avatar.siradaki")));
+		}
 
 		foreach (var c in FrixCommands.List().Where(c => c.Enabled))
 		{

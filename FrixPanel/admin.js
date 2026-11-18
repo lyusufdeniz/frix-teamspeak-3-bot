@@ -70,6 +70,7 @@
     }
     // sections keep the (now 17) plugins scannable; unknown ids land in "other"
     const GROUPS = [
+      ['core', ['music', 'radio', 'npstatus', 'avatar']],
       ['welcome', ['welcome', 'advertisement', 'scheduled']],
       ['music', ['alonepause', 'idleradio', 'voteskip', 'djmode']],
       ['moderation', ['afkmover', 'namefilter', 'channelguard', 'antiflood']],
@@ -209,20 +210,32 @@
 
   function commandsTab(pane) {
     const builtin = h('div', { class: 'builtin-list' });
+    // commands whose plugin is off on every bot are hidden (toggle shows them greyed out)
+    let showOff = false;
+    const offNote = h('div', { class: 'callout small off-note', hidden: true });
     const custom = h('div', { class: 'cmd-list' }, F.skeleton(3, 'sk-row'));
     pane.append(
       h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h2', { class: 'card-title' }, icon('terminal'), t('commands.custom')),
         F.btn(t('commands.new'), { kind: 'primary', icon: 'plus', onClick: () => form(null) })),
       h('p', { class: 'muted small' }, F.rich(t('commands.customHelp'))), custom),
       h('section', { class: 'card' }, h('h2', { class: 'card-title' }, icon('list'), t('commands.builtin')), h('p', { class: 'muted small' }, F.rich(t('commands.builtinHelp'))),
-        cmdDefaultsBar(async () => { await load(); bumpAvatar(); }), builtin));
+        cmdDefaultsBar(async () => { await load(); bumpAvatar(); }), offNote, builtin));
     let data = null;
     async function load() {
       try { data = await F.api('GET', 'commands'); render(); }
       catch (e) { F.fail(e); custom.replaceChildren(F.empty('alert', t('err.loadFailed'))); }
     }
     function render() {
-      builtin.replaceChildren(...(data.builtin || []).map(builtinRow));
+      const all = data.builtin || [];
+      const off = all.filter((b) => b.available === false);
+      builtin.replaceChildren(...all.filter((b) => showOff || b.available !== false).map(builtinRow));
+      offNote.hidden = !off.length;
+      if (off.length) {
+        const names = [...new Set(off.flatMap((b) => b.plugins || []))].map((id) => t('plugin.' + id)).join(', ');
+        offNote.replaceChildren(icon('info'), h('div', { class: 'grow', text: t('commands.hiddenOff', { n: off.length, plugins: names }) }),
+          F.btn(showOff ? t('commands.hideOff') : t('commands.showOff'), { kind: 'ghost', onClick: () => { showOff = !showOff; render(); } }),
+          F.btn(t('commands.openPlugins'), { kind: 'ghost', onClick: () => F.go('/plugins') }));
+      }
       const items = data.custom || [];
       if (!items.length) { custom.replaceChildren(F.empty('terminal', t('commands.none'), t('commands.noneHint'))); return; }
       custom.replaceChildren(...items.map((c) => {
@@ -263,8 +276,9 @@
         } catch (e) { F.fail(e); }
       }));
       alias.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save.click(); } });
-      return h('div', { class: 'builtin-row' },
-        h('code', { class: 'builtin-usage', text: b.usage }),
+      const needs = (b.plugins || []).map((id) => F.badge(t('plugin.' + id), b.available === false ? '' : 'info'));
+      return h('div', { class: 'builtin-row' + (b.available === false ? ' off' : '') },
+        h('div', { class: 'builtin-usage-cell' }, h('code', { class: 'builtin-usage', text: b.usage }), needs.length ? h('div', { class: 'row gap-s wrap' }, needs) : null),
         h('div', { class: 'input-prefix builtin-alias' }, h('span', { text: '!' }), alias),
         keepLbl, save, result);
     }
@@ -308,7 +322,104 @@
     load();
   }
 
+  // ---- BBCode (TeamSpeak) helpers for the bot-texts editor
+  const BB_SWATCHES = ['#00FF00', '#FF5555', '#FFD54A', '#4FC3F7', '#FF9800', '#E040FB', '#FFFFFF', '#9E9E9E'];
+  /** wraps the textarea selection in open…close */
+  function bbWrap(ta, open, close) {
+    const a = ta.selectionStart, b = ta.selectionEnd, v = ta.value;
+    ta.value = v.slice(0, a) + open + v.slice(a, b) + close + v.slice(b);
+    ta.focus();
+    ta.setSelectionRange(a + open.length, b + open.length);
+    ta.dispatchEvent(new Event('input'));
+  }
+  function bbToolbar(ta) {
+    const b = (label, tag, title, cls) => h('button', { type: 'button', class: 'bb-btn ' + cls, title, 'aria-label': title, text: label, onclick: () => bbWrap(ta, '[' + tag + ']', '[/' + tag + ']') });
+    const custom = h('input', { type: 'color', class: 'bb-color', value: '#00ff00', title: t('texts.bb.color'), 'aria-label': t('texts.bb.color') });
+    custom.addEventListener('change', () => bbWrap(ta, '[color=' + custom.value.toUpperCase() + ']', '[/color]'));
+    const sw = BB_SWATCHES.map((c) => h('button', { type: 'button', class: 'bb-swatch', style: '--c:' + c, title: c, 'aria-label': t('texts.bb.color') + ' ' + c, onclick: () => bbWrap(ta, '[color=' + c + ']', '[/color]') }));
+    const strip = h('button', { type: 'button', class: 'bb-btn', title: t('texts.bb.clear'), 'aria-label': t('texts.bb.clear'), text: '⌫', onclick: () => {
+      const a = ta.selectionStart, z = ta.selectionEnd;
+      const [x, y] = a === z ? [0, ta.value.length] : [a, z];
+      ta.value = ta.value.slice(0, x) + ta.value.slice(x, y).replace(/\[\/?(b|i|u|s|color|url|size)(=[^\]]*)?\]/gi, '') + ta.value.slice(y);
+      ta.dispatchEvent(new Event('input'));
+    } });
+    return h('div', { class: 'bb-bar', role: 'toolbar', 'aria-label': 'BBCode' },
+      b('B', 'b', t('texts.bb.bold'), 'b'), b('I', 'i', t('texts.bb.italic'), 'i'), b('U', 'u', t('texts.bb.underline'), 'u'), b('S', 's', t('texts.bb.strike'), 's'),
+      b('URL', 'url', t('texts.bb.link'), 'url'),
+      h('span', { class: 'bb-sep' }), ...sw, custom, h('span', { class: 'bb-sep' }), strip);
+  }
+  const safeColor = (c) => (/^(#[0-9a-f]{3}|#[0-9a-f]{6}|[a-z]{3,20})$/i.test(String(c).trim()) ? String(c).trim() : 'inherit');
+  /** safe BBCode → DOM preview (only tags TeamSpeak supports in chat), mimics FrixChat.Color */
+  function bbRender(text, lk) {
+    const root = h('span', { class: 'bb-out' });
+    let cur = root;
+    if (lk && !/\[color/i.test(text)) {
+      if (lk.bold && !/\[b\]/i.test(text)) { const bEl = h('b'); cur.append(bEl); cur = bEl; }
+      if (lk.color && String(lk.color).toLowerCase() !== 'none') { const c = h('span', { style: 'color:' + safeColor(lk.color) }); cur.append(c); cur = c; }
+    }
+    const stack = [cur];
+    const top = () => stack[stack.length - 1];
+    const re = /\[(\/?)(b|i|u|s|color|url)(?:=([^\]]*))?\]/gi;
+    let last = 0, m;
+    while ((m = re.exec(text))) {
+      if (m.index > last) top().append(document.createTextNode(text.slice(last, m.index)));
+      last = re.lastIndex;
+      const tag = m[2].toLowerCase();
+      if (m[1]) { if (stack.length > 1 && top().dataset.tag === tag) stack.pop(); continue; }
+      const el = tag === 'color' ? h('span', { style: 'color:' + safeColor(m[3] || '') })
+        : tag === 'url' ? h('span', { class: 'bb-link' }) : h(tag);
+      el.dataset.tag = tag;
+      top().append(el); stack.push(el);
+    }
+    if (last < text.length) top().append(document.createTextNode(text.slice(last)));
+    return root;
+  }
+  // current chat look (default colour / bold); text previews repaint when it changes
+  let look = { color: '#00FF00', errorColor: '#FF5555', bold: true };
+  let previews = [];
+
+  function lookCard() {
+    const color = h('input', { type: 'color', class: 'look-color', value: '#00ff00', 'aria-label': t('texts.look.color') });
+    const none = h('input', { type: 'checkbox' });
+    const err = h('input', { type: 'color', class: 'look-color', value: '#ff5555', 'aria-label': t('texts.look.errorColor') });
+    const bold = F.switchEl(true, t('texts.look.bold'));
+    const sample = h('div', { class: 'bb-preview look-sample' });
+    const cur = () => ({ color: none.checked ? 'none' : color.value.toUpperCase(), errorColor: err.value.toUpperCase(), bold: bold.input.checked });
+    const paint = () => {
+      color.disabled = none.checked;
+      const c = cur();
+      sample.replaceChildren(bbRender(t('texts.look.sample'), c), h('br'), bbRender(t('texts.look.sampleErr'), Object.assign({}, c, { color: c.errorColor })));
+    };
+    [color, none, err, bold.input].forEach((x) => x.addEventListener('input', paint));
+    none.addEventListener('change', paint); bold.input.addEventListener('change', paint);
+    const toHex = (c) => (/^#[0-9a-f]{6}$/i.test(c) ? c.toLowerCase() : /^#[0-9a-f]{3}$/i.test(c) ? '#' + c.slice(1).split('').map((x) => x + x).join('').toLowerCase() : null);
+    F.api('GET', 'settings').then((st) => {
+      if (!st || !st.chat) return;
+      look = st.chat;
+      none.checked = String(look.color).toLowerCase() === 'none';
+      if (toHex(look.color)) color.value = toHex(look.color);
+      if (toHex(look.errorColor)) err.value = toHex(look.errorColor);
+      bold.input.checked = !!look.bold;
+      paint(); previews.forEach((f) => f());
+    }).catch(() => { /* defaults */ });
+    const save = F.btn(t('common.save'), { kind: 'primary', icon: 'check' });
+    save.addEventListener('click', () => F.busy(save, async () => {
+      try { await F.api('PUT', 'settings', { chat: cur() }); look = cur(); previews.forEach((f) => f()); F.toast(t('common.saved')); }
+      catch (e) { F.fail(e); }
+    }));
+    paint();
+    return h('section', { class: 'card' },
+      h('h2', { class: 'card-title' }, icon('text'), t('texts.look.title')),
+      h('p', { class: 'muted small' }, F.rich(t('texts.look.help'))),
+      h('div', { class: 'look-grid' },
+        F.field(t('texts.look.color'), h('div', { class: 'row gap-s' }, color, h('label', { class: 'check' }, none, h('span', { text: t('texts.look.none') })))),
+        F.field(t('texts.look.errorColor'), err),
+        bold),
+      sample, h('div', { class: 'look-foot' }, save));
+  }
+
   function textsTab(pane) {
+    previews = [];
     let lang = F.state.lang;
     // flag dropdown; starts with tr/en (+ current) and is rebuilt with the server's language list
     const langHost = h('div', { class: 'lp-host' });
@@ -325,6 +436,7 @@
     const filter = F.input({ type: 'search', placeholder: t('texts.filter'), 'aria-label': t('texts.filter') });
     const list = h('div', { class: 'text-list' }, F.skeleton(4, 'sk-row'));
     filter.addEventListener('input', applyFilter);
+    pane.append(lookCard());
     pane.append(h('section', { class: 'card' },
       h('p', { class: 'muted small' }, F.rich(t('texts.help'))),
       h('div', { class: 'toolbar' }, F.field(t('texts.lang'), langHost), F.field(t('texts.filter'), filter, null, { cls: 'grow' })),
@@ -343,6 +455,12 @@
     }
     function row(it) {
       const ta = F.textarea({ value: it.value, rows: 2, 'aria-label': it.key });
+      const prev = h('div', { class: 'bb-preview', 'aria-label': t('texts.bb.preview') });
+      const isErr = ['failed', 'stream.error'].includes(it.key);
+      const paintPrev = () => prev.replaceChildren(bbRender(ta.value, isErr ? Object.assign({}, look, { color: look.errorColor }) : look));
+      ta.addEventListener('input', paintPrev);
+      previews.push(paintPrev);
+      paintPrev();
       const badge = F.badge(t('texts.custom'), 'accent');
       badge.hidden = !it.custom;
       const reset = F.btn(t('texts.reset'), { kind: 'ghost', icon: 'refresh' });
@@ -353,7 +471,7 @@
           await F.api('PUT', 'texts', { lang, key: it.key, value });
           const custom = !!value && value !== it.defaultValue;
           it.custom = custom; it.value = value || it.defaultValue;
-          ta.value = it.value; badge.hidden = !custom; reset.disabled = !custom;
+          ta.value = it.value; badge.hidden = !custom; reset.disabled = !custom; paintPrev();
           F.toast(custom ? t('common.saved') : t('texts.wasReset'));
           if (it.key.startsWith('avatar.')) bumpAvatar();
         } catch (e) { F.fail(e); }
@@ -362,7 +480,7 @@
       reset.addEventListener('click', () => put('', reset));
       return h('div', { class: 'text-row', dataset: { search: (it.key + ' ' + it.value + ' ' + it.defaultValue).toLowerCase() } },
         h('div', { class: 'row gap-s wrap' }, h('code', { class: 'text-key', text: it.key }), badge),
-        ta,
+        bbToolbar(ta), ta, prev,
         h('div', { class: 'text-foot' }, h('div', { class: 'muted small grow' }, h('span', { text: t('texts.default') + ': ' }), h('span', { class: 'default-val', text: it.defaultValue })), reset, save));
     }
     load();

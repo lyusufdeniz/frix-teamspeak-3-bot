@@ -252,8 +252,9 @@ public static partial class FrixText
 	public static string Get(string key, params (string name, string value)[] args)
 	{
 		var text = Frix.FrixCommands.ApplyNames(Raw(key));
+		// Metinler BBCode içerebilir; değişkenlerdeki (şarkı adı, kullanıcı adı…) köşeli parantezler etkisizleştirilir
 		foreach (var (name, value) in args)
-			text = text.Replace("{" + name + "}", value);
+			text = text.Replace("{" + name + "}", FrixChat.Escape(value));
 		return text;
 	}
 

@@ -36,6 +36,39 @@ public static class FrixCommands
 		("sec", "!sec a | b | c"), ("istatistik", "!istatistik"), ("top", "!top"), ("sure", "!sure"),
 	];
 
+	/// <summary>
+	/// Yerleşik komutun çalışması için açık olması gereken eklentiler (herhangi biri yeterli).
+	/// "id:ayar" = eklentinin o ayarı da açık olmalı. Listede olmayan komutlar her zaman açıktır.
+	/// </summary>
+	public static readonly Dictionary<string, string[]> Requirements = new(StringComparer.OrdinalIgnoreCase)
+	{
+		["ara"] = ["music"], ["link"] = ["music"], ["liste"] = ["music"], ["istatistik"] = ["music"],
+		["radyo"] = ["radio"],
+		["gec"] = ["music", "radio"], ["skip"] = ["music", "radio"], ["dur"] = ["music", "radio"], ["duraklat"] = ["music", "radio"],
+		["devam"] = ["music", "radio"], ["bitir"] = ["music", "radio"], ["kapat"] = ["music", "radio"], ["ses"] = ["music", "radio"],
+		["calan"] = ["music", "radio"], ["siradaki"] = ["music", "radio"], ["temizle"] = ["music", "radio"],
+		["kayit"] = ["registration"], ["top"] = ["ranks"], ["sure"] = ["ranks"],
+		["soz"] = ["fun:lyrics"], ["anket"] = ["fun:poll"], ["oy"] = ["fun:poll"], ["hava"] = ["fun:weather"],
+		["doviz"] = ["fun:currency"], ["dolar"] = ["fun:currency"], ["euro"] = ["fun:currency"],
+		["zar"] = ["fun:dice"], ["yazitura"] = ["fun:dice"], ["sec"] = ["fun:dice"],
+	};
+
+	/// <summary>Yerleşik komut bu botta kullanılabilir mi (bağlı eklenti açık mı)?</summary>
+	public static bool IsAvailable(string builtin, string? bot)
+		=> bot is null || !Requirements.TryGetValue(builtin, out var reqs) || reqs.Any(r => FrixPluginHost.Active(bot, r));
+
+	/// <summary>Verilen botlardan en az birinde kullanılabilir mi? Bot yoksa true.</summary>
+	public static bool IsAvailableAny(string builtin, IReadOnlyCollection<string> bots)
+		=> bots.Count == 0 || bots.Any(b => IsAvailable(builtin, b));
+
+	/// <summary>Metindeki satırlardan, komutu bu botta kapalı olanları çıkarır (yardım metni için).</summary>
+	public static string FilterLines(string text, Func<string, bool> available)
+		=> string.Join('\n', text.Split('\n').Where(line =>
+		{
+			var tokens = CommandToken.Matches(line).Select(m => m.Groups[1].Value).Where(IsBuiltin).ToArray();
+			return tokens.Length == 0 || tokens.Any(available);
+		}));
+
 	/// <summary>Kurulumda seçilen dile göre ana komutların adları. Türkçe adlar da çalışmaya devam eder.</summary>
 	public static readonly Dictionary<string, Dictionary<string, string>> LanguageDefaults = new()
 	{

@@ -34,6 +34,8 @@ public abstract class FrixPlugin
 	protected PluginContext Ctx { get; private set; } = null!;
 
 	internal void Bind(PluginContext ctx) => Ctx = ctx;
+	/// <summary>Ayarları olayları tetiklemeden yükler (sadece okuma için).</summary>
+	internal void Load(JsonObject config) => Config = config;
 
 	internal void Apply(bool enabled, JsonObject config)
 	{
@@ -65,6 +67,9 @@ public abstract class FrixPlugin
 	public virtual Task OnAloneChanged(bool alone) => Task.CompletedTask;
 	public virtual Task OnPlaybackStopped() => Task.CompletedTask;
 
+	/// <summary>Ayar anahtarının (bool) değeri; komut/eklenti bağımlılığı kontrolü için.</summary>
+	public bool Flag(string key) => Schema.Any(f => f.Key == key && f.Type == "bool") ? B(key) : true;
+
 	protected string S(string key) => Config.TryGetPropertyValue(key, out var v) && v != null ? v.ToString() : Schema.First(f => f.Key == key).Default?.ToString() ?? "";
 	protected int I(string key) => int.TryParse(S(key), out var i) ? i : Convert.ToInt32(Schema.First(f => f.Key == key).Default ?? 0);
 	protected bool B(string key) => Config.TryGetPropertyValue(key, out var v) && v is JsonValue jv && jv.TryGetValue<bool>(out var b) ? b : (bool)(Schema.First(f => f.Key == key).Default ?? false);
@@ -87,6 +92,10 @@ public sealed class PluginContext
 	public required Player Player { get; init; }
 	public required PlaylistManager Playlist { get; init; }
 	public required Func<Func<Task>, Task> RunOnBot { get; init; }
+	/// <summary>Botun ayarlardaki asıl adı (şarkı adı eklentisi geri dönerken kullanır).</summary>
+	public required Func<string> BaseNickname { get; init; }
+	/// <summary>Avatarı mevcut duruma göre yeniden ayarlar.</summary>
+	public required Func<Task> RefreshAvatar { get; init; }
 
 	public string ServerName => Full.Book.Server?.Name ?? "TeamSpeak";
 
@@ -118,6 +127,10 @@ public sealed class FrixPluginHost
 
 	public static Func<FrixPlugin>[] Factories { get; } =
 	[
+		() => new MusicPlugin(),
+		() => new RadioPlugin(),
+		() => new NowPlayingStatusPlugin(),
+		() => new AvatarPlugin(),
 		() => new WelcomePlugin(),
 		() => new AdvertisementPlugin(),
 		() => new AlonePausePlugin(),
@@ -231,6 +244,31 @@ public sealed class FrixPluginHost
 	/// <summary>Komutların eklentiye erişmesi için: bu botta açık olan T eklentisi.</summary>
 	public static T? Enabled<T>(string? bot) where T : FrixPlugin
 		=> bot is null ? null : For(bot)?.Plugins.OfType<T>().FirstOrDefault(p => p.Enabled);
+	/// <summary>
+	/// "id" ya da "id:ayar" biçimindeki gereksinim bu botta açık mı? Bot çalışmıyorsa veritabanına bakar.
+	/// </summary>
+	public static bool Active(string bot, string requirement)
+	{
+		var (id, flag) = requirement.IndexOf(':') is var i and >= 0 ? (requirement[..i], requirement[(i + 1)..]) : (requirement, null);
+		if (For(bot) is { } host)
+		{
+			var p = host.Plugins.FirstOrDefault(x => x.Id == id);
+			return p is not null && p.Enabled && (flag is null || p.Flag(flag));
+		}
+		var proto = Factories.Select(f => f()).FirstOrDefault(x => x.Id == id);
+		if (proto is null) return false;
+		var row = FrixDb.Query("SELECT enabled, config FROM plugins WHERE bot=$b AND id=$i", ("$b", bot), ("$i", id)).FirstOrDefault();
+		if (row is null) return proto.DefaultEnabled && (flag is null || proto.Flag(flag));
+		if ((long)row["enabled"]! == 0) return false;
+		if (flag is null) return true;
+
+		proto.Load(JsonNode.Parse((row["config"] as string) ?? "{}") as JsonObject ?? []);
+		return proto.Flag(flag);
+	}
+
+	/// <summary>Çalışan botlar.</summary>
+	public static string[] RunningBots => [.. Hosts.Keys];
+
 	public Task AloneChanged(bool alone) => Each(p => p.OnAloneChanged(alone));
 	public Task PlaybackStopped() => Each(p => p.OnPlaybackStopped());
 }

@@ -137,5 +137,6 @@ public static partial class MainCommands
 	}
 
 	[Command("yardim")]
-	public static string CommandYardim() => FrixText.Get("cmd.help");
+	public static string CommandYardim(Config.ConfBot conf)
+		=> Frix.FrixCommands.ApplyNames(Frix.FrixCommands.FilterLines(FrixText.Raw("cmd.help"), c => Frix.FrixCommands.IsAvailable(c, conf.Name)));
 }

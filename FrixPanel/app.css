@@ -787,3 +787,26 @@ a.st-title:hover { color: var(--accent); }
 }
 .keep-case { text-transform: none; font-weight: 400; color: var(--muted); }
 .table th.no-tt, .table td[data-label="IP"]::before { text-transform: none; }
+
+/* ---- commands: plugin-dependent rows */
+.builtin-usage-cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.builtin-usage-cell .badge { font-size: .68rem; }
+.builtin-row.off { opacity: .5; }
+.off-note { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 6px 0 10px; }
+.off-note .btn { height: 30px; padding: 0 10px; font-size: .8rem; }
+
+/* ---- bot texts: BBCode toolbar + TeamSpeak-like preview */
+.bb-bar { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.bb-btn { height: 28px; min-width: 28px; padding: 0 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); font: 600 .78rem var(--mono); cursor: pointer; }
+.bb-btn:hover, .bb-swatch:hover { border-color: var(--accent); }
+.bb-btn.b { font-weight: 800; } .bb-btn.i { font-style: italic; } .bb-btn.u { text-decoration: underline; } .bb-btn.s { text-decoration: line-through; }
+.bb-swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); background: var(--c); cursor: pointer; padding: 0; }
+.bb-color, .look-color { width: 30px; height: 28px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: none; cursor: pointer; }
+.look-color { width: 44px; height: 34px; }
+.look-color:disabled { opacity: .35; cursor: not-allowed; }
+.bb-sep { width: 1px; height: 18px; background: var(--line); margin: 0 4px; }
+.bb-preview { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 7px 10px; font-size: .85rem; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid #3a3f48; }
+.bb-preview .bb-link { color: #6fb3ff; text-decoration: underline; }
+.look-grid { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 10px; }
+.look-grid .field { margin: 0; }
+.look-foot { display: flex; justify-content: flex-end; margin-top: 10px; }
