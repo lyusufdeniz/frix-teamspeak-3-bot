@@ -135,8 +135,8 @@ Evet: Panel → Komutlar → *Bot metinleri*. Üstteki *Mesaj görünümü* kart
 **Botun avatarı neden komut listesi gösteriyor?**
 Bot boştayken avatarı, ayarladığın komutlara göre otomatik çizilir (yeniden adlandırılan komutlar, özel komutlar ve radyo varsa `!radyo`). Açıklamaları Panel → Komutlar → *Metinler* bölümündeki `avatar.*` satırlarından değiştirebilirsin. Şarkı çalarken avatar şarkının kapağı olur. Tamamen kendi resmini kullanmak istersen `bots/<bot-adı>/avatars/` klasörüne `sleep.png` koy.
 
-**Botun cevapları başka dilde olsun**
-Panel → Ayarlar → *TeamSpeak cevap dili*: Türkçe, English, Deutsch, Español, Français, Русский, Português, Polski, Italiano. Tek tek cevapları Panel → Komutlar → *Metinler* bölümünden düzenleyebilirsin. Komut adları dile göre değişmez; istersen yeniden adlandır.
+**Dili nasıl değiştiririm?**
+Tek bir dil ayarı var: Panel → Ayarlar → Genel → *Dil* (ilk kurulumda da sorulur). Panel, botun TeamSpeak cevapları ve komut adları hep bu dili kullanır: Türkçe, English, Deutsch, Español, Français, Русский, Português, Polski, Italiano. Dil değişince komutlara verdiğin özel adlar o dilin varsayılanlarına döner; Türkçe adlar her zaman çalışır. Tek tek cevapları Panel → Komutlar → *Bot metinleri* bölümünden düzenleyebilirsin.
 
 ---
 
@@ -273,5 +273,5 @@ Yes: Panel → Commands → *Bot texts*. The *Message look* card sets the defaul
 **Why does the bot's avatar show a command list?**
 While idle, the avatar is drawn automatically from your commands (renamed commands, custom commands, and `!radyo` if you have radio stations). Edit the descriptions via the `avatar.*` lines in Panel → Commands → *Texts*. While playing, the avatar shows the song's cover. To use your own image instead, put `sleep.png` into `bots/<bot-name>/avatars/`.
 
-**I want the bot to reply in another language**
-Panel → Settings → *TeamSpeak reply language*: Türkçe, English, Deutsch, Español, Français, Русский, Português, Polski, Italiano. Individual replies can be edited in Panel → Commands → *Texts*. Command names don't change with the language; rename them if you like.
+**How do I change the language?**
+There is one language setting: Panel → Settings → General → *Language* (also asked during setup). The panel, the bot's TeamSpeak replies and the command names all use it: Türkçe, English, Deutsch, Español, Français, Русский, Português, Polski, Italiano. Changing it resets custom command names to that language's defaults; the Turkish names always work. Individual replies can be edited in Panel → Commands → *Bot texts*.

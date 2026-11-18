@@ -722,7 +722,6 @@
       h('div', { class: 'top-actions' },
         h('label', { class: 'bot-select-wrap' }, botDot, botSel),
         F.themeBtn(),
-        F.langSwitch(),
         h('div', { class: 'menu-wrap' }, userBtn, userMenu)));
 
     const banner = h('div', { id: 'conn-banner', class: 'conn-banner', hidden: S.online, role: 'status' }, h('span', { class: 'spinner' }), h('span', { text: t('top.offline') }));
@@ -1004,7 +1003,7 @@
     app.className = 'auth';
     app.replaceChildren(h('div', { class: 'auth-bg', 'aria-hidden': 'true' }),
       h('main', { class: 'auth-card' },
-        h('div', { class: 'auth-top' }, h('div', { class: 'auth-brand' }, F.brand(true)), h('div', { class: 'row gap-s' }, F.themeBtn(), F.langSwitch())),
+        h('div', { class: 'auth-top' }, h('div', { class: 'auth-brand' }, F.brand(true)), h('div', { class: 'row gap-s' }, F.themeBtn())),
         content,
         h('div', { class: 'auth-foot muted', text: S.version ? 'v' + S.version : '' })));
   }
@@ -1144,6 +1143,7 @@
   }
 
   async function boot() {
+    // the panel shows the bot's single language (Settings → Language); the browser's last value is only a fallback until the server answers
     const saved = lsGet(LS_LANG);
     if (saved && window.I18N[saved]) S.lang = saved;
     document.documentElement.lang = S.lang;
@@ -1155,7 +1155,7 @@
       app.replaceChildren(h('main', { class: 'auth-card' }, F.empty('alert', t('boot.fail'), t('boot.failText'), F.btn(t('common.retry'), { kind: 'primary', icon: 'refresh', onClick: boot }))));
       return;
     }
-    if (!saved && st.lang && window.I18N[st.lang]) S.lang = st.lang;
+    if (!st.setupRequired && st.lang && window.I18N[st.lang]) { S.lang = st.lang; lsSet(LS_LANG, st.lang); }
     document.documentElement.lang = S.lang;
     S.version = st.version || '';
     if (st.setupRequired) renderSetup(st);

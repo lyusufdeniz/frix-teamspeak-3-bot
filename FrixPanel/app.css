@@ -810,3 +810,20 @@ a.st-title:hover { color: var(--accent); }
 .look-grid { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 10px; }
 .look-grid .field { margin: 0; }
 .look-foot { display: flex; justify-content: flex-end; margin-top: 10px; }
+
+/* ---- update progress */
+.upd-card { min-width: min(440px, 90vw); text-align: left; }
+.upd-steps { align-self: center; list-style: none; margin: 14px 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.upd-steps li { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .9rem; }
+.upd-steps li.on { color: var(--text); font-weight: 600; }
+.upd-steps li.done { color: var(--text); }
+.upd-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--line); flex: none; }
+.upd-steps li.on .upd-dot { border-color: var(--accent); background: var(--accent); animation: upd-pulse 1s ease-in-out infinite alternate; }
+.upd-steps li.done .upd-dot { border-color: var(--accent); background: var(--accent); }
+@keyframes upd-pulse { from { opacity: .45; } to { opacity: 1; } }
+.upd-bar { align-self: stretch; width: 100%; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; position: relative; }
+.upd-bar-fill { height: 100%; width: 0; background: var(--accent); transition: width .3s ease; }
+.upd-bar.indeterminate .upd-bar-fill { width: 35% !important; position: absolute; animation: upd-slide 1.2s ease-in-out infinite; }
+@keyframes upd-slide { from { left: -35%; } to { left: 100%; } }
+.upd-detail { margin-top: 8px; min-height: 1.2em; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .upd-steps li.on .upd-dot, .upd-bar.indeterminate .upd-bar-fill { animation: none; } }

@@ -153,6 +153,7 @@ public static class PanelApi
 			case ["restart"] when m == "POST": await Ok(ctx, Restart(FrixUpdater.UpdateExitCode - 1)); break;
 			case ["update", "check"] when m == "GET": await Ok(ctx, await FrixUpdater.Check()); break;
 			case ["update", "apply"] when m == "POST": await Ok(ctx, await ApplyUpdate()); break;
+			case ["update", "progress"] when m == "GET": await Ok(ctx, FrixUpdater.Progress); break;
 			case ["logs"] when m == "GET": await Ok(ctx, Logs(ctx.Request.Query["since"])); break;
 			case ["logs", "page"] when m == "GET": await Ok(ctx, LogPage(ctx)); break;
 			case ["logs", "clear"] when m == "POST": PanelLog.Clear(); await Ok(ctx, new { ok = true }); break;
@@ -782,7 +783,14 @@ public static class PanelApi
 
 	private static object SaveSettings(JsonObject body)
 	{
-		if (body.Str("lang") is { } lang) { FrixText.SetLanguage(lang); FrixAvatar.Invalidate(); }
+		// Tek dil: bot cevapları, komut adları ve panel aynı dili kullanır
+		if (body.Str("lang") is { } lang)
+		{
+			FrixText.SetLanguage(lang);
+			if (FrixDb.GetMeta("cmd_names_lang") != lang)
+				FrixCommands.ApplyLanguageDefaults(lang);
+			FrixAvatar.Invalidate();
+		}
 		if (body["chat"] is JsonObject chat)
 		{
 			foreach (var (key, meta) in new[] { ("color", "chat_color"), ("errorColor", "chat_error_color") })
@@ -854,12 +862,12 @@ public static class PanelApi
 		return new { ok = true };
 	}
 
-	private static async Task<object> ApplyUpdate()
+	private static Task<object> ApplyUpdate()
 	{
-		var info = await FrixUpdater.Check();
-		if (!info.Available || info.DownloadUrl is null) throw Bad(info.Error ?? "no_update");
-		if (!await FrixUpdater.Download(info.DownloadUrl)) throw new ApiError(500, "download_failed");
-		return Restart(FrixUpdater.UpdateExitCode);
+		// Arka planda çalışır; panel update/progress ile ilerlemeyi izler
+		if (!FrixUpdater.StartApply(() => Restart(FrixUpdater.UpdateExitCode)))
+			throw new ApiError(409, "update_running");
+		return Task.FromResult<object>(new { ok = true });
 	}
 
 	private static (int page, int size) Paging(HttpContext ctx, int defSize = 50)

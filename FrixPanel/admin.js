@@ -180,34 +180,6 @@
       pane);
   };
 
-  /** set every built-in command name to one language's defaults (POST commands/builtin/defaults {lang}); Commands page + Settings */
-  function cmdDefaultsBar(onDone) {
-    let dLang = 'en';
-    const host = h('div', { class: 'lp-host' });
-    // English is the default command set: list it first and tag it
-    const mk = (langs) => host.replaceChildren(F.langPicker({ langs: ['en'].concat(langs.filter((l) => l !== 'en')), value: dLang, label: t('commands.defaultsLang'), align: 'left',
-      tags: { en: t('commands.defaultTag') }, onChange: (c) => { dLang = c; } }));
-    mk(Object.keys(window.I18N));
-    F.api('GET', 'settings').then((st) => {
-      if (st && st.commandLang) dLang = st.commandLang; // komutların şu anki dili
-      if (st && Array.isArray(st.languages) && st.languages.length) { if (!st.languages.includes(dLang)) dLang = 'en'; mk(st.languages); }
-    }).catch(() => { /* keep panel languages */ });
-    const apply = F.btn(t('commands.defaultsApply'), { kind: 'ghost', icon: 'refresh' });
-    apply.addEventListener('click', async () => {
-      if (!(await F.confirm(t('commands.defaultsConfirm'), { ok: t('common.yes') }))) return;
-      await F.busy(apply, async () => {
-        try {
-          const r = (await F.api('POST', 'commands/builtin/defaults', { lang: dLang })) || {};
-          const skipped = Array.isArray(r.skipped) ? r.skipped : [];
-          F.toast(t('commands.defaultsDone'));
-          if (skipped.length) F.toast(t('commands.defaultsSkipped', { list: skipped.map((x) => '!' + String(x).replace(/^!/, '')).join(', ') }), 'info');
-          if (onDone) await onDone();
-        } catch (e) { F.fail(e); }
-      });
-    });
-    return h('div', { class: 'toolbar defaults-bar' }, F.field(t('commands.defaultsLang'), host), apply);
-  }
-
   function commandsTab(pane) {
     const builtin = h('div', { class: 'builtin-list' });
     // commands whose plugin is off on every bot are hidden (toggle shows them greyed out)
@@ -219,7 +191,7 @@
         F.btn(t('commands.new'), { kind: 'primary', icon: 'plus', onClick: () => form(null) })),
       h('p', { class: 'muted small' }, F.rich(t('commands.customHelp'))), custom),
       h('section', { class: 'card' }, h('h2', { class: 'card-title' }, icon('list'), t('commands.builtin')), h('p', { class: 'muted small' }, F.rich(t('commands.builtinHelp'))),
-        cmdDefaultsBar(async () => { await load(); bumpAvatar(); }), offNote, builtin));
+        offNote, builtin));
     let data = null;
     async function load() {
       try { data = await F.api('GET', 'commands'); render(); }
@@ -420,26 +392,14 @@
 
   function textsTab(pane) {
     previews = [];
-    let lang = F.state.lang;
-    // flag dropdown; starts with tr/en (+ current) and is rebuilt with the server's language list
-    const langHost = h('div', { class: 'lp-host' });
-    const mkPicker = (langs) => langHost.replaceChildren(F.langPicker({ langs, value: lang, label: t('texts.lang'), align: 'left', onChange: (c) => { lang = c; load(); } }));
-    mkPicker(['tr', 'en'].includes(lang) ? ['tr', 'en'] : ['tr', 'en', lang]);
-    F.api('GET', 'settings').then((st) => {
-      if (!st || !Array.isArray(st.languages) || !st.languages.length) return;
-      const next = st.languages.includes(lang) ? lang : st.lang;
-      const changed = next !== lang;
-      lang = next;
-      mkPicker(st.languages);
-      if (changed) load();
-    }).catch(() => { /* keep tr/en */ });
+    const lang = F.state.lang;
     const filter = F.input({ type: 'search', placeholder: t('texts.filter'), 'aria-label': t('texts.filter') });
     const list = h('div', { class: 'text-list' }, F.skeleton(4, 'sk-row'));
     filter.addEventListener('input', applyFilter);
     pane.append(lookCard());
     pane.append(h('section', { class: 'card' },
       h('p', { class: 'muted small' }, F.rich(t('texts.help'))),
-      h('div', { class: 'toolbar' }, F.field(t('texts.lang'), langHost), F.field(t('texts.filter'), filter, null, { cls: 'grow' })),
+      h('div', { class: 'toolbar' }, F.field(t('texts.filter'), filter, null, { cls: 'grow' })),
       list));
     function applyFilter() {
       const q = filter.value.trim().toLowerCase();
@@ -607,7 +567,6 @@
   // ================================================================== SETTINGS (sections: /settings/<key>)
   const SETTINGS_SECTIONS = [
     { key: 'general', icon: 'sliders' },
-    { key: 'commands', icon: 'terminal' },
     { key: 'youtube', icon: 'music' },
     { key: 'updates', icon: 'download' },
     { key: 'maintenance', icon: 'power' },
@@ -636,8 +595,7 @@
       if (!s) return;
       const head = h('div', { class: 'section-head' }, h('h2', { text: t('settings.sec.' + k) }), h('p', { class: 'muted small', text: t('settings.secDesc.' + k) }));
       const cards = {
-        general: () => [panelCard(), langCard(), sysCard()],
-        commands: () => [cmdCard()],
+        general: () => [langCard(), cmdCard(), panelCard(), sysCard()],
         youtube: () => [ytdlpCard(), cookieCard()],
         updates: () => [updateCard()],
         maintenance: () => [restartCard()],
@@ -649,18 +607,22 @@
     const card = (ic, title, desc, ...kids) => h('section', { class: 'card set-card' }, h('h3', { class: 'card-title' }, icon(ic), title), desc ? h('p', { class: 'muted small card-desc' }, desc) : null, kids);
 
     function panelCard() {
-      const lang = F.langPicker({ langs: Object.keys(window.I18N), value: F.state.lang, label: t('settings.panelLang'), align: 'left', onChange: (c) => F.setLang(c) });
       const theme = F.select([['lacivert', t('theme.lacivert')], ['krem', t('theme.krem')]], F.theme(), { class: 'input theme-sel' });
       theme.addEventListener('change', () => F.setTheme(theme.value));
       return card('sliders', t('settings.panelCard'), t('settings.panelHelp'),
-        h('div', { class: 'set-grid' }, F.field(t('settings.panelLang'), lang), F.field(t('theme.title'), theme)));
+        h('div', { class: 'set-grid' }, F.field(t('theme.title'), theme)));
     }
     function langCard() {
       const sel = F.langPicker({ langs: s.languages && s.languages.length ? s.languages : ['tr', 'en'], value: s.lang, label: t('settings.lang'), align: 'left' });
       const save = F.btn(t('common.save'), { kind: 'primary', icon: 'check' });
       save.addEventListener('click', () => F.busy(save, async () => {
         const v = sel.value();
-        try { await F.api('PUT', 'settings', { lang: v }); s.lang = v; F.toast(t('settings.langSaved')); } catch (e) { F.fail(e); }
+        if (v === s.lang) return;
+        if (!(await F.confirm(t('settings.langConfirm'), { ok: t('common.yes') }))) return;
+        try {
+          await F.api('PUT', 'settings', { lang: v }); s.lang = v;
+          F.setLang(v); bumpAvatar(); F.toast(t('settings.langSaved'));
+        } catch (e) { F.fail(e); }
       }));
       return card('globe', t('settings.lang'), t('settings.langHelp'), h('div', { class: 'set-row' }, h('div', { class: 'grow' }, sel), save));
     }
@@ -672,8 +634,7 @@
           h('dt', { text: 'yt-dlp' }), h('dd', { text: s.ytdlp ? t('settings.found') : t('settings.notFound') })));
     }
     function cmdCard() {
-      return card('terminal', t('commands.defaultsLang'), null,
-        cmdDefaultsBar(() => bumpAvatar()),
+      return card('terminal', t('nav.commands'), t('settings.cmdHelp'),
         h('a', { href: '/commands', 'data-link': '', class: 'small link-arrow' }, t('settings.cmdLink'), ' →'));
     }
     function ytdlpCard() {
@@ -737,7 +698,7 @@
           const apply = r.available ? F.btn(t('settings.updateNow'), { kind: 'primary', icon: 'download', onClick: async (e) => {
             if (!(await F.confirm(t('settings.updateConfirm', { v: r.latest }), { ok: t('settings.updateNow') }))) return;
             await F.busy(e.currentTarget, async () => {
-              try { await F.api('POST', 'update/apply'); F.waitForRestart(t('settings.updating')); } catch (er) { F.fail(er); }
+              try { await F.api('POST', 'update/apply'); updateProgress(r.latest); } catch (er) { F.fail(er); }
             });
           } }) : null;
           out.replaceChildren(
@@ -754,6 +715,50 @@
         card('download', t('settings.updates'), t('settings.version', { v: s.version }), h('div', { class: 'set-row' }, check), out),
         card('link', t('settings.repo'), t('settings.repoHelp'), h('div', { class: 'set-row' }, h('div', { class: 'grow' }, repo), saveRepo)),
       ];
+    }
+    /** modal with stages + progress bar while the update downloads/extracts; hands over to waitForRestart */
+    function updateProgress(version) {
+      const STAGES = ['checking', 'downloading', 'extracting', 'restarting'];
+      const bar = h('div', { class: 'upd-bar-fill' });
+      const barBox = h('div', { class: 'upd-bar', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': '0' }, bar);
+      const detail = h('div', { class: 'muted small upd-detail' });
+      const steps = h('ol', { class: 'upd-steps' }, STAGES.map((st) => h('li', { dataset: { st } }, h('span', { class: 'upd-dot' }), h('span', { text: t('update.stage.' + st) }))));
+      const mb = (n) => (n / 1048576).toFixed(1);
+      let done = false, lastStage = null;
+      const box = h('div', { class: 'restart-overlay', role: 'alertdialog', 'aria-live': 'polite' },
+        h('div', { class: 'restart-card upd-card' }, h('h2', { text: t('update.title', { v: version || '' }) }), steps, barBox, detail));
+      document.body.appendChild(box);
+      const paint = (p) => {
+        const idx = STAGES.indexOf(p.stage);
+        steps.querySelectorAll('li').forEach((li, i) => { li.className = i < idx ? 'done' : i === idx ? 'on' : ''; });
+        const pct = p.stage === 'restarting' ? 100 : (p.percent || 0);
+        // new stage starts from its own value without animating backwards
+        if (p.stage !== lastStage) { bar.style.transition = 'none'; bar.style.width = pct + '%'; void bar.offsetWidth; bar.style.transition = ''; lastStage = p.stage; }
+        bar.style.width = pct + '%';
+        barBox.setAttribute('aria-valuenow', String(pct));
+        barBox.classList.toggle('indeterminate', p.stage === 'checking' || (p.stage === 'downloading' && !p.total));
+        detail.textContent = p.stage === 'downloading'
+          ? (p.total ? t('update.mb', { a: mb(p.received), b: mb(p.total), p: pct }) : t('update.mbNoTotal', { a: mb(p.received) }))
+          : p.stage === 'extracting' ? t('update.files', { a: p.received, b: p.total, p: pct })
+          : p.stage === 'restarting' ? t('update.restartingHint') : '';
+      };
+      const poll = async () => {
+        if (done) return;
+        let p;
+        try { p = await F.api('GET', 'update/progress'); } catch (_) { p = null; }
+        if (!p) { done = true; box.remove(); F.waitForRestart(t('settings.updating')); return; } // server already restarting
+        paint(p);
+        if (p.stage === 'failed') {
+          done = true;
+          detail.textContent = t('update.failed') + (p.error ? ' — ' + F.errMsg({ code: p.error, message: p.error }) : '');
+          box.querySelector('.upd-card').append(h('div', { class: 'look-foot' }, F.btn(t('common.close'), { kind: 'ghost', onClick: () => box.remove() })));
+          return;
+        }
+        if (p.stage === 'restarting') { setTimeout(() => { done = true; box.remove(); F.waitForRestart(t('settings.updating')); }, 1200); return; }
+        setTimeout(poll, 400);
+      };
+      paint({ stage: 'checking' });
+      poll();
     }
     function restartCard() {
       const btn = F.btn(t('settings.restart'), { kind: 'danger', icon: 'power', onClick: async () => {

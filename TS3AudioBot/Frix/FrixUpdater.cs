@@ -85,8 +85,48 @@ public static class FrixUpdater
 		return current == "dev" || Parse(latest) > Parse(current);
 	}
 
+	// ---- ilerleme (panel bunu sorgular)
+	public sealed record UpdateProgress(string Stage, string? Version, long Received, long Total, int Percent, string? Error);
+
+	private static readonly object ProgressLock = new();
+	private static UpdateProgress progress = new("idle", null, 0, 0, 0, null);
+	public static UpdateProgress Progress { get { lock (ProgressLock) return progress; } }
+	private static void SetProgress(UpdateProgress p) { lock (ProgressLock) progress = p; }
+	public static bool Busy => Progress.Stage is "checking" or "downloading" or "extracting" or "restarting";
+
+	/// <summary>
+	/// Güncellemeyi arka planda başlatır: kontrol → indirme → açma → yeniden başlatma.
+	/// Panel ilerlemeyi <see cref="Progress"/> ile izler. Zaten çalışıyorsa false.
+	/// </summary>
+	public static bool StartApply(Action restart)
+	{
+		lock (ProgressLock)
+		{
+			if (progress.Stage is "checking" or "downloading" or "extracting" or "restarting") return false;
+			progress = new("checking", null, 0, 0, 0, null);
+		}
+		_ = Task.Run(async () =>
+		{
+			var info = await Check();
+			if (!info.Available || info.DownloadUrl is null)
+			{
+				SetProgress(new("failed", info.Latest, 0, 0, 0, info.Error ?? "no_update"));
+				return;
+			}
+			if (!await Download(info.DownloadUrl, info.Latest))
+			{
+				if (Progress.Stage != "failed") SetProgress(new("failed", info.Latest, 0, 0, 0, "download_failed"));
+				return;
+			}
+			SetProgress(new("restarting", info.Latest, 0, 0, 100, null));
+			await Task.Delay(1500); // panel "yeniden başlatılıyor" adımını görsün
+			restart();
+		});
+		return true;
+	}
+
 	/// <summary>Güncellemeyi indirir ve _update/ klasörüne açar. Başarılıysa true.</summary>
-	public static async Task<bool> Download(string url)
+	public static async Task<bool> Download(string url, string? version = null)
 	{
 		var baseDir = AppContext.BaseDirectory;
 		var updateDir = Path.Combine(baseDir, "_update");
@@ -98,10 +138,38 @@ public static class FrixUpdater
 			using (var res = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
 			{
 				res.EnsureSuccessStatusCode();
+				var total = res.Content.Headers.ContentLength ?? 0;
+				SetProgress(new("downloading", version, 0, total, 0, null));
 				await using var fs = File.Create(zipPath);
-				await res.Content.CopyToAsync(fs);
+				await using var src = await res.Content.ReadAsStreamAsync();
+				var buffer = new byte[81920];
+				long received = 0;
+				int read;
+				while ((read = await src.ReadAsync(buffer)) > 0)
+				{
+					await fs.WriteAsync(buffer.AsMemory(0, read));
+					received += read;
+					SetProgress(new("downloading", version, received, total, total > 0 ? (int)(received * 100 / total) : 0, null));
+				}
 			}
-			ZipFile.ExtractToDirectory(zipPath, updateDir, true);
+
+			// Açma: dosya dosya, ilerleme ile
+			SetProgress(new("extracting", version, 0, 0, 0, null));
+			using (var zip = ZipFile.OpenRead(zipPath))
+			{
+				var root = Path.GetFullPath(updateDir) + Path.DirectorySeparatorChar;
+				var files = zip.Entries.Where(e => e.Name.Length > 0).ToArray();
+				for (var i = 0; i < files.Length; i++)
+				{
+					var target = Path.GetFullPath(Path.Combine(updateDir, files[i].FullName));
+					if (!target.StartsWith(root, StringComparison.Ordinal))
+						throw new InvalidDataException("Güncelleme paketinde geçersiz yol var.");
+					Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+					files[i].ExtractToFile(target, true);
+					if (i % 10 == 0 || i == files.Length - 1)
+						SetProgress(new("extracting", version, i + 1, files.Length, (i + 1) * 100 / files.Length, null));
+				}
+			}
 			File.Delete(zipPath);
 
 			// Zip tek bir üst klasör içeriyorsa onu kök yap
@@ -122,6 +190,7 @@ public static class FrixUpdater
 		catch (Exception ex)
 		{
 			Log.Error(ex, "Güncelleme indirilemedi");
+			SetProgress(new("failed", version, 0, 0, 0, ex.Message));
 			try { if (File.Exists(zipPath)) File.Delete(zipPath); } catch { }
 			try { if (Directory.Exists(updateDir)) Directory.Delete(updateDir, true); } catch { }
 			return false;
