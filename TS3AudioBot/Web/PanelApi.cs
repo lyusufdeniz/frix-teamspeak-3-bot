@@ -30,6 +30,7 @@ public static class PanelApi
 	{
 		injector = coreInjector;
 		FrixAvatar.RefreshAllBots = () => Bots.IterateAll(b => _ = b.RefreshIdleAvatar());
+		FrixSystem.Start();
 	}
 
 	private static BotManager Bots => injector!.GetModuleOrThrow<BotManager>();
@@ -71,6 +72,7 @@ public static class PanelApi
 			case ["bots", var b, "queue"] when m == "GET": await Ok(ctx, await Queue(b)); return;
 			case ["radios"] when m == "GET": await Ok(ctx, FrixRadio.List()); return;
 			case ["stats"] when m == "GET": await Ok(ctx, Stats(ctx)); return;
+			case ["dashboard"] when m == "GET": await Ok(ctx, Dashboard(ctx.Request.Query["history"] == "1")); return;
 			case ["playlists"] when m == "GET": await Ok(ctx, FrixData.Playlists()); return;
 			case ["playlists", var pid] when m == "GET":
 				await Ok(ctx, FrixData.PlaylistItems(long.Parse(pid)).Select((i, n) => new
@@ -567,6 +569,50 @@ public static class PanelApi
 	}
 
 	// ================================================================== istatistik ve çalma listeleri
+
+	private static object Dashboard(bool withHistory)
+	{
+		object Map(FrixSystem.Sample s) => new { t = s.Time, cpu = s.Cpu, appCpu = s.AppCpu, ramUsed = s.RamUsed, ramTotal = s.RamTotal, appMem = s.AppMem };
+		using var proc = System.Diagnostics.Process.GetCurrentProcess();
+		var last = FrixSystem.Last();
+		return new
+		{
+			system = new
+			{
+				now = last is null ? null : Map(last),
+				history = withHistory ? FrixSystem.Samples().Select(Map).ToArray() : null,
+				cores = System.Environment.ProcessorCount,
+				os = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
+				uptime = (long)(DateTime.UtcNow - FrixSystem.StartedAt).TotalSeconds,
+				threads = proc.Threads.Count,
+				gcHeap = GC.GetTotalMemory(false),
+				version = FrixUpdater.CurrentVersion,
+			},
+			plays = new
+			{
+				today = FrixData.PlayCountSince(DateTime.UtcNow.Date),
+				yesterday = FrixData.PlayCountBetween(DateTime.UtcNow.Date.AddDays(-1), DateTime.UtcNow.Date),
+				week = FrixData.PlayCount(7),
+				prevWeek = FrixData.PlayCountBetween(DateTime.UtcNow.AddDays(-14), DateTime.UtcNow.AddDays(-7)),
+				month = FrixData.PlayCount(30),
+				total = FrixData.PlayCount(0),
+			},
+			perDay = FrixData.PlaysPerDay(14).Select(x => new { day = x.Day, count = x.Count }),
+			topSongs = FrixData.TopSongs(30, 5).Select(x => new
+			{
+				title = x.Title, count = x.Count,
+				thumbnail = x.Type == "youtube" ? $"https://i.ytimg.com/vi/{x.ResourceId}/mqdefault.jpg" : null,
+			}),
+			topUsers = FrixData.TopRequesters(30, 5).Select(x => new { user = x.User, count = x.Count }),
+			counts = new
+			{
+				radios = FrixRadio.List().Count,
+				playlists = FrixData.Playlists().Count,
+				users = (long)(FrixDb.Scalar("SELECT COUNT(*) FROM users") ?? 0L),
+				commands = FrixCommands.List().Length,
+			},
+		};
+	}
 
 	private static object Stats(HttpContext ctx)
 	{

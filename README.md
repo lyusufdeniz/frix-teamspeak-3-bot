@@ -31,7 +31,8 @@ The bot connects to your TeamSpeak server by itself and streams audio directly w
 
 **Web panel** (single-page app, mobile friendly, TR/EN)
 - First-run setup wizard (you choose the admin username & password)
-- Dashboard with live status of **multiple bots** (e.g. one music bot + one welcome bot)
+- **Dashboard**: live server CPU / RAM chart, Frix memory usage, plays today / this week, top songs and requesters, and the status of **multiple bots**
+- Left sidebar layout with a dark (charcoal + violet) and a light theme
 - Player with search results, "adding song" progress, queue move/remove, seek, volume
 - **21 plugins**, each enabled and configured per bot:
   - *Core:* music, radio (turn either off to disable its commands), song title as the bot's nickname/description, avatar (idle command card, song cover)

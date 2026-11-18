@@ -81,6 +81,11 @@
     volume: 'p:M4 9.5h3l4.5-4v13l-4.5-4H4z|p:M15 9.5a3.5 3.5 0 0 1 0 5|p:M17.5 7a7 7 0 0 1 0 10',
     plus: 'p:M12 5v14M5 12h14',
     menu: 'p:M4 7h16M4 12h16M4 17h16',
+    clock: 'c:12 12 8.5|p:M12 7.5V12l3 2',
+    cpu: 'r:7 7 10 10 1.5|p:M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4',
+    memory: 'r:3 7 18 10 1.5|p:M7 10v4M11 10v4M15 10v4|p:M6 17v3M10 17v3M14 17v3M18 17v3',
+    arrowUp: 'p:M12 19V5M6 11l6-6 6 6',
+    arrowDown: 'p:M12 5v14M6 13l6 6 6-6',
     trash: 'p:M5 7h14|p:M9.5 7V5h5v2|p:M7 7l.8 12h8.4L17 7|p:M10.5 10.5v5M13.5 10.5v5',
     edit: 'p:M5 19l1-4L15.5 5.5a2.1 2.1 0 0 1 3 3L9 18z|p:M13.5 7.5l3 3',
     power: 'p:M12 4v7|p:M7.5 6.8a7 7 0 1 0 9 0',
@@ -644,7 +649,8 @@
 
   // ------------------------------------------------------------------ shell
   const NAV = [
-    { path: '/', key: 'bots', icon: 'grid' },
+    { path: '/', key: 'dashboard', icon: 'grid' },
+    { path: '/bots', key: 'bots', icon: 'server' },
     { path: '/player', key: 'player', icon: 'music', usesBot: true },
     { path: '/playlists', key: 'playlists', icon: 'playlist' },
     { path: '/radios', key: 'radios', icon: 'radio' },
@@ -682,7 +688,7 @@
     document.documentElement.dataset.theme = th;
     lsSet(LS_THEME, th);
     const m = document.querySelector('meta[name=theme-color]');
-    if (m) m.content = th === 'krem' ? '#f4ede1' : '#16212d';
+    if (m) m.content = th === 'krem' ? '#f3f3f8' : '#131316';
     document.querySelectorAll('.theme-btn').forEach(paintThemeBtn);
     document.querySelectorAll('select.theme-sel').forEach((x) => { x.value = th; });
   };
@@ -722,7 +728,7 @@
     const admin = F.isAdmin();
     const byKey = (k) => NAV.find((n) => n.key === k);
     const groups = [
-      ['music', ['bots', 'player', 'playlists', 'radios']],
+      ['music', ['dashboard', 'bots', 'player', 'playlists', 'radios']],
       ['manage', admin ? ['plugins', 'commands', 'users', 'settings', 'logs'] : []],
       ['other', ['stats', 'faq']],
     ].filter((g) => g[1].length);
@@ -733,7 +739,7 @@
     };
     const side = h('aside', { class: 'sidebar', id: 'sidebar', 'aria-label': t('nav.main') },
       h('div', { class: 'side-brand' }, h('a', { href: '/', 'data-link': '', class: 'brand', 'aria-label': 'frix' }, F.brand(true))),
-      h('div', { class: 'side-add' }, F.btn(t('quick.title'), { kind: 'primary', icon: 'plus', cls: 'side-add-btn', onClick: () => { closeDrawer(); openQuickAdd(); } })),
+      h('div', { class: 'side-bot' }, h('div', { class: 'side-group-title', text: t('top.botSelect') }), h('label', { class: 'bot-select-wrap' }, botDot, botSel)),
       h('nav', { class: 'sidenav' }, groups.map(([g, keys]) => h('div', { class: 'side-group' },
         h('div', { class: 'side-group-title', text: t('nav.group.' + g) }), h('ul', null, keys.map(link))))),
       h('div', { class: 'side-foot muted small', text: 'frix ' + (S.version ? 'v' + S.version : '') }));
@@ -746,7 +752,6 @@
     const top = h('header', { class: 'topbar' },
       h('div', { class: 'top-left' }, burger, h('h1', { class: 'top-title', id: 'top-title' })),
       h('div', { class: 'top-actions' },
-        h('label', { class: 'bot-select-wrap' }, botDot, botSel),
         F.themeBtn(),
         h('div', { class: 'menu-wrap' }, userBtn, userMenu)));
 
@@ -757,17 +762,6 @@
     updateBotSelect();
   }
   let closeDrawer = () => {};
-
-  /** "şarkı ekle" bottom sheet opened from the fox button */
-  function openQuickAdd() {
-    if (!F.canControl()) { F.go('/player'); return; }
-    const b = F.selectedBot();
-    if (!b) { F.toast(t('player.pickBot'), 'info'); return; }
-    if (!b.live) { F.toast(t('player.offline', { name: F.botLabel(b) }), 'err'); return; }
-    const adder = F.buildAdder(b.name);
-    const m = F.modal({ title: [t('quick.title'), ' · ', h('span', { class: 'keep-case', text: F.botLabel(b) })], size: 'sheet', body: adder.el, actions: [], onClose: adder.destroy });
-    m.el.classList.add('sheet');
-  }
 
   let openPop = null;
   function togglePop(menu, btn) {

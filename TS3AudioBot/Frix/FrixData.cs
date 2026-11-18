@@ -58,6 +58,21 @@ CREATE TABLE IF NOT EXISTS playlist_items (
 	public static long PlayCount(int days, string? bot = null)
 		=> (long)(FrixDb.Scalar("SELECT COUNT(*) FROM play_stats WHERE time >= $s AND ($b IS NULL OR bot = $b)", ("$s", Since(days)), ("$b", bot)) ?? 0L);
 
+	public static long PlayCountSince(DateTime fromUtc)
+		=> (long)(FrixDb.Scalar("SELECT COUNT(*) FROM play_stats WHERE time >= $s", ("$s", fromUtc.ToString("O"))) ?? 0L);
+
+	public static long PlayCountBetween(DateTime fromUtc, DateTime toUtc)
+		=> (long)(FrixDb.Scalar("SELECT COUNT(*) FROM play_stats WHERE time >= $s AND time < $e", ("$s", fromUtc.ToString("O")), ("$e", toUtc.ToString("O"))) ?? 0L);
+
+	/// <summary>Son N günün (UTC) günlük çalma sayıları; boş günler 0.</summary>
+	public static List<(string Day, long Count)> PlaysPerDay(int days)
+	{
+		var from = DateTime.UtcNow.Date.AddDays(-(days - 1));
+		var rows = FrixDb.Query("SELECT substr(time,1,10) AS d, COUNT(*) AS c FROM play_stats WHERE time >= $s GROUP BY d", ("$s", from.ToString("O")))
+			.ToDictionary(r => (string)r["d"]!, r => (long)r["c"]!);
+		return Enumerable.Range(0, days).Select(i => from.AddDays(i).ToString("yyyy-MM-dd")).Select(d => (d, rows.GetValueOrDefault(d))).ToList();
+	}
+
 	// ---------------------------------------------------------------- çevrimiçi süre
 
 	public static void AddOnline(IEnumerable<(string uid, string name)> clients, int seconds)
