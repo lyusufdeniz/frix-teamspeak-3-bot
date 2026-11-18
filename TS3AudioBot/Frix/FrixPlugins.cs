@@ -132,6 +132,11 @@ public sealed class FrixPluginHost
 		() => new NowPlayingStatusPlugin(),
 		() => new AvatarPlugin(),
 		() => new AutoReconnectPlugin(),
+		() => new NormalizePlugin(),
+		() => new AutoplayPlugin(),
+		() => new FavoritesPlugin(),
+		() => new ScheduledPlayPlugin(),
+		() => new ActivityPlugin(),
 		() => new WelcomePlugin(),
 		() => new AdvertisementPlugin(),
 		() => new AlonePausePlugin(),
@@ -147,7 +152,6 @@ public sealed class FrixPluginHost
 		() => new AntiFloodPlugin(),
 		() => new VoteSkipPlugin(),
 		() => new DjModePlugin(),
-		() => new ScheduledPlugin(),
 		() => new FunPlugin(),
 	];
 
@@ -157,8 +161,35 @@ public sealed class FrixPluginHost
 	public IReadOnlyList<FrixPlugin> Plugins { get; }
 	private DateTime connectedAt = DateTime.MaxValue;
 
+	private static int migrated;
+
+	/// <summary>Eski "scheduled" eklentisinin ayarlarını "Duyurular" eklentisine taşır (bir kez).</summary>
+	internal static void MigrateScheduled()
+	{
+		if (System.Threading.Interlocked.Exchange(ref migrated, 1) == 1) return;
+		try
+		{
+			foreach (var row in FrixDb.Query("SELECT bot, enabled, config FROM plugins WHERE id='scheduled'"))
+			{
+				var bot = (string)row["bot"]!;
+				var sched = JsonNode.Parse((row["config"] as string) ?? "{}") as JsonObject ?? [];
+				var schedOn = (long)row["enabled"]! != 0;
+				var adv = FrixDb.Query("SELECT enabled, config FROM plugins WHERE bot=$b AND id='advertisement'", ("$b", bot)).FirstOrDefault();
+				var advCfg = adv is null ? [] : JsonNode.Parse((adv["config"] as string) ?? "{}") as JsonObject ?? [];
+				var advOn = adv is not null && (long)adv["enabled"]! != 0;
+				if (sched.TryGetPropertyValue("entries", out var e) && e is not null) advCfg["schedule"] = e.ToString();
+				if (!advOn && schedOn) { advCfg["messages"] = ""; if (sched.TryGetPropertyValue("target", out var tg) && tg is not null) advCfg["target"] = tg.ToString(); }
+				FrixDb.Exec("INSERT INTO plugins(bot,id,enabled,config) VALUES($b,'advertisement',$e,$c) ON CONFLICT(bot,id) DO UPDATE SET enabled=excluded.enabled, config=excluded.config",
+					("$b", bot), ("$e", advOn || schedOn ? 1 : 0), ("$c", advCfg.ToJsonString()));
+				FrixDb.Exec("DELETE FROM plugins WHERE bot=$b AND id='scheduled'", ("$b", bot));
+			}
+		}
+		catch (Exception ex) { Log.Warn(ex, "Zamanlı duyuru ayarları taşınamadı"); }
+	}
+
 	public FrixPluginHost(PluginContext ctx)
 	{
+		MigrateScheduled();
 		Ctx = ctx;
 		Plugins = Factories.Select(f => f()).ToList();
 		foreach (var p in Plugins)
@@ -319,18 +350,24 @@ public sealed class WelcomePlugin : FrixPlugin
 public sealed class AdvertisementPlugin : FrixPlugin
 {
 	public override string Id => "advertisement";
-	public override string NameTr => "Duyuru / Reklam";
-	public override string NameEn => "Announcements / Ads";
-	public override string DescTr => "Belirli aralıklarla kanala veya tüm sunucuya duyuru mesajları gönderir.";
-	public override string DescEn => "Posts announcement messages to the channel or the whole server at intervals.";
+	public override string NameTr => "Duyurular";
+	public override string NameEn => "Announcements";
+	public override string DescTr => "Belirli aralıklarla dönen duyuru/reklam mesajları ve belirli gün ve saatlerde gönderilen zamanlı duyurular.";
+	public override string DescEn => "Rotating announcement/ad messages at an interval, plus scheduled messages on specific days and times.";
 	public override PluginField[] Schema =>
 	[
-		new("messages", "textarea", "Mesajlar (her satır bir mesaj)", "Messages (one per line)",
-			"[b][color=#00FF00]🎵 Müzik botunu kullanmak için !yardim yazın.[/color][/b]\n[b][color=#00FF00]📻 Radyolar için: !radyo[/color][/b]"),
+		new("messages", "textarea", "Dönen mesajlar (her satır bir mesaj)", "Rotating messages (one per line)",
+			"[b][color=#00FF00]🎵 Müzik botunu kullanmak için !yardim yazın.[/color][/b]\n[b][color=#00FF00]📻 Radyolar için: !radyo[/color][/b]",
+			null, "Boş bırakırsan sadece zamanlı duyurular gönderilir.", "Leave empty to send only scheduled messages."),
 		new("interval", "number", "Aralık (dakika)", "Interval (minutes)", 30),
-		new("target", "select", "Nereye", "Target", "channel", ["channel", "server"]),
 		new("order", "select", "Sıra", "Order", "sequential", ["sequential", "random"]),
+		new("target", "select", "Nereye", "Target", "channel", ["channel", "server"]),
+		new("schedule", "textarea", "Zamanlı duyurular (her satır: [günler] SS:DD | mesaj)", "Scheduled messages (one per line: [days] HH:MM | message)",
+			"", null, "Örn: 21:00 | 🎮 Akşam etkinliği başlıyor! — Cmt,Paz 12:00 | ☀️ İyi hafta sonları! Günler: pzt sal çar per cum cmt paz; boş = her gün.",
+			"E.g. 21:00 | 🎮 Event starts! — sat,sun 12:00 | ☀️ Have a nice weekend! Days: mon tue wed thu fri sat sun; empty = every day."),
 	];
+
+	private string lastMinute = "";
 
 	private DateTime next = DateTime.MinValue;
 	private int index;
@@ -340,6 +377,7 @@ public sealed class AdvertisementPlugin : FrixPlugin
 
 	public override async Task OnTick(DateTime now)
 	{
+		await RunSchedule();
 		if (now < next) return;
 		next = now.AddMinutes(Math.Max(1, I("interval")));
 		var lines = S("messages").Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToArray();
@@ -347,6 +385,26 @@ public sealed class AdvertisementPlugin : FrixPlugin
 		var msg = S("order") == "random" ? lines[Random.Shared.Next(lines.Length)] : lines[index++ % lines.Length];
 		msg = Fill(msg, ("server", Ctx.ServerName), ("channel", Ctx.ChannelName), ("time", DateTime.Now.ToString("HH:mm")));
 		await Ctx.RunOnBot(() => S("target") == "server" ? Ctx.Client.SendServerMessage(msg) : Ctx.Client.SendChannelMessage(msg));
+	}
+
+	/// <summary>Zamanlı duyurular (eski "Zamanlı duyuru" eklentisi).</summary>
+	private async Task RunSchedule()
+	{
+		var local = DateTime.Now;
+		var minute = local.ToString("yyyyMMddHHmm");
+		if (minute == lastMinute) return;
+		lastMinute = minute;
+		foreach (var raw in S("schedule").Split('\n'))
+		{
+			var bar = raw.IndexOf('|');
+			if (bar < 0) continue;
+			var when = raw[..bar].Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+			var msg = raw[(bar + 1)..].Trim();
+			if (when.Length == 0 || msg.Length == 0 || when[^1] != local.ToString("HH:mm")) continue;
+			if (when.Length > 1 && !ScheduledPlugin.DayMatches(when[0], local.DayOfWeek)) continue;
+			msg = Fill(msg, ("server", Ctx.ServerName), ("channel", Ctx.ChannelName), ("time", local.ToString("HH:mm")), ("date", local.ToString("dd.MM.yyyy")));
+			await Ctx.RunOnBot(() => S("target") == "server" ? Ctx.Client.SendServerMessage(msg) : Ctx.Client.SendChannelMessage(msg));
+		}
 	}
 }
 

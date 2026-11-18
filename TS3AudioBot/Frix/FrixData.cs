@@ -21,6 +21,12 @@ CREATE TABLE IF NOT EXISTS play_stats (
 CREATE INDEX IF NOT EXISTS ix_play_stats_time ON play_stats(time);
 CREATE TABLE IF NOT EXISTS online_time (
 	uid TEXT PRIMARY KEY, name TEXT, seconds INTEGER NOT NULL DEFAULT 0, last_seen TEXT);
+CREATE TABLE IF NOT EXISTS favorites (
+	uid TEXT NOT NULL, type TEXT NOT NULL, resource_id TEXT NOT NULL, title TEXT, added TEXT NOT NULL,
+	PRIMARY KEY(uid, type, resource_id));
+CREATE TABLE IF NOT EXISTS server_activity (
+	server TEXT NOT NULL, time TEXT NOT NULL, users INTEGER NOT NULL, PRIMARY KEY(server, time));
+CREATE INDEX IF NOT EXISTS ix_activity_time ON server_activity(time);
 CREATE TABLE IF NOT EXISTS playlists (
 	id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE COLLATE NOCASE, created TEXT NOT NULL, created_by TEXT);
 CREATE TABLE IF NOT EXISTS playlist_items (
@@ -71,6 +77,67 @@ CREATE TABLE IF NOT EXISTS playlist_items (
 		var rows = FrixDb.Query("SELECT substr(time,1,10) AS d, COUNT(*) AS c FROM play_stats WHERE time >= $s GROUP BY d", ("$s", from.ToString("O")))
 			.ToDictionary(r => (string)r["d"]!, r => (long)r["c"]!);
 		return Enumerable.Range(0, days).Select(i => from.AddDays(i).ToString("yyyy-MM-dd")).Select(d => (d, rows.GetValueOrDefault(d))).ToList();
+	}
+
+	// ---------------------------------------------------------------- favoriler
+
+	public sealed record Favorite(string Type, string ResourceId, string? Title);
+
+	public static List<Favorite> Favorites(string uid)
+		=> FrixDb.Query("SELECT type, resource_id, title FROM favorites WHERE uid=$u ORDER BY added", ("$u", uid))
+			.Select(r => new Favorite((string)r["type"]!, (string)r["resource_id"]!, r["title"] as string)).ToList();
+
+	/// <summary>true = eklendi, false = zaten vardı. Sınır aşılırsa InvalidOperationException.</summary>
+	public static bool AddFavorite(string uid, string type, string id, string? title, int max)
+	{
+		if (FrixDb.Scalar("SELECT 1 FROM favorites WHERE uid=$u AND type=$t AND resource_id=$r", ("$u", uid), ("$t", type), ("$r", id)) != null)
+			return false;
+		if ((long)(FrixDb.Scalar("SELECT COUNT(*) FROM favorites WHERE uid=$u", ("$u", uid)) ?? 0L) >= max)
+			throw new InvalidOperationException("limit");
+		FrixDb.Exec("INSERT INTO favorites(uid,type,resource_id,title,added) VALUES($u,$t,$r,$ti,$a)",
+			("$u", uid), ("$t", type), ("$r", id), ("$ti", title), ("$a", DateTime.UtcNow.ToString("O")));
+		return true;
+	}
+
+	public static Favorite? RemoveFavorite(string uid, int index)
+	{
+		var all = Favorites(uid);
+		if (index < 1 || index > all.Count) return null;
+		var f = all[index - 1];
+		FrixDb.Exec("DELETE FROM favorites WHERE uid=$u AND type=$t AND resource_id=$r", ("$u", uid), ("$t", f.Type), ("$r", f.ResourceId));
+		return f;
+	}
+
+	// ---------------------------------------------------------------- sunucu aktivitesi
+
+	public static void RecordActivity(string server, DateTime bucketUtc, int users, int keepDays)
+	{
+		try
+		{
+			FrixDb.Exec("INSERT INTO server_activity(server,time,users) VALUES($s,$t,$u) ON CONFLICT(server,time) DO UPDATE SET users=MAX(users, excluded.users)",
+				("$s", server), ("$t", bucketUtc.ToString("O")), ("$u", users));
+			if (bucketUtc.Minute == 0)
+				FrixDb.Exec("DELETE FROM server_activity WHERE time < $c", ("$c", DateTime.UtcNow.AddDays(-keepDays).ToString("O")));
+		}
+		catch { /* kritik değil */ }
+	}
+
+	/// <summary>Son 24 saat (saatlik en yüksek) ve son 28 günün gün×saat ortalaması (yerel saat). Sunucular toplanır.</summary>
+	public static (List<(DateTime Hour, long Users)> Last24, double[][] Heat, long Peak, DateTime? PeakAt, long Now, bool Any) Activity()
+	{
+		var rows = FrixDb.Query("SELECT time, SUM(users) AS u FROM server_activity WHERE time >= $s GROUP BY time",
+				("$s", DateTime.UtcNow.AddDays(-28).ToString("O")))
+			.Select(r => (t: DateTime.Parse((string)r["time"]!, null, System.Globalization.DateTimeStyles.RoundtripKind).ToLocalTime(), u: (long)r["u"]!)).ToList();
+		var nowH = DateTime.Now;
+		nowH = new DateTime(nowH.Year, nowH.Month, nowH.Day, nowH.Hour, 0, 0);
+		var last24 = Enumerable.Range(0, 24).Select(i => nowH.AddHours(i - 23))
+			.Select(hr => (hr, rows.Where(r => r.t >= hr && r.t < hr.AddHours(1)).Select(r => r.u).DefaultIfEmpty(0).Max())).ToList();
+		var heat = Enumerable.Range(0, 7).Select(_ => new double[24]).ToArray();
+		foreach (var g in rows.GroupBy(r => ((int)r.t.DayOfWeek + 6) % 7 * 24 + r.t.Hour))
+			heat[g.Key / 24][g.Key % 24] = Math.Round(g.Average(r => r.u), 1);
+		if (rows.Count == 0) return (last24, heat, 0, null, 0, false);
+		var peak = rows.MaxBy(r => r.u);
+		return (last24, heat, peak.u, peak.t, rows.MaxBy(r => r.t).u, true);
 	}
 
 	// ---------------------------------------------------------------- çevrimiçi süre

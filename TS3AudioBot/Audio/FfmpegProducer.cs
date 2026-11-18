@@ -35,8 +35,11 @@ public sealed partial class FfmpegProducer : IPlayerSource, IDisposable
 	private static partial Regex IcyMetadataMacher { get; }
 
 	private const string PreLinkConf = "-hide_banner -nostats -threads 1 -i \"";
-	private const string PostLinkConf = "\" -ac 2 -ar 48000 -f s16le -acodec pcm_s16le pipe:1";
-	private const string LinkConfIcy = "-hide_banner -nostats -threads 1 -i pipe:0 -ac 2 -ar 48000 -f s16le -acodec pcm_s16le pipe:1";
+	/// <summary>Frix: ffmpeg ses filtresi (örn. loudnorm). Bir sonraki şarkıdan itibaren uygulanır.</summary>
+	public string? AudioFilter { get; set; }
+	private string Af => string.IsNullOrWhiteSpace(AudioFilter) ? "" : " -af \"" + AudioFilter.Replace("\"", "") + "\"";
+	private string PostLinkConf => "\"" + Af + " -ac 2 -ar 48000 -f s16le -acodec pcm_s16le pipe:1";
+	private string LinkConfIcy => "-hide_banner -nostats -threads 1 -i pipe:0" + Af + " -ac 2 -ar 48000 -f s16le -acodec pcm_s16le pipe:1";
 	private static readonly TimeSpan retryOnDropBeforeEnd = TimeSpan.FromSeconds(10);
 
 	private readonly ConfToolsFfmpeg config;
@@ -244,7 +247,7 @@ public sealed partial class FfmpegProducer : IPlayerSource, IDisposable
 		return StartFfmpegProcessInternal(newInstance, arguments);
 	}
 
-	private const string PipeConf = "-hide_banner -nostats -threads 1 -i pipe:0 -ac 2 -ar 48000 -f s16le -acodec pcm_s16le pipe:1";
+	private string PipeConf => "-hide_banner -nostats -threads 1 -i pipe:0" + Af + " -ac 2 -ar 48000 -f s16le -acodec pcm_s16le pipe:1";
 
 	/// <summary>Frix: yt-dlp çıktısını ffmpeg'e borudan verir (indirmesiz, canlı yayın destekli).</summary>
 	private R<FfmpegInstance, string> StartYtdlpPipe(string uri, TimeSpan offset)

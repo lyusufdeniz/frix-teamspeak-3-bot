@@ -34,6 +34,7 @@ public static class FrixCommands
 		("anket", "!anket soru | a | b"), ("oy", "!oy <no>"), ("hava", "!hava <şehir>"), ("doviz", "!doviz <kod> [miktar]"),
 		("dolar", "!dolar [miktar]"), ("euro", "!euro [miktar]"), ("zar", "!zar [2d6]"), ("yazitura", "!yazitura"),
 		("sec", "!sec a | b | c"), ("istatistik", "!istatistik"), ("top", "!top"), ("sure", "!sure"),
+		("fav", "!fav [sil <no>]"), ("favs", "!favs [liste]"),
 	];
 
 	/// <summary>
@@ -51,6 +52,7 @@ public static class FrixCommands
 		["soz"] = ["fun:lyrics"], ["anket"] = ["fun:poll"], ["oy"] = ["fun:poll"], ["hava"] = ["fun:weather"],
 		["doviz"] = ["fun:currency"], ["dolar"] = ["fun:currency"], ["euro"] = ["fun:currency"],
 		["zar"] = ["fun:dice"], ["yazitura"] = ["fun:dice"], ["sec"] = ["fun:dice"],
+		["fav"] = ["favorites"], ["favs"] = ["favorites"],
 	};
 
 	/// <summary>Yerleşik komut bu botta kullanılabilir mi (bağlı eklenti açık mı)?</summary>

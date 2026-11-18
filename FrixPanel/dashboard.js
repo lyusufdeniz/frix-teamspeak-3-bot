@@ -115,42 +115,84 @@
   const card = (ic, title, extra, ...kids) => h('section', { class: 'card dash-card' },
     h('div', { class: 'dash-card-head' }, h('h2', { class: 'card-title' }, h('span', { class: 'tile-ic sm' }, icon(ic)), title), extra || null), kids);
 
-  Pages.dashboard = function (root) {
-    const me = F.state.me || {};
-    root.append(h('div', { class: 'dash-hello' },
-      h('div', null, h('h1', { text: t('dash.hello', { name: me.name || '' }) }), h('p', { class: 'muted', text: t('dash.sub') }))));
+  /** users-per-hour line (scaled to its own max) */
+  function usersChart() {
+    const W = 600, H = 120, P = 6;
+    const id = F.uid('uf');
+    const defs = sv('defs', null, sv('linearGradient', { id, x1: 0, y1: 0, x2: 0, y2: 1 },
+      sv('stop', { offset: '0%', 'stop-color': 'var(--accent)', 'stop-opacity': '.3' }),
+      sv('stop', { offset: '100%', 'stop-color': 'var(--accent)', 'stop-opacity': '0' })));
+    const fill = sv('path', { class: 'chart-fill', fill: `url(#${id})` });
+    const line = sv('path', { class: 'chart-line main' });
+    const svg = sv('svg', { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: 'none', class: 'chart' }, defs, fill, line);
+    return {
+      el: svg,
+      set(vals) {
+        const max = Math.max(1, ...vals);
+        const n = Math.max(vals.length - 1, 1);
+        const pts = vals.map((v, i) => [(W * i) / n, P + (H - 2 * P) * (1 - v / max)]);
+        let d = pts.length ? 'M' + pts[0].join(',') : '';
+        for (let i = 1; i < pts.length; i++) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], cx = (x0 + x1) / 2; d += ` C${cx},${y0} ${cx},${y1} ${x1},${y1}`; }
+        line.setAttribute('d', d);
+        fill.setAttribute('d', d ? d + ` L${W},${H} L0,${H} Z` : '');
+      },
+    };
+  }
 
+  /** 7 × 24 heat map (Mon..Sun × hours) */
+  function heatMap() {
+    const el = h('div', { class: 'heat' });
+    return {
+      el,
+      set(heat) {
+        const max = Math.max(1, ...heat.flat());
+        const days = t('dash.days').split(',');
+        el.replaceChildren(...heat.map((row, d) => h('div', { class: 'heat-row' },
+          h('span', { class: 'heat-day', text: days[d] || '' }),
+          ...row.map((v, hr) => h('span', { class: 'heat-cell', title: `${days[d]} ${String(hr).padStart(2, '0')}:00 · ${v}`, style: `--o:${v ? 0.15 + 0.85 * (v / max) : 0}` })))),
+        h('div', { class: 'heat-row heat-hours' }, h('span', { class: 'heat-day' }), ...Array.from({ length: 24 }, (_, i) => h('span', { class: 'heat-h', text: i % 6 === 0 ? String(i) : '' }))));
+      },
+    };
+  }
+
+  Pages.dashboard = function (root) {
+    root.classList.add('dash-page');
     const tBots = tile('server', t('dash.botsOnline'));
     const tToday = tile('music', t('dash.playsToday'));
     const tWeek = tile('chart', t('dash.playsWeek'));
+    const tUsers = tile('users', t('dash.onlineNow'));
     const tUp = tile('clock', t('dash.uptime'));
-    root.append(h('div', { class: 'tile-grid' }, tBots.el, tToday.el, tWeek.el, tUp.el));
 
-    // --- system
+    // system (CPU line + memory figures in one card)
     const chart = lineChart([{ key: 'cpu', cls: 'main' }, { key: 'appCpu', cls: 'second' }]);
     const cpuNow = h('span', { class: 'big-num' });
-    const legend = h('div', { class: 'legend' },
-      h('span', { class: 'lg main' }, t('dash.cpuSystem')), h('span', { class: 'lg second' }, t('dash.cpuApp')));
-    const sysCard = card('cpu', t('dash.system'), h('div', { class: 'row gap' }, legend, cpuNow), h('div', { class: 'chart-box' }, chart.el), h('div', { class: 'muted small sys-os' }));
-    const ramRing = ring(150);
+    const legend = h('div', { class: 'legend' }, h('span', { class: 'lg main' }, t('dash.cpuSystem')), h('span', { class: 'lg second' }, t('dash.cpuApp')));
+    const ramRing = ring(112);
     const memList = h('dl', { class: 'mem-list' });
-    const memCard = card('memory', t('dash.memory'), null, h('div', { class: 'mem-wrap' }, ramRing.el, memList));
-    root.append(h('div', { class: 'dash-grid two' }, sysCard, memCard));
+    const sysOs = h('div', { class: 'muted small sys-os' });
+    const sysCard = card('cpu', t('dash.system'), h('div', { class: 'row gap' }, legend, cpuNow),
+      h('div', { class: 'sys-body' }, h('div', { class: 'chart-box' }, chart.el), h('div', { class: 'mem-wrap' }, ramRing.el, memList)), sysOs);
 
-    // --- plays + top
+    // server activity
+    const usersLine = usersChart();
+    const heat = heatMap();
+    const actInfo = h('span', { class: 'muted small' });
+    const actBody = h('div', { class: 'act-body' }, h('div', { class: 'chart-box sm' }, usersLine.el), heat.el);
+    const actEmpty = h('p', { class: 'muted small act-empty', text: t('dash.activityOff') });
+    const actCard = card('users', t('dash.activity'), actInfo, actBody, actEmpty);
+
+    // plays, top songs, bots
     const bars = barChart();
     const playsCard = card('chart', t('dash.plays14'), h('span', { class: 'muted small dash-total' }), bars.el);
     const topSongs = h('ol', { class: 'top-songs' });
     const songsCard = card('music', t('dash.topSongs'), h('a', { href: '/stats', 'data-link': '', class: 'small link-arrow', text: t('dash.seeAll') + ' →' }), topSongs);
-    root.append(h('div', { class: 'dash-grid two-1' }, playsCard, songsCard));
-
-    const topUsers = h('div', { class: 'hbars' });
-    const usersCard = card('users', t('dash.topUsers'), null, topUsers);
     const botList = h('div', { class: 'dash-bots' });
     const botsCard = card('server', t('nav.bots'), h('a', { href: '/bots', 'data-link': '', class: 'small link-arrow', text: t('dash.manage') + ' →' }), botList);
-    const counts = h('div', { class: 'count-grid' });
-    const countsCard = card('grid', t('dash.library'), null, counts);
-    root.append(h('div', { class: 'dash-grid three' }, botsCard, usersCard, countsCard));
+
+    root.append(h('div', { class: 'dash' },
+      h('div', { class: 'tile-grid' }, tBots.el, tToday.el, tWeek.el, tUsers.el, tUp.el),
+      h('div', { class: 'dash-row' }, sysCard, actCard),
+      h('div', { class: 'dash-row three' }, playsCard, songsCard, botsCard)));
 
     let history = [];
     let alive = true, timer = null, first = true;
@@ -165,7 +207,7 @@
           h('span', { class: 'dash-bot-info' }, h('strong', { text: F.botLabel(b) }),
             h('span', { class: 'muted small', text: p ? p.title : t('status.' + b.status) })),
           h('span', { class: 'dot dot-' + b.status, title: t('status.' + b.status) }));
-      }) : [F.empty('server', t('bots.none'))]));
+      }) : [h('p', { class: 'muted small', text: t('bots.none') })]));
     }
 
     async function load() {
@@ -178,14 +220,13 @@
       chart.set(history);
       const n = s.now;
       cpuNow.textContent = n ? Math.round(n.cpu) + '%' : '–';
-      sysCard.querySelector('.sys-os').textContent = s.os + ' · ' + t('dash.cores', { n: s.cores }) + ' · ' + t('dash.last3');
+      sysOs.textContent = s.os + ' · ' + t('dash.cores', { n: s.cores }) + ' · ' + t('dash.last3');
       if (n) {
         ramRing.set(n.ramTotal ? n.ramUsed / n.ramTotal : 0, Math.round((100 * n.ramUsed) / Math.max(1, n.ramTotal)) + '%', t('dash.ram'));
         memList.replaceChildren(
           h('dt', { text: t('dash.ramUsed') }), h('dd', { text: F.fmtBytes(n.ramUsed) + ' / ' + F.fmtBytes(n.ramTotal) }),
           h('dt', { text: t('dash.appMem') }), h('dd', { class: 'accent', text: F.fmtBytes(n.appMem) }),
           h('dt', { text: t('dash.appCpu') }), h('dd', { text: n.appCpu.toFixed(1) + '%' }),
-          h('dt', { text: t('dash.heap') }), h('dd', { text: F.fmtBytes(s.gcHeap) }),
           h('dt', { text: t('dash.threads') }), h('dd', { text: F.fmtNum(s.threads) }));
       }
       tUp.set(fmtUptime(s.uptime), null, 'frix v' + s.version);
@@ -199,24 +240,26 @@
           h('span', { class: 'ts-thumb' }, x.thumbnail ? h('img', { src: x.thumbnail, alt: '', loading: 'lazy' }) : icon('music')),
           h('span', { class: 'ts-title', text: F.cleanTitle ? F.cleanTitle(x.title) : x.title }),
           h('span', { class: 'ts-count', text: '×' + x.count }))) : [h('li', { class: 'muted small', text: t('dash.noPlays') })]));
-        const max = Math.max(1, ...d.topUsers.map((u) => u.count));
-        topUsers.replaceChildren(...(d.topUsers.length ? d.topUsers.map((u) => h('div', { class: 'hbar' },
-          h('div', { class: 'hbar-top' }, h('span', { text: u.user }), h('span', { class: 'muted', text: F.fmtNum(u.count) })),
-          h('div', { class: 'hbar-track' }, h('div', { class: 'hbar-fill', style: `width:${(100 * u.count) / max}%` })))) : [h('p', { class: 'muted small', text: t('dash.noPlays') })]));
-        const c = d.counts;
-        counts.replaceChildren(...[['radio', 'nav.radios', c.radios, '/radios'], ['playlist', 'nav.playlists', c.playlists, '/playlists'],
-          ['terminal', 'dash.customCmds', c.commands, '/commands'], ['users', 'nav.users', c.users, '/users']].map(([ic, k, v, href]) =>
-          h('a', { href, 'data-link': '', class: 'count-item' }, h('span', { class: 'tile-ic sm' }, icon(ic)), h('span', { class: 'count-num', text: F.fmtNum(v) }), h('span', { class: 'muted small', text: t(k) }))));
+        const a = d.activity || {};
+        actBody.hidden = !a.any; actEmpty.hidden = !!a.any;
+        if (a.any) {
+          usersLine.set((a.last24 || []).map((x) => x.users));
+          heat.set(a.heat || []);
+          const pk = a.peakAt ? new Date(a.peakAt) : null;
+          actInfo.textContent = pk ? t('dash.peak', { n: a.peak, when: pk.toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' }) }) : '';
+        }
+        tUsers.set(a.any ? F.fmtNum(a.now) : '–', null, a.any ? t('dash.peakShort', { n: a.peak }) : t('dash.activityShort'));
       }
       first = false;
     }
 
     load();
     timer = setInterval(load, 2000);
+    const slow = setInterval(() => { first = true; }, 60000); // refresh slow-changing parts every minute
     if (F.state.botsLoaded) paintBots(F.state.bots);
     return {
       onBots: paintBots,
-      destroy() { alive = false; clearInterval(timer); },
+      destroy() { alive = false; clearInterval(timer); clearInterval(slow); root.classList.remove('dash-page'); },
     };
   };
 })();

@@ -31,6 +31,7 @@ public static class PanelApi
 		injector = coreInjector;
 		FrixAvatar.RefreshAllBots = () => Bots.IterateAll(b => _ = b.RefreshIdleAvatar());
 		FrixSystem.Start();
+		FrixPluginHost.MigrateScheduled();
 	}
 
 	private static BotManager Bots => injector!.GetModuleOrThrow<BotManager>();
@@ -604,6 +605,7 @@ public static class PanelApi
 				thumbnail = x.Type == "youtube" ? $"https://i.ytimg.com/vi/{x.ResourceId}/mqdefault.jpg" : null,
 			}),
 			topUsers = FrixData.TopRequesters(30, 5).Select(x => new { user = x.User, count = x.Count }),
+			activity = ActivityInfo(),
 			counts = new
 			{
 				radios = FrixRadio.List().Count,
@@ -611,6 +613,17 @@ public static class PanelApi
 				users = (long)(FrixDb.Scalar("SELECT COUNT(*) FROM users") ?? 0L),
 				commands = FrixCommands.List().Length,
 			},
+		};
+	}
+
+	private static object ActivityInfo()
+	{
+		var a = FrixData.Activity();
+		return new
+		{
+			any = a.Any, now = a.Now, peak = a.Peak, peakAt = a.PeakAt?.ToString("yyyy-MM-ddTHH:mm"),
+			last24 = a.Last24.Select(x => new { hour = x.Hour.ToString("HH:mm"), users = x.Users }),
+			heat = a.Heat,
 		};
 	}
 

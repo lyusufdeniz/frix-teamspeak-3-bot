@@ -34,12 +34,12 @@ The bot connects to your TeamSpeak server by itself and streams audio directly w
 - **Dashboard**: live server CPU / RAM chart, Frix memory usage, plays today / this week, top songs and requesters, and the status of **multiple bots**
 - Left sidebar layout with a dark (charcoal + violet) and a light theme
 - Player with search results, "adding song" progress, queue move/remove, seek, volume
-- **22 plugins**, each enabled and configured per bot:
-  - *Core:* music, radio (turn either off to disable its commands), song title as the bot's nickname/description, avatar (idle command card, song cover), auto reconnect (rejoins the same channel)
-  - *Welcome & announcements:* welcome message, announcements/ads, scheduled messages
-  - *Music:* pause when alone, idle radio, vote skip, DJ mode & queue limit
+- **26 plugins**, each enabled and configured per bot:
+  - *Core:* music, radio (turn either off to disable its commands), song title as the bot's nickname/description, avatar (idle command card, song cover), auto reconnect (rejoins the same channel), volume levelling
+  - *Welcome & announcements:* welcome message, announcements (rotating ads + scheduled messages in one plugin)
+  - *Music:* autoplay (similar songs when the queue ends), favourites (`!fav`, `!favs`), scheduled playback, pause when alone, idle radio, vote skip, DJ mode & queue limit
   - *Moderation:* AFK mover, nickname filter, channel guard, anti-flood
-  - *Server management:* registration (`!kayit`), temporary channel creator, activity ranks, support notifier, channel name info
+  - *Server management:* server activity (online users chart and busiest hours on the dashboard), registration (`!kayit`), temporary channel creator, activity ranks, support notifier, channel name info
   - *Fun & tools:* polls, dice, coin flip, pick, weather, currency, lyrics
 - **Playlists** (`!liste`) and **statistics** (most played songs, top requesters, most active users)
 - Rename any built-in command, add custom commands; command names follow the language chosen at setup

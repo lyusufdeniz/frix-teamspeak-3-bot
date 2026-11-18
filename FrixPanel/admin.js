@@ -70,7 +70,7 @@
   const PLUGIN_ICONS = {
     music: 'music', radio: 'radio', npstatus: 'idcard', avatar: 'image', welcome: 'hand', advertisement: 'megaphone', scheduled: 'calendar',
     alonepause: 'pause', idleradio: 'radio', voteskip: 'vote', djmode: 'headphones', afkmover: 'moon', namefilter: 'filter', channelguard: 'shield',
-    antiflood: 'zap', autoreconnect: 'refresh', registration: 'userPlus', tempchannel: 'folderPlus', ranks: 'trophy', supportnotify: 'bell', channelinfo: 'info', fun: 'dice',
+    antiflood: 'zap', autoreconnect: 'refresh', normalize: 'volume', autoplay: 'repeat', favorites: 'star', scheduleplay: 'clock', activity: 'chart', registration: 'userPlus', tempchannel: 'folderPlus', ranks: 'trophy', supportnotify: 'bell', channelinfo: 'info', fun: 'dice',
   };
 
   // ================================================================== PLUGINS
@@ -112,11 +112,11 @@
     }
     // sections keep the (now 17) plugins scannable; unknown ids land in "other"
     const GROUPS = [
-      ['core', ['music', 'radio', 'npstatus', 'avatar', 'autoreconnect']],
-      ['welcome', ['welcome', 'advertisement', 'scheduled']],
-      ['music', ['alonepause', 'idleradio', 'voteskip', 'djmode']],
+      ['core', ['music', 'radio', 'npstatus', 'avatar', 'autoreconnect', 'normalize']],
+      ['welcome', ['welcome', 'advertisement']],
+      ['music', ['autoplay', 'favorites', 'scheduleplay', 'alonepause', 'idleradio', 'voteskip', 'djmode']],
       ['moderation', ['afkmover', 'namefilter', 'channelguard', 'antiflood']],
-      ['server', ['registration', 'tempchannel', 'ranks', 'supportnotify', 'channelinfo']],
+      ['server', ['activity', 'registration', 'tempchannel', 'ranks', 'supportnotify', 'channelinfo']],
       ['fun', ['fun']],
     ];
     function grouped(pl) {

@@ -314,8 +314,12 @@ public class PlayManager
 
 	public Task Stop() => StopInternal(false);
 
+	/// <summary>Frix: son durma kuyruğun bitmesinden mi (true) yoksa !dur/!bitir'den mi (false) oldu.</summary>
+	public bool LastStopWasQueueEnd { get; private set; }
+
 	private async Task StopInternal(bool songEndedByCallback)
 	{
+		LastStopWasQueueEnd = songEndedByCallback;
 		await ResourceStopped.InvokeAsync(this, new SongEndEventArgs(songEndedByCallback));
 
 		if (songEndedByCallback)

@@ -387,6 +387,13 @@ public sealed class ScheduledPlugin : FrixPlugin
 
 	private string lastMinute = "";
 
+	/// <summary>"pzt,sal" / "mon,tue" gün listesi bugünü kapsıyor mu? Tanınan gün yoksa her gün.</summary>
+	internal static bool DayMatches(string spec, DayOfWeek day)
+	{
+		var days = spec.Split(',').Select(d => Days.TryGetValue(d.Trim(), out var dw) ? (DayOfWeek?)dw : null).Where(d => d != null).ToList();
+		return days.Count == 0 || days.Contains(day);
+	}
+
 	private static readonly Dictionary<string, DayOfWeek> Days = new(StringComparer.OrdinalIgnoreCase)
 	{
 		["pzt"] = DayOfWeek.Monday, ["sal"] = DayOfWeek.Tuesday, ["çar"] = DayOfWeek.Wednesday, ["car"] = DayOfWeek.Wednesday,

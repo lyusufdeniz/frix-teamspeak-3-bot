@@ -120,6 +120,58 @@ public static partial class MainCommands
 		return sb.ToString();
 	}
 
+	// ================================================================== favoriler
+
+	[Command("fav")]
+	public static string CommandFav(ConfBot conf, PlayManager pm, InvokerData invoker, string? islem = null)
+	{
+		var fav = RequirePlugin<FavoritesPlugin>(conf);
+		var uid = invoker.ClientUid.Value;
+		if (string.IsNullOrEmpty(uid)) return FrixText.Get("fav.nouser");
+		var text = (islem ?? "").Trim();
+		var sp = text.IndexOf(' ');
+		var verb = (sp < 0 ? text : text[..sp]).ToLowerInvariant();
+		if (verb is "sil" or "del" or "delete" or "remove")
+		{
+			var removed = int.TryParse(sp < 0 ? "" : text[(sp + 1)..].Trim(), out var no) ? FrixData.RemoveFavorite(uid, no) : null;
+			return removed is null ? FrixText.Get("fav.badno") : FrixText.Get("fav.removed", ("title", removed.Title ?? removed.ResourceId));
+		}
+		var res = pm.CurrentPlayData?.ResourceData;
+		if (res is null || res.AudioType == "media") return FrixText.Get("fav.nothing");
+		try
+		{
+			return FrixData.AddFavorite(uid, res.AudioType, res.ResourceId, res.ResourceTitle, fav.Max)
+				? FrixText.Get("fav.added", ("title", res.ResourceTitle ?? "?"))
+				: FrixText.Get("fav.exists", ("title", res.ResourceTitle ?? "?"));
+		}
+		catch (InvalidOperationException) { return FrixText.Get("fav.limit", ("max", fav.Max.ToString())); }
+	}
+
+	[Command("favs")]
+	public static async Task<string> CommandFavs(ExecutionInformation info, ConfBot conf, PlayManager pm, PlaylistManager pl, InvokerData invoker, string? islem = null)
+	{
+		var fav = RequirePlugin<FavoritesPlugin>(conf);
+		var uid = invoker.ClientUid.Value;
+		if (string.IsNullOrEmpty(uid)) return FrixText.Get("fav.nouser");
+		var all = FrixData.Favorites(uid);
+		if (all.Count == 0) return FrixText.Get("fav.none");
+		var verb = (islem ?? "").Trim().ToLowerInvariant();
+		if (verb is "liste" or "list" or "goster" or "göster" or "show")
+		{
+			var sb = new StringBuilder(FrixText.Get("fav.header", ("count", all.Count.ToString())));
+			foreach (var (f, i) in all.Take(30).Select((f, i) => (f, i)))
+				sb.Append('\n').Append($"{i + 1}. {FrixChat.Escape(f.Title ?? f.ResourceId)}");
+			if (all.Count > 30) sb.Append("\n…");
+			return sb.ToString();
+		}
+		if (invoker is ClientCall cc && FrixPluginHost.Enabled<DjModePlugin>(conf.Name)?.CheckAdd(cc, pl) is { } err)
+			throw new CommandException(err, CommandExceptionReason.CommandError);
+		var items = (fav.Shuffle ? all.OrderBy(_ => Random.Shared.Next()) : all.AsEnumerable())
+			.Select(f => new PlaylistItem(new AudioResource(f.ResourceId, f.Title, f.Type))).ToList();
+		await pm.Enqueue(invoker, items);
+		return FrixText.Get("fav.queued", ("count", items.Count.ToString()));
+	}
+
 	// ================================================================== istatistik
 
 	[Command("istatistik")]

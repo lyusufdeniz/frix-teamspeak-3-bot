@@ -129,6 +129,24 @@ Panel → Eklentiler → *Müzik* → *Direkt çal (kuyruğa ekleme)*. Açıkken
 **Bot sunucudan düşünce kendi geri girsin**
 Panel → Eklentiler → *Otomatik yeniden bağlan* (varsayılan açık). Bot zaman aşımı, sunucu yeniden başlaması ya da sunucudan atılma sonrası kendiliğinden bağlanır ve aynı kanala döner. İlk deneme süresini, en fazla deneme sayısını ve atılınca geri girip girmeyeceğini ayarlayabilirsin. Banlanınca tekrar denemez.
 
+**Bazı şarkılar çok yüksek, bazıları çok kısık çalıyor**
+Panel → Eklentiler → *Ses seviyesi eşitleme* (varsayılan açık). Her şarkı aynı ses seviyesine çekilir; hedef seviyeyi kısık / normal / yüksek seçebilirsin. Değişiklik bir sonraki şarkıda başlar.
+
+**Kuyruk bitince bot sussun istemiyorum**
+Panel → Eklentiler → *Otomatik devam*. Kuyruk bitince son çalan şarkıya benzer bir şarkı (YouTube mix) seçilip çalınır. `!dur` / `!bitir` ile durdurursan devam etmez. İstersen sadece kanalda biri varken çalışır.
+
+**Favoriler nasıl çalışır?**
+*Favoriler* eklentisi açıkken `!fav` çalan şarkıyı senin favorilerine ekler, `!favs` hepsini kuyruğa ekler. `!favs liste` listeyi gösterir, `!fav sil 3` 3. favoriyi siler. Favoriler TeamSpeak kimliğine göre kişiye özeldir.
+
+**Her sabah radyo otomatik başlasın**
+Panel → Eklentiler → *Zamanlanmış çalma*. Her satır bir plan: `09:00 | radyo Power Türk`, `pzt,sal,çar,per,cum 18:30 | liste akşam`, `00:30 | dur`, `20:00 | ses 40`.
+
+**Duyuru/reklam ve zamanlı duyuru nerede?**
+İkisi tek eklentide: Panel → Eklentiler → *Duyurular*. Dönen mesajlar belirli aralıklarla gider; *Zamanlı duyurular* alanına `21:00 | mesaj` biçiminde gün/saat bazlı mesajlar yazılır. Sadece zamanlı duyuru istiyorsan dönen mesajları boş bırak.
+
+**Dashboard'daki sunucu aktivitesi**
+*Sunucu aktivitesi* eklentisi (varsayılan açık) çevrimiçi kişi sayısını 5 dakikada bir kaydeder. Dashboard'da son 24 saat grafiği ve gün × saat ısı haritası (en yoğun saatler) görünür.
+
 **Çalan şarkı botun adında / açıklamasında görünsün**
 Panel → Eklentiler → *Şarkı adı → bot adı/açıklaması*. Ad ve açıklama biçimini ayrı ayrı ayarlarsın (`{title}`, `{user}`, `{bot}`). TeamSpeak adları en fazla 30 karakter olduğu için uzun adlar kısaltılır. Çalma bitince bot eski adına döner.
 
@@ -272,6 +290,24 @@ Panel → Plugins → *Music* → *Play now (don't queue)*. When on, the new son
 
 **Make the bot rejoin by itself after it drops**
 Panel → Plugins → *Auto reconnect* (on by default). After a timeout, a server restart or a kick, the bot reconnects and goes back to the same channel. You can set the first retry delay, the maximum number of retries and whether to come back after a kick. It never retries after a ban.
+
+**Some songs are much louder than others**
+Panel → Plugins → *Volume levelling* (on by default). Every song is brought to the same loudness; choose quiet / normal / loud. Changes apply from the next song.
+
+**I don't want the bot to go silent when the queue ends**
+Panel → Plugins → *Autoplay*. When the queue ends, a song similar to the last one (YouTube mix) is played. It does not continue after `!stop`. Optionally only while someone is in the channel.
+
+**How do favourites work?**
+With the *Favourites* plugin on, `!fav` adds the playing song to your favourites and `!favs` queues all of them. `!favs list` shows the list, `!fav del 3` removes the 3rd one. Favourites belong to your TeamSpeak identity.
+
+**Start a radio every morning**
+Panel → Plugins → *Scheduled playback*. One plan per line: `09:00 | radio Power Türk`, `mon,tue,wed,thu,fri 18:30 | playlist evening`, `00:30 | stop`, `20:00 | volume 40`.
+
+**Where are announcements and scheduled messages?**
+Both are one plugin now: Panel → Plugins → *Announcements*. Rotating messages go out at an interval; put day/time based messages like `21:00 | message` in *Scheduled messages*. Leave the rotating messages empty if you only want scheduled ones.
+
+**Server activity on the dashboard**
+The *Server activity* plugin (on by default) records how many people are online every 5 minutes. The dashboard shows the last 24 hours and a day × hour heat map of the busiest times.
 
 **Show the playing song in the bot's nickname / description**
 Panel → Plugins → *Song → bot name/description*. Set the nickname and description formats separately (`{title}`, `{user}`, `{bot}`). TeamSpeak nicknames are max 30 characters, so long titles are cut. The bot gets its own name back when playback stops.
