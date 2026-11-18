@@ -1454,3 +1454,53 @@ select.input, .bot-select { background-size: 12px 12px; }
   .fit-g > * { min-height: 0; }
 }
 .plugin-list .plugin-group { display: block; margin-top: 0; }
+
+/* ================================================================ v11: calmer sidebar, fewer boxes on pages */
+/* sidebar: brand, bot switcher, one list split by thin lines, now-playing at the bottom */
+.sidebar { padding: 0 12px 12px 12px; }
+.side-brand { height: 64px; padding: 0 8px; margin: 0; }
+.side-bot { padding: 2px 0 10px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.side-bot .bot-select-wrap { height: 42px; border-radius: 12px; background: var(--raised); border: 1px solid transparent; padding-left: 12px; }
+.side-bot .bot-select-wrap:hover { border-color: var(--line2); }
+.side-bot .fx-btn { font-weight: 600; font-size: .9rem; }
+.side-group { margin: 0; padding: 6px 0; }
+.side-group + .side-group { border-top: 1px solid var(--line); }
+.side-group-title { display: none; }
+.side-item { height: 40px; padding: 0 12px; gap: 12px; font-size: .92rem; border-radius: 10px; }
+.side-item .ic { width: 18px; height: 18px; }
+.side-item[aria-current="page"], .side-parent.active { background: var(--raised); color: var(--text); font-weight: 600; }
+.side-item[aria-current="page"] .ic, .side-parent.active .ic { color: var(--accent-2); }
+.side-item[aria-current="page"]::before { content: ""; display: block; position: absolute; left: -12px; top: 9px; bottom: 9px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
+.side-parent .side-chev { opacity: .6; }
+.side-player .mini { background: transparent; border: 1px solid var(--line); }
+
+/* pages: plain sections and lists instead of a box around everything */
+.callout { background: transparent; border: 0; border-left: 3px solid var(--accent); border-radius: 0; padding: 4px 0 4px 14px; }
+.radio-grid { gap: 0 28px; }
+.radio-grid .radio-card { background: none; border: 0; border-radius: 0; box-shadow: none; border-bottom: 1px solid var(--line); padding: 12px 4px; margin: 0; }
+.radio-grid .radio-card:hover { background: color-mix(in srgb, var(--raised) 35%, transparent); }
+.radio-grid .radio-card .btn-primary { background: transparent; color: var(--accent-2); border: 1px solid var(--line2); }
+.radio-grid .radio-card .btn-primary:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
+.radio-grid .radio-card.is-playing { box-shadow: inset 3px 0 0 var(--accent); }
+.pl-list { gap: 0; }
+.pl-list .pl-card { background: none; border: 0; border-radius: 0; box-shadow: none; border-bottom: 1px solid var(--line); padding: 10px 4px; margin: 0; }
+.stats-grid { gap: 0; }
+.stats-grid .card, .stats-grid .st-side .card { background: none; border: 0; border-radius: 0; box-shadow: none; padding: 4px 28px 12px; margin: 0; }
+.stats-grid > .card { padding-left: 0; border-right: 1px solid var(--line); }
+.stats-grid .st-side .card + .card { border-top: 1px solid var(--line); padding-top: 16px; }
+.text-list { gap: 0 24px; }
+.text-item { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; padding: 10px 4px; }
+.text-item:hover { background: color-mix(in srgb, var(--raised) 35%, transparent); border-color: var(--line); }
+.texts-card, .log-card { background: none; border: 0; box-shadow: none; padding: 0; border-radius: 0; }
+.cmd-list .cmd-row { padding: 12px 4px; }
+.main > .card:not(.dash-card):not(.tile):not(.now-card), .settings-body > .card { background: none; border: 0; box-shadow: none; border-radius: 0; padding-left: 0; padding-right: 0; }
+.faq-q-item { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; padding: 12px 4px; }
+.faq-q-item:hover { background: color-mix(in srgb, var(--raised) 35%, transparent); }
+.faq { gap: 0 28px; }
+/* dashboard: stats as one strip, not five boxes */
+.tile-grid { gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.tile-grid .tile { background: none; border: 0; border-radius: 0; box-shadow: none; border-left: 1px solid var(--line); }
+.tile-grid .tile:first-child { border-left: 0; }
+@media (max-width: 1300px) { .tile-grid .tile { border-left: 0; } }
+.fx-list { z-index: 200; min-width: 0; }
+.legend { flex-wrap: nowrap; } .lg { white-space: nowrap; } .act-body { overflow: hidden; } .heat { padding-bottom: 2px; }

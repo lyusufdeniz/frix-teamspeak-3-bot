@@ -326,9 +326,12 @@
       list.hidden = false;
       wrap.classList.add('open');
       btn.setAttribute('aria-expanded', 'true');
-      // open upwards when there is no room below
+      // fixed position so dialogs / scroll boxes never clip it; opens upwards when there is no room below
       const r = btn.getBoundingClientRect();
-      wrap.classList.toggle('up', window.innerHeight - r.bottom < Math.min(280, list.scrollHeight + 16) && r.top > window.innerHeight - r.bottom);
+      const need = Math.min(280, list.scrollHeight + 4);
+      const up = window.innerHeight - r.bottom < need + 12 && r.top > window.innerHeight - r.bottom;
+      Object.assign(list.style, { position: 'fixed', left: r.left + 'px', width: Math.max(r.width, 180) + 'px', right: 'auto',
+        top: up ? 'auto' : (r.bottom + 6) + 'px', bottom: up ? (window.innerHeight - r.top + 6) + 'px' : 'auto' });
       setActive(sel.selectedIndex);
       openSel = close;
     }
@@ -368,6 +371,8 @@
     paint();
   };
   document.addEventListener('mousedown', (e) => { if (openSel && !e.target.closest('.fx')) openSel(); });
+  window.addEventListener('resize', () => { if (openSel) openSel(); });
+  document.addEventListener('scroll', (e) => { if (openSel && !(e.target.closest && e.target.closest('.fx-list'))) openSel(); }, true);
   const enhanceAll = (root) => (root.querySelectorAll ? root.querySelectorAll('select.input, select.bot-select') : []).forEach((s) => F.enhanceSelect(s));
   new MutationObserver((muts) => {
     for (const m of muts) for (const n of m.addedNodes) {
@@ -934,9 +939,8 @@
     };
     const side = h('aside', { class: 'sidebar', id: 'sidebar', 'aria-label': t('nav.main') },
       h('div', { class: 'side-brand' }, h('a', { href: '/', 'data-link': '', class: 'brand', 'aria-label': 'frix' }, F.brand(true))),
-      h('div', { class: 'side-bot' }, h('div', { class: 'side-group-title', text: t('top.botSelect') }), h('label', { class: 'bot-select-wrap' }, botDot, botSel)),
-      h('nav', { class: 'sidenav' }, groups.map(([g, keys]) => h('div', { class: 'side-group' },
-        h('div', { class: 'side-group-title', text: t('nav.group.' + g) }), h('ul', null, keys.map(link))))),
+      h('div', { class: 'side-bot', title: t('top.botSelect') }, h('label', { class: 'bot-select-wrap' }, botDot, botSel)),
+      h('nav', { class: 'sidenav' }, groups.map(([, keys]) => h('div', { class: 'side-group' }, h('ul', null, keys.map(link))))),
       h('div', { class: 'side-player', id: 'side-player' }),
       h('div', { class: 'side-foot muted small', text: 'frix ' + (S.version ? 'v' + S.version : '') }));
     const scrim = h('div', { class: 'side-scrim', onclick: () => closeDrawer() });

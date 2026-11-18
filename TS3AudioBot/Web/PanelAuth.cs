@@ -140,8 +140,8 @@ public static class PanelAuth
 		// SPA: uzantısız yollar index.html'e döner (istemci tarafı yönlendirme)
 		if (!Path.HasExtension(path))
 			ctx.Request.Path = "/index.html";
-		if (path.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || !Path.HasExtension(path))
-			h["Cache-Control"] = "no-cache";
+		// Panel dosyaları her açılışta doğrulansın (güncellemeden sonra eski JS/CSS görünmesin)
+		h["Cache-Control"] = "no-cache";
 		return true;
 	}
 
