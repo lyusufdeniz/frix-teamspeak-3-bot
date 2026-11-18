@@ -123,6 +123,9 @@ Panel → Komutlar → *Özel komutlar*. *Metin* türü sabit bir cevap verir (�
 **Müzik ya da radyoyu kapatabilir miyim?**
 Evet: Panel → Eklentiler → *Temel*. *Müzik* kapalıyken `!ara`, `!link`, `!liste`, `!istatistik` çalışmaz; *Radyo* kapalıyken `!radyo` çalışmaz. `!gec`, `!dur`, `!ses` gibi kontroller ikisinden biri açık olduğu sürece çalışır. Kapalı bir özelliğin komutu yazılırsa bot "bu özellik kapalı" der. Komutlar sayfası ve `!yardim` sadece açık eklentilerin komutlarını gösterir.
 
+**!ara yazınca şarkı kuyruğa değil direkt çalsın**
+Panel → Eklentiler → *Müzik* → *Direkt çal (kuyruğa ekleme)*. Açıkken yeni şarkı çalanı bırakıp hemen başlar, kuyruk korunur. Aynı seçenek *Radyo* eklentisinde de var (varsayılan açık); kapatırsan radyo kuyruğa eklenir.
+
 **Çalan şarkı botun adında / açıklamasında görünsün**
 Panel → Eklentiler → *Şarkı adı → bot adı/açıklaması*. Ad ve açıklama biçimini ayrı ayrı ayarlarsın (`{title}`, `{user}`, `{bot}`). TeamSpeak adları en fazla 30 karakter olduğu için uzun adlar kısaltılır. Çalma bitince bot eski adına döner.
 
@@ -260,6 +263,9 @@ Panel → Commands → *Custom commands*. *Text* replies with fixed text (e.g. `
 
 **Can I turn music or radio off?**
 Yes: Panel → Plugins → *Core*. With *Music* off, `!ara`, `!link`, `!liste` and `!istatistik` don't work; with *Radio* off, `!radyo` doesn't. Controls like `!gec`, `!dur` and `!ses` work while either is on. If someone types a disabled command, the bot says the feature is off. The commands page and `!yardim` only list commands whose plugin is on.
+
+**Make !ara play right away instead of queueing**
+Panel → Plugins → *Music* → *Play now (don't queue)*. When on, the new song replaces the current one immediately and the queue is kept. The *Radio* plugin has the same option (on by default); turn it off to queue radios instead.
 
 **Show the playing song in the bot's nickname / description**
 Panel → Plugins → *Song → bot name/description*. Set the nickname and description formats separately (`{title}`, `{user}`, `{bot}`). TeamSpeak nicknames are max 30 characters, so long titles are cut. The bot gets its own name back when playback stops.

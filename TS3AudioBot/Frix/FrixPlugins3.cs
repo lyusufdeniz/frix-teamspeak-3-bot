@@ -17,7 +17,14 @@ public sealed class MusicPlugin : FrixPlugin
 	public override string NameEn => "Music";
 	public override string DescTr => "YouTube/link ile şarkı çalma: !ara, !link, !liste, !istatistik ve !gec, !dur, !ses gibi kontrol komutları. Kapatırsan bu komutlar devre dışı kalır (kontroller radyo açıksa çalışmaya devam eder).";
 	public override string DescEn => "Playing songs from YouTube/links: !ara, !link, !liste, !istatistik and controls like !gec, !dur, !ses. Turning it off disables these commands (controls keep working while Radio is on).";
-	public override PluginField[] Schema => [];
+	public override PluginField[] Schema =>
+	[
+		new("forcePlay", "bool", "Direkt çal (kuyruğa ekleme)", "Play now (don't queue)", false, null,
+			"Açıkken !ara ve !link çalan şarkıyı bırakıp yeni şarkıyı hemen çalar. Kuyruktaki diğer şarkılar korunur.",
+			"When on, !ara and !link stop the current song and play the new one right away. The rest of the queue is kept."),
+	];
+
+	public bool ForcePlay => B("forcePlay");
 }
 
 /// <summary>!radyo komutu.</summary>
@@ -29,7 +36,14 @@ public sealed class RadioPlugin : FrixPlugin
 	public override string NameEn => "Radio";
 	public override string DescTr => "Panelde eklenen radyoları !radyo <isim> ile çalar. Kapatırsan !radyo devre dışı kalır.";
 	public override string DescEn => "Plays the radios added in the panel with !radyo <name>. Turning it off disables !radyo.";
-	public override PluginField[] Schema => [];
+	public override PluginField[] Schema =>
+	[
+		new("forcePlay", "bool", "Direkt çal (kuyruğa ekleme)", "Play now (don't queue)", true, null,
+			"Açıkken radyo çalan şarkıyı bırakıp hemen başlar. Kapalıysa radyo kuyruğun sonuna eklenir.",
+			"When on, the radio starts right away and the current song stops. When off, the radio is added to the end of the queue."),
+	];
+
+	public bool ForcePlay => B("forcePlay");
 }
 
 /// <summary>Çalan şarkıyı botun adı ve/veya açıklaması yapar; boşta eski haline döner.</summary>

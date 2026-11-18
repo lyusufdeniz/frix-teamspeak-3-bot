@@ -80,6 +80,7 @@
     shuffle: 'p:M4 7h3.5c4.5 0 4.5 10 9 10H20|p:M4 17h3.5c1.6 0 2.6-1.2 3.4-2.8|p:M13.1 9.8C13.9 8.2 14.9 7 16.5 7H20|p:M17.5 4.5 20 7l-2.5 2.5|p:M17.5 14.5 20 17l-2.5 2.5',
     volume: 'p:M4 9.5h3l4.5-4v13l-4.5-4H4z|p:M15 9.5a3.5 3.5 0 0 1 0 5|p:M17.5 7a7 7 0 0 1 0 10',
     plus: 'p:M12 5v14M5 12h14',
+    menu: 'p:M4 7h16M4 12h16M4 17h16',
     trash: 'p:M5 7h14|p:M9.5 7V5h5v2|p:M7 7l.8 12h8.4L17 7|p:M10.5 10.5v5M13.5 10.5v5',
     edit: 'p:M5 19l1-4L15.5 5.5a2.1 2.1 0 0 1 3 3L9 18z|p:M13.5 7.5l3 3',
     power: 'p:M12 4v7|p:M7.5 6.8a7 7 0 1 0 9 0',
@@ -657,7 +658,7 @@
   ];
   const ROUTES = NAV.concat([{ path: '/account', key: 'account', icon: 'user' }]);
 
-  let botSel = null, botDot = null, moreKeys = [];
+  let botSel = null, botDot = null;
   function updateBotSelect() {
     if (!botSel) return;
     const sig = S.bots.map((b) => b.name + '|' + b.nickname).join(',');
@@ -717,8 +718,33 @@
       h('span', { class: 'avatar', text: (me.name[0] || '?').toLowerCase() }), h('span', { class: 'user-name', text: me.name }), icon('chevron', 'sm'));
     userBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePop(userMenu, userBtn); });
 
+    // left sidebar: brand, grouped navigation, "add song" button; on narrow screens it becomes a drawer
+    const admin = F.isAdmin();
+    const byKey = (k) => NAV.find((n) => n.key === k);
+    const groups = [
+      ['music', ['bots', 'player', 'playlists', 'radios']],
+      ['manage', admin ? ['plugins', 'commands', 'users', 'settings', 'logs'] : []],
+      ['other', ['stats', 'faq']],
+    ].filter((g) => g[1].length);
+    const link = (k) => {
+      const n = byKey(k);
+      return h('li', null, h('a', { href: n.path, 'data-link': '', class: 'side-item', 'data-path': n.path },
+        icon(n.icon), h('span', { text: t('nav.' + n.key) })));
+    };
+    const side = h('aside', { class: 'sidebar', id: 'sidebar', 'aria-label': t('nav.main') },
+      h('div', { class: 'side-brand' }, h('a', { href: '/', 'data-link': '', class: 'brand', 'aria-label': 'frix' }, F.brand(true))),
+      h('div', { class: 'side-add' }, F.btn(t('quick.title'), { kind: 'primary', icon: 'plus', cls: 'side-add-btn', onClick: () => { closeDrawer(); openQuickAdd(); } })),
+      h('nav', { class: 'sidenav' }, groups.map(([g, keys]) => h('div', { class: 'side-group' },
+        h('div', { class: 'side-group-title', text: t('nav.group.' + g) }), h('ul', null, keys.map(link))))),
+      h('div', { class: 'side-foot muted small', text: 'frix ' + (S.version ? 'v' + S.version : '') }));
+    const scrim = h('div', { class: 'side-scrim', onclick: () => closeDrawer() });
+    const burger = h('button', { type: 'button', class: 'btn-icon burger', 'aria-label': t('nav.menu'), title: t('nav.menu'), 'aria-controls': 'sidebar', 'aria-expanded': 'false',
+      onclick: () => (document.body.classList.contains('drawer-open') ? closeDrawer() : openDrawer()) }, icon('menu'));
+    function openDrawer() { document.body.classList.add('drawer-open'); burger.setAttribute('aria-expanded', 'true'); const f = side.querySelector('a,button'); if (f) f.focus(); }
+    closeDrawer = function () { if (!document.body.classList.contains('drawer-open')) return; document.body.classList.remove('drawer-open'); burger.setAttribute('aria-expanded', 'false'); };
+
     const top = h('header', { class: 'topbar' },
-      h('a', { href: '/', 'data-link': '', class: 'brand', 'aria-label': 'frix' }, F.brand(false)),
+      h('div', { class: 'top-left' }, burger, h('h1', { class: 'top-title', id: 'top-title' })),
       h('div', { class: 'top-actions' },
         h('label', { class: 'bot-select-wrap' }, botDot, botSel),
         F.themeBtn(),
@@ -726,42 +752,11 @@
 
     const banner = h('div', { id: 'conn-banner', class: 'conn-banner', hidden: S.online, role: 'status' }, h('span', { class: 'spinner' }), h('span', { text: t('top.offline') }));
     const main = h('main', { id: 'main', class: 'main', tabindex: '-1' });
-
-    // bottom bar: [left items] (fox) [right items]; desktop shows everything, narrow screens a short set + "more"
-    const admin = F.isAdmin();
-    const byKey = (k) => NAV.find((n) => n.key === k);
-    // desktop: music pages left of the fox, management/info right; phones: 4 fixed items + "more" for everyone
-    const deskLeft = admin ? ['bots', 'player', 'playlists', 'radios', 'plugins', 'commands'] : ['bots', 'player', 'playlists'];
-    const deskRight = admin ? ['stats', 'users', 'settings', 'logs', 'faq'] : ['radios', 'stats', 'faq'];
-    const mobLeft = ['bots', 'player'];
-    const mobRight = ['radios'];
-    const item = (k, cls) => {
-      const n = byKey(k);
-      return h('li', { class: cls }, h('a', { href: n.path, 'data-link': '', class: 'nav-item', 'data-path': n.path, 'aria-label': t('nav.' + n.key), title: t('nav.' + n.key) },
-        icon(n.icon), h('span', { class: 'nav-label', text: t('nav.' + n.key) })));
-    };
-    const navList = h('ul', { class: 'nav-list' });
-    deskLeft.forEach((k) => navList.append(item(k, 'd-only')));
-    mobLeft.forEach((k) => navList.append(item(k, 'm-only')));
-    const fox = h('button', { type: 'button', class: 'nav-fox', 'aria-label': t('quick.open'), title: t('quick.open'), onclick: openQuickAdd },
-      h('img', { src: '/logo.svg', alt: '', width: 44, height: 44 }));
-    navList.append(h('li', { class: 'nav-center' }, fox));
-    deskRight.forEach((k) => navList.append(item(k, 'd-only')));
-    mobRight.forEach((k) => navList.append(item(k, 'm-only')));
-    moreKeys = ['playlists', 'stats'].concat(admin ? ['plugins', 'commands', 'users', 'settings', 'logs'] : [], ['faq']);
-    {
-      const moreMenu = h('div', { class: 'menu more-menu', hidden: true, role: 'menu' },
-        moreKeys.map((k) => { const n = byKey(k); return h('a', { href: n.path, 'data-link': '', role: 'menuitem', class: 'menu-item', 'data-path': n.path }, icon(n.icon), h('span', { text: t('nav.' + n.key) })); }));
-      const moreBtn = h('button', { type: 'button', class: 'nav-item', 'aria-haspopup': 'menu', 'aria-expanded': 'false', 'aria-label': t('nav.more'), title: t('nav.more') },
-        icon('more'), h('span', { class: 'nav-label', text: t('nav.more') }));
-      moreBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePop(moreMenu, moreBtn); });
-      navList.append(h('li', { class: 'm-only nav-more' }, moreBtn, moreMenu));
-    }
-    const nav = h('nav', { class: 'bottom-nav', 'aria-label': t('nav.main') }, navList);
     const skip = h('a', { href: '#main', class: 'skip', text: t('common.skip'), onclick: (e) => { e.preventDefault(); main.focus(); } });
-    app.append(skip, top, banner, main, h('div', { class: 'dock' }, mini.build(), nav));
+    app.append(skip, side, scrim, h('div', { class: 'content' }, top, banner, main, h('div', { class: 'dock' }, mini.build())));
     updateBotSelect();
   }
+  let closeDrawer = () => {};
 
   /** "şarkı ekle" bottom sheet opened from the fox button */
   function openQuickAdd() {
@@ -796,7 +791,10 @@
     }
     if (openPop && !openPop.menu.contains(e.target)) closePops();
   });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && openPop) { const b = openPop.btn; closePops(); b.focus(); } });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && openPop) { const b = openPop.btn; closePops(); b.focus(); return; }
+    if (e.key === 'Escape' && document.body.classList.contains('drawer-open')) { closeDrawer(); const bb = F.$('.burger'); if (bb) bb.focus(); }
+  });
 
   // ------------------------------------------------------------------ router
   F.go = function (path) {
@@ -820,11 +818,11 @@
     if (!r) { history.replaceState(null, '', '/'); r = ROUTES[0]; }
     F.curRoute = r;
     document.title = t('nav.' + r.key) + ' · frix';
-    document.querySelectorAll('.bottom-nav [data-path]').forEach((a) => {
+    document.querySelectorAll('.sidenav [data-path]').forEach((a) => {
       if (a.dataset.path === r.path) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
-    const more = F.$('.nav-more > .nav-item');
-    if (more) more.classList.toggle('active', moreKeys.includes(r.key));
+    const tt = F.$('#top-title'); if (tt) tt.textContent = t('nav.' + r.key);
+    closeDrawer();
     const main = F.$('#main');
     main.replaceChildren();
     main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter');

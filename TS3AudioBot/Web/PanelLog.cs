@@ -85,9 +85,28 @@ public sealed class PanelLog : TargetWithLayout
 		}
 	}
 
-	public static void Clear()
+	/// <summary>Paneldeki logları ve logs/ klasöründeki log dosyalarını temizler. Silinen/boşaltılan dosya sayısını döner.</summary>
+	public static int Clear()
 	{
 		lock (Sync)
 			Entries.Clear();
+		var count = 0;
+		var dirs = new[] { System.AppContext.BaseDirectory, System.IO.Directory.GetCurrentDirectory(), System.IO.Path.Combine(System.AppContext.BaseDirectory, "ytdlp") }
+			.Select(d => System.IO.Path.GetFullPath(System.IO.Path.Combine(d, "logs")))
+			.Distinct(StringComparer.OrdinalIgnoreCase)
+			.Where(System.IO.Directory.Exists);
+		foreach (var dir in dirs)
+			foreach (var file in System.IO.Directory.EnumerateFiles(dir, "*.log"))
+			{
+				try { System.IO.File.Delete(file); count++; }
+				catch (System.IO.IOException)
+				{
+					// açık olan güncel log dosyası: silinemiyorsa içini boşalt
+					try { using var fs = new System.IO.FileStream(file, System.IO.FileMode.Open, System.IO.FileAccess.Write, System.IO.FileShare.ReadWrite | System.IO.FileShare.Delete); fs.SetLength(0); count++; }
+					catch { /* yoksay */ }
+				}
+				catch (UnauthorizedAccessException) { }
+			}
+		return count;
 	}
 }

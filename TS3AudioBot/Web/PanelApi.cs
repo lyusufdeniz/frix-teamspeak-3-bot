@@ -156,7 +156,7 @@ public static class PanelApi
 			case ["update", "progress"] when m == "GET": await Ok(ctx, FrixUpdater.Progress); break;
 			case ["logs"] when m == "GET": await Ok(ctx, Logs(ctx.Request.Query["since"])); break;
 			case ["logs", "page"] when m == "GET": await Ok(ctx, LogPage(ctx)); break;
-			case ["logs", "clear"] when m == "POST": PanelLog.Clear(); await Ok(ctx, new { ok = true }); break;
+			case ["logs", "clear"] when m == "POST": await Ok(ctx, new { ok = true, files = PanelLog.Clear() }); break;
 			case ["audit"] when m == "GET": await Ok(ctx, AuditPage(ctx)); break;
 			case ["audit"] when m == "DELETE":
 				FrixDb.Exec("DELETE FROM audit");

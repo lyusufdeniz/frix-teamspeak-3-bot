@@ -832,8 +832,8 @@
     onlyWarn.input.addEventListener('change', () => { filt(); if (auto.input.checked) box.scrollTop = box.scrollHeight; });
     auto.input.addEventListener('change', () => { if (auto.input.checked) box.scrollTop = box.scrollHeight; });
     clear.addEventListener('click', async () => {
-      if (!(await F.confirm(t('logs.clearConfirm'), { ok: t('logs.clear') }))) return;
-      try { await F.api('POST', 'logs/clear'); box.replaceChildren(); n = 0; count.textContent = ''; F.toast(t('logs.cleared')); } catch (e) { F.fail(e); }
+      if (!(await F.confirm(t('logs.clearConfirm'), { danger: true, ok: t('logs.clear') }))) return;
+      try { const r = await F.api('POST', 'logs/clear'); box.replaceChildren(); n = 0; count.textContent = ''; F.toast(r && r.files ? t('logs.clearedFiles', { n: r.files }) : t('logs.cleared')); } catch (e) { F.fail(e); }
     });
     async function poll() {
       try {
@@ -884,7 +884,7 @@
     const clear = F.btn(t('logs.clear'), { kind: 'ghost', icon: 'trash' });
     clear.addEventListener('click', async () => {
       if (!(await F.confirm(t('logs.clearConfirm'), { danger: true, ok: t('logs.clear') }))) return;
-      try { await F.api('POST', 'logs/clear'); F.toast(t('logs.cleared')); page = 1; load(); } catch (e) { F.fail(e); }
+      try { const r = await F.api('POST', 'logs/clear'); F.toast(r && r.files ? t('logs.clearedFiles', { n: r.files }) : t('logs.cleared')); page = 1; load(); } catch (e) { F.fail(e); }
     });
     const box = h('div', { class: 'logbox log-history', tabindex: '0', 'aria-label': t('logs.tabHistory') });
     const pg = pager((p) => { page = p; load(); });

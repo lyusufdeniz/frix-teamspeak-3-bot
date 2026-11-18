@@ -172,6 +172,13 @@ public class PlayManager
 	/// <param name="meta">Allows overriding certain settings for the resource.</param>
 	/// <returns>Ok if successful, or an error message otherwise.</returns>
 	/// <summary>Frix: kuyruğu silmeden, çalan şarkının hemen arkasına ekleyip başlatır.</summary>
+	/// <summary>Frix: linki çözüp hemen çalar (kuyruk korunur).</summary>
+	public async Task PlayNow(InvokerData invoker, string link)
+	{
+		var res = await resourceResolver.Load(link, CancellationToken.None);
+		await PlayNow(invoker, res.AudioResource);
+	}
+
 	public async Task PlayNow(InvokerData invoker, AudioResource ar)
 	{
 		ArgumentNullException.ThrowIfNull(ar);

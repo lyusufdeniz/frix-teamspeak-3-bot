@@ -111,10 +111,18 @@ public static partial class MainCommands
 		}
 
 		var playing = playManager.IsPlaying || playManager.IsLoading;
+		// Müzik eklentisinde "direkt çal" açıksa kuyruğa eklemeden hemen çal
+		var force = info.TryGet<Config.ConfBot>(out var mConf) && Frix.FrixPluginHost.Enabled<Frix.MusicPlugin>(mConf.Name) is { ForcePlay: true };
 		// Önce kullanıcıya haber ver, sonra yükle (böylece "Şimdi çalıyor" mesajından önce gelir)
-		if (!playing)
+		if (!playing || force)
 			await TryWrite(info, FrixText.Get("ara.found", ("title", FrixChat.Escape(title))));
 
+		if (force && playing)
+		{
+			if (resource != null) await playManager.PlayNow(invoker, resource);
+			else await playManager.PlayNow(invoker, query);
+			return null;
+		}
 		if (resource != null)
 			await playManager.Enqueue(invoker, resource);
 		else
@@ -166,9 +174,16 @@ public static partial class MainCommands
 
 		await TryWrite(info, FrixText.Get("radio.opening", ("name", FrixChat.Escape(station.Name))));
 		var resource = new AudioResource(streamUrl, station.Name, "media").Add("radio", station.Name);
-		// Radyo hemen çalsın, kuyruk korunur
-		await playManager.PlayNow(invoker, resource);
-		return null;
+		// Radyo eklentisinde "direkt çal" açıksa (varsayılan) hemen çalar, kuyruk korunur; kapalıysa kuyruğa eklenir
+		var force = !(info.TryGet<Config.ConfBot>(out var rConf) && Frix.FrixPluginHost.Enabled<Frix.RadioPlugin>(rConf.Name) is { ForcePlay: false });
+		if (force || !(playManager.IsPlaying || playManager.IsLoading))
+		{
+			await playManager.PlayNow(invoker, resource);
+			return null;
+		}
+		await playManager.Enqueue(invoker, resource);
+		var pos = playlistManager.CurrentList.Items.Count - playlistManager.Index - 1;
+		return FrixText.Get("ara.queued", ("title", FrixChat.Escape(station.Name)), ("pos", pos.ToString()));
 	}
 
 	[Command("ozelkomut", "_undocumented")]
