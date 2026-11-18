@@ -105,8 +105,9 @@
         builtins = (cm && cm.builtin) || [];
         list.replaceChildren(...grouped(pl || []));
         const general = commandsBlock(builtins, null);
-        if (general) list.append(h('section', { class: 'plugin-group' }, h('div', { class: 'plugin-group-head' }, h('h2', { text: t('plugins.generalCmds') })),
-          h('article', { class: 'card plugin-general' }, general)));
+        const tpa = F.$('#top-page-actions');
+        if (general && tpa && !tpa.querySelector('.gen-cmds')) tpa.prepend(F.btn(t('plugins.generalCmds'), { kind: 'ghost', icon: 'terminal', cls: 'gen-cmds',
+          onClick: () => F.modal({ title: t('plugins.generalCmds'), size: 'wide', body: commandsBlock(builtins, null), actions: [{ label: t('common.close') }] }) }));
         if (!pl || !pl.length) list.append(F.empty('box', t('plugins.none')));
       } catch (e) { F.fail(e); list.replaceChildren(F.empty('alert', t('err.loadFailed'))); }
     }
@@ -191,6 +192,7 @@
             h('span', { class: 'plugin-state', text: p.enabled ? t('plugins.stateOn') : t('plugins.stateOff') })), enabled),
         h('p', { class: 'plugin-desc', text: F.loc(p.description), title: F.loc(p.description) }),
         h('div', { class: 'tile-foot' }, cfgBtn, cmds ? h('span', { class: 'muted small', text: t('plugins.cmdCount', { n: cmds.querySelectorAll('.builtin-row').length }) }) : null));
+      if (hasSettings) el.addEventListener('click', (e) => { if (!e.target.closest('.switch, button')) openSettings(); });
       enabled.input.addEventListener('change', () => { el.querySelector('.plugin-state').textContent = enabled.input.checked ? t('plugins.stateOn') : t('plugins.stateOff'); });
       return el;
     }
@@ -202,6 +204,7 @@
   // ================================================================== COMMANDS + TEXTS
   function commandsTab(pane) {
     const custom = h('div', { class: 'cmd-list' }, F.skeleton(3, 'sk-row'));
+    setTimeout(() => F.fitPage(custom));
     pane.append(
       h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h2', { class: 'card-title' }, icon('terminal'), t('commands.custom')),
         F.btn(t('commands.new'), { kind: 'primary', icon: 'plus', onClick: () => form(null) })),
@@ -370,9 +373,10 @@
     const lang = F.state.lang;
     const filter = F.input({ type: 'search', placeholder: t('texts.filter'), 'aria-label': t('texts.filter') });
     const list = h('div', { class: 'text-list' }, F.skeleton(4, 'sk-row'));
+    setTimeout(() => F.fitPage(list));
     filter.addEventListener('input', applyFilter);
-    pane.append(lookCard());
-    pane.append(h('section', { class: 'card' },
+    F.$('#top-page-actions').append(F.btn(t('texts.look.title'), { kind: 'ghost', icon: 'text', onClick: () => F.modal({ title: t('texts.look.title'), size: 'wide', body: lookCard(), actions: [{ label: t('common.close') }] }) }));
+    pane.append(h('section', { class: 'card texts-card' },
       h('p', { class: 'muted small' }, F.rich(t('texts.help'))),
       h('div', { class: 'toolbar' }, F.field(t('texts.filter'), filter, null, { cls: 'grow' })),
       list));
@@ -962,29 +966,22 @@
       return h('p', null, F.rich(p));
     };
     const items = [];
-    const toc = h('nav', { class: 'faq-toc', 'aria-label': t('faq.toc') });
-    data.forEach((sec, si) => {
-      const secId = 'faq-s' + si;
-      toc.append(h('a', { href: '#' + secId, class: 'tag', text: sec.section, onclick: (e) => { e.preventDefault(); document.getElementById(secId).scrollIntoView({ behavior: 'smooth', block: 'start' }); } }));
-      const group = h('section', { class: 'faq-section', id: secId }, h('h2', { class: 'faq-sec-title', text: sec.section }));
+    data.forEach((sec) => {
       (sec.items || []).forEach((it) => {
-        const d = h('details', { class: 'faq-item', id: 'faq-' + it.id },
-          h('summary', null, h('span', { class: 'faq-q', text: it.q }), icon('chevron', 'faq-chev')),
-          h('div', { class: 'faq-body' }, (it.a || []).map(block)));
-        d.dataset.search = (it.q + ' ' + JSON.stringify(it.a)).toLowerCase();
+        const d = h('button', { type: 'button', class: 'faq-q-item', id: 'faq-' + it.id },
+          h('span', { class: 'faq-sec-tag', text: sec.section }), h('span', { class: 'faq-q', text: it.q }), icon('chevron', 'faq-chev'));
+        d.addEventListener('click', () => F.modal({ title: it.q, size: 'wide', body: h('div', { class: 'faq-body' }, (it.a || []).map(block)), actions: [{ label: t('common.close') }] }));
+        d.dataset.search = (sec.section + ' ' + it.q + ' ' + JSON.stringify(it.a)).toLowerCase();
         items.push(d);
-        group.append(d);
+        list.append(d);
       });
-      list.append(group);
     });
-    list.before(toc);
     const none = F.empty('help', t('faq.none'));
     none.hidden = true;
+    none.classList.add('fit-skip');
     list.append(none);
-    if (location.hash.startsWith('#faq-')) {
-      const target = document.getElementById(location.hash.slice(1));
-      if (target && target.tagName === 'DETAILS') { target.open = true; setTimeout(() => target.scrollIntoView({ block: 'start' }), 60); }
-    }
+    setTimeout(() => F.fitPage(list));
+    if (location.hash.startsWith('#faq-')) { const tg = document.getElementById(location.hash.slice(1)); if (tg) setTimeout(() => tg.click(), 60); }
     q.addEventListener('input', () => {
       const v = q.value.trim().toLowerCase();
       let shown = 0;

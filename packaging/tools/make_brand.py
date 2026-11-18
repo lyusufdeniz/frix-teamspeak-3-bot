@@ -7,7 +7,7 @@ import sys
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(__file__), "..", "..")
-BG = next((a for a in sys.argv[2:] if a.startswith("#")), "#1d2b3a")
+BG = next((a for a in sys.argv[2:] if a.startswith("#")), "#26272c")
 FONT_DIR = os.path.join(ROOT, "TS3AudioBot", "Assets", "Fonts")
 
 ORANGE = "#ec6b2d"
@@ -20,7 +20,7 @@ HP = "HP"  # kulaklık rengi: zemine göre seçilir
 def hp_color(bg):
     bg = bg.lstrip("#")
     r, g, b = (int(bg[i:i + 2], 16) for i in (0, 2, 4))
-    return INK if (0.299 * r + 0.587 * g + 0.114 * b) > 140 else "#f3e7d6"
+    return INK if (0.299 * r + 0.587 * g + 0.114 * b) > 140 else "#93b4f3"
 
 # 100x100 koordinat sisteminde şekiller: (tür, renk, veri)
 SHAPES = [
@@ -113,8 +113,8 @@ def banner(path, bg=None):
     reg = ImageFont.truetype(os.path.join(FONT_DIR, "JetBrainsMono-Regular.ttf"), s(26))
     draw_fox(d, s(880), s(28), s(320), bg)
     d.text((s(96), s(86)), "frix", font=bold, fill=CREAM)
-    d.text((s(100), s(212)), "teamspeak 3 bot", font=reg, fill=ORANGE)
-    d.text((s(100), s(256)), "music · radio · live streams · web panel", font=reg, fill="#9fb0c2")
+    d.text((s(100), s(212)), "teamspeak 3 bot", font=reg, fill="#93b4f3")
+    d.text((s(100), s(256)), "music · radio · live streams · web panel", font=reg, fill="#9a9ba5")
     img = img.resize((W, H), Image.LANCZOS)
     img.save(path, optimize=True)
 

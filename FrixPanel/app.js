@@ -234,6 +234,148 @@
     document.title = title + ' · frix';
     return document.createComment('page-head');
   };
+  /**
+   * Desktop pages don't scroll: a long list shows as many items as fit in the space left on screen,
+   * the rest is reached with a small pager under it. Re-paginates when items change or the window resizes.
+   */
+  const FIT_MQ = matchMedia('(min-width: 1000px) and (min-height: 600px)');
+  F.fitPage = function (list) {
+    if (list._fit) return list._fit;
+    const label = h('span', { class: 'fit-label' });
+    const prev = F.iconBtn('chevron', t('pager.prev'), () => go(page - 1), 'sm fit-prev');
+    const next = F.iconBtn('chevron', t('pager.next'), () => go(page + 1), 'sm fit-next');
+    const pager = h('div', { class: 'fit-pager' }, prev, label, next);
+    list.after(pager);
+    list.classList.add('fit-list');
+    let page = 0, pages = 1, raf = 0;
+    const visible = () => [...list.children].filter((c) => !c.hidden && !c.classList.contains('fit-skip'));
+    function markChain() {
+      for (let p = list.parentElement; p && !p.classList.contains('main'); p = p.parentElement) {
+        p.classList.add(getComputedStyle(p).display.includes('grid') ? 'fit-g' : 'fit-c');
+      }
+    }
+    function layout() {
+      raf = 0;
+      if (!list.isConnected) return;
+      const all = visible();
+      [...list.children].forEach((c) => c.classList.remove('pg-off'));
+      if (!FIT_MQ.matches) { pager.classList.remove('on'); return; }
+      markChain();
+      const H = list.clientHeight;
+      if (H < 40) { pager.classList.remove('on'); return; }
+      let per = all.findIndex((c) => c.offsetTop + c.offsetHeight > H + 2);
+      if (per < 0) per = all.length;
+      per = Math.max(1, per);
+      pages = Math.max(1, Math.ceil(all.length / per));
+      page = Math.min(page, pages - 1);
+      all.forEach((c, i) => { if (i < page * per || i >= (page + 1) * per) c.classList.add('pg-off'); });
+      pager.classList.toggle('on', pages > 1);
+      label.textContent = (page + 1) + ' / ' + pages;
+      prev.disabled = page <= 0; next.disabled = page >= pages - 1;
+    }
+    function go(p) { page = Math.max(0, Math.min(p, pages - 1)); layout(); }
+    const schedule = (reset) => { if (reset) page = 0; if (!raf) raf = requestAnimationFrame(layout); };
+    new MutationObserver((m) => schedule(m.some((x) => x.type === 'childList'))).observe(list, { childList: true, attributes: true, subtree: true, attributeFilter: ['hidden'] });
+    window.addEventListener('resize', () => schedule(false));
+    FIT_MQ.addEventListener('change', () => schedule(true));
+    setTimeout(() => schedule(true));
+    list._fit = { refresh: () => schedule(true), go };
+    return list._fit;
+  };
+  /**
+   * Themed dropdown for every native <select class="input"> / .bot-select: the native element stays (value, change
+   * events, forms) but is hidden; a button + listbox drawn in the panel theme replaces the OS menu.
+   */
+  const selDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  let openSel = null;
+  F.enhanceSelect = function (sel) {
+    if (sel._fx || sel.multiple) return;
+    const btn = h('button', { type: 'button', class: 'fx-btn', 'aria-haspopup': 'listbox', 'aria-expanded': 'false' },
+      h('span', { class: 'fx-text' }), icon('chevron', 'fx-chev'));
+    const list = h('ul', { class: 'fx-list', role: 'listbox', tabindex: '-1', hidden: true });
+    const wrap = h('div', { class: 'fx' + (sel.classList.contains('bot-select') ? ' fx-bot' : '') }, btn, list);
+    sel._fx = wrap;
+    sel.classList.add('fx-native');
+    sel.after(wrap);
+    wrap.prepend(sel);
+    if (sel.id) btn.id = sel.id + '-fx';
+    if (sel.getAttribute('aria-label')) btn.setAttribute('aria-label', sel.getAttribute('aria-label'));
+    const lbl = sel.id && document.querySelector('label[for="' + sel.id + '"]');
+    if (lbl) lbl.addEventListener('click', (e) => { e.preventDefault(); btn.focus(); });
+    let active = -1;
+    const opts = () => [...sel.options];
+    function paint() {
+      const o = sel.options[sel.selectedIndex];
+      btn.querySelector('.fx-text').textContent = o ? o.textContent : '';
+      btn.disabled = sel.disabled;
+    }
+    function fill() {
+      list.replaceChildren(...opts().map((o, i) => h('li', { role: 'option', class: 'fx-opt' + (o.disabled ? ' off' : ''), 'aria-selected': i === sel.selectedIndex ? 'true' : 'false', 'data-i': i, text: o.textContent })));
+    }
+    function setActive(i) {
+      const items = [...list.children];
+      if (!items.length) return;
+      active = Math.max(0, Math.min(items.length - 1, i));
+      items.forEach((li, k) => li.classList.toggle('active', k === active));
+      items[active].scrollIntoView({ block: 'nearest' });
+    }
+    function open() {
+      if (sel.disabled) return;
+      if (openSel && openSel !== close) openSel();
+      fill();
+      list.hidden = false;
+      wrap.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+      // open upwards when there is no room below
+      const r = btn.getBoundingClientRect();
+      wrap.classList.toggle('up', window.innerHeight - r.bottom < Math.min(280, list.scrollHeight + 16) && r.top > window.innerHeight - r.bottom);
+      setActive(sel.selectedIndex);
+      openSel = close;
+    }
+    function close() {
+      list.hidden = true;
+      wrap.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+      if (openSel === close) openSel = null;
+    }
+    function pick(i) {
+      const o = sel.options[i];
+      if (!o || o.disabled) return;
+      if (sel.selectedIndex !== i) { sel.selectedIndex = i; sel.dispatchEvent(new Event('input', { bubbles: true })); sel.dispatchEvent(new Event('change', { bubbles: true })); }
+      paint(); close(); btn.focus();
+    }
+    btn.addEventListener('click', () => (list.hidden ? open() : close()));
+    list.addEventListener('mousedown', (e) => e.preventDefault());
+    list.addEventListener('click', (e) => { const li = e.target.closest('.fx-opt'); if (li) pick(Number(li.dataset.i)); });
+    list.addEventListener('mousemove', (e) => { const li = e.target.closest('.fx-opt'); if (li) setActive(Number(li.dataset.i)); });
+    btn.addEventListener('keydown', (e) => {
+      if (list.hidden) {
+        if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) { e.preventDefault(); open(); }
+        return;
+      }
+      if (e.key === 'ArrowDown') { e.preventDefault(); setActive(active + 1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(active - 1); }
+      else if (e.key === 'Home') { e.preventDefault(); setActive(0); }
+      else if (e.key === 'End') { e.preventDefault(); setActive(sel.options.length - 1); }
+      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(active); }
+      else if (e.key === 'Escape' || e.key === 'Tab') { close(); }
+    });
+    btn.addEventListener('blur', () => setTimeout(() => { if (!wrap.contains(document.activeElement)) close(); }, 120));
+    // keep the button in sync when code sets .value or replaces the options
+    Object.defineProperty(sel, 'value', { configurable: true, get() { return selDesc.get.call(this); }, set(v) { selDesc.set.call(this, v); paint(); } });
+    sel.addEventListener('change', paint);
+    new MutationObserver(() => { paint(); if (!list.hidden) fill(); }).observe(sel, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled', 'selected'] });
+    paint();
+  };
+  document.addEventListener('mousedown', (e) => { if (openSel && !e.target.closest('.fx')) openSel(); });
+  const enhanceAll = (root) => (root.querySelectorAll ? root.querySelectorAll('select.input, select.bot-select') : []).forEach((s) => F.enhanceSelect(s));
+  new MutationObserver((muts) => {
+    for (const m of muts) for (const n of m.addedNodes) {
+      if (n.nodeType !== 1) continue;
+      if (n.matches && n.matches('select.input, select.bot-select')) F.enhanceSelect(n); else enhanceAll(n);
+    }
+  }).observe(document.documentElement, { childList: true, subtree: true });
+
   /** text containing `code` segments → nodes */
   F.rich = function (str) {
     const out = [];
@@ -710,7 +852,7 @@
     document.documentElement.dataset.theme = th;
     lsSet(LS_THEME, th);
     const m = document.querySelector('meta[name=theme-color]');
-    if (m) m.content = th === 'krem' ? '#f3f3f8' : '#131316';
+    if (m) m.content = th === 'krem' ? '#f3f3f8' : '#17181b';
     document.querySelectorAll('.theme-btn').forEach(paintThemeBtn);
     document.querySelectorAll('select.theme-sel').forEach((x) => { x.value = th; });
   };
@@ -766,13 +908,29 @@
         n.children.map(([path, key]) => h('li', null, h('a', { href: path, 'data-link': '', class: 'side-subitem', 'data-sub': path }, h('span', { text: t(key) })))));
       const btn = h('button', { type: 'button', class: 'side-item side-parent', 'data-parent': n.path, 'aria-expanded': 'false', 'aria-controls': subId },
         icon(n.icon), h('span', { text: t('nav.' + n.key) }), h('span', { class: 'side-chev' }, icon('chevron', 'sm')));
+      const li = h('li', { class: 'side-has-sub' }, btn, subList);
+      // desktop: the sub-menu flies out to the right on hover/focus; phones (drawer): click opens it in place
+      const desktop = () => matchMedia('(min-width: 1000px)').matches;
+      const place = () => {
+        const r = btn.getBoundingClientRect();
+        subList.style.top = Math.min(r.top - 6, window.innerHeight - subList.offsetHeight - 8) + 'px';
+        subList.style.left = (r.right + 8) + 'px';
+      };
+      let hideT = 0;
+      const show = () => { if (!desktop()) return; clearTimeout(hideT); li.classList.add('fly'); place(); btn.setAttribute('aria-expanded', 'true'); };
+      const hide = () => { if (!desktop()) return; hideT = setTimeout(() => { li.classList.remove('fly'); btn.setAttribute('aria-expanded', 'false'); }, 160); };
+      li.addEventListener('mouseenter', show);
+      li.addEventListener('mouseleave', hide);
+      li.addEventListener('focusin', show);
+      li.addEventListener('focusout', (e) => { if (!li.contains(e.relatedTarget)) hide(); });
+      subList.addEventListener('click', () => { li.classList.remove('fly'); });
       btn.addEventListener('click', () => {
+        if (desktop()) { F.go(n.children[0][0]); return; }
         const open = btn.getAttribute('aria-expanded') !== 'true';
         btn.setAttribute('aria-expanded', open ? 'true' : 'false');
         subList.hidden = !open;
-        if (open && !location.pathname.startsWith(n.path)) F.go(n.children[0][0]);
       });
-      return h('li', { class: 'side-has-sub' }, btn, subList);
+      return li;
     };
     const side = h('aside', { class: 'sidebar', id: 'sidebar', 'aria-label': t('nav.main') },
       h('div', { class: 'side-brand' }, h('a', { href: '/', 'data-link': '', class: 'brand', 'aria-label': 'frix' }, F.brand(true))),
@@ -867,7 +1025,7 @@
     document.querySelectorAll('.sidenav .side-parent').forEach((b) => {
       const mine = b.dataset.parent === r.path;
       b.classList.toggle('active', mine);
-      if (mine) { b.setAttribute('aria-expanded', 'true'); b.nextElementSibling.hidden = false; }
+      if (mine && !matchMedia('(min-width: 1000px)').matches) { b.setAttribute('aria-expanded', 'true'); b.nextElementSibling.hidden = false; }
     });
     const subs = [...document.querySelectorAll('.sidenav [data-sub]')];
     const best = subs.filter((a) => path === a.dataset.sub || path.startsWith(a.dataset.sub + '/')).sort((x, y) => y.dataset.sub.length - x.dataset.sub.length)[0]

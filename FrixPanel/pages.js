@@ -37,6 +37,7 @@
     root.append(
       F.pageHead(t('bots.title'), t('bots.sub'), admin ? F.btn(t('bots.new'), { kind: 'primary', icon: 'plus', onClick: () => botForm(null) }) : null),
       grid);
+    F.fitPage(grid);
     const cards = new Map();
     let loaded = false;
 
@@ -297,6 +298,7 @@
         h('div', { class: 'card-head' }, qTitle, can ? h('div', { class: 'row gap-s wrap' }, saveListB, clearB) : null), qList);
 
       body.append(nowCard, h('div', { class: 'player-grid' + (can ? '' : ' single') }, queueCard, addCard));
+      F.fitPage(qList);
 
       ui = { cover, title, sub, botLine, seek, curT, lenT, liveBadge, liveLine, seekRow, playB, prevB, nextB, stopB, repB, repTag, shufB, vol, volVal, qList, qTitle, clearB, saveListB,
         seeking: () => Date.now() - seeking < 1500, volBusy: () => Date.now() - volTouched < 2500 };
@@ -457,6 +459,7 @@
     h('div', { class: 'callout' }, icon('info'), h('div', null, h('p', null, F.rich(t('radios.hint'))), can ? playOn : null)));
     const list = h('div', { class: 'radio-grid' }, F.skeleton(4, 'sk-row'));
     root.append(list);
+    F.fitPage(list);
     let radios = [];
 
     async function load() {
@@ -565,6 +568,7 @@
       h('div', { class: 'toolbar st-toolbar' }, h('div', { class: 'field' }, h('span', { class: 'label', text: t('stats.period') }), seg),
         h('div', { class: 'kpi' }, plays, h('span', { class: 'label', text: t('stats.plays') }))),
       h('div', { class: 'stats-grid' }, songsCard, h('div', { class: 'st-side' }, usersCard, onlineCard)));
+    [songsL, usersL, onlineL].forEach(F.fitPage);
 
     let seq = 0;
     async function load() {
@@ -651,6 +655,7 @@
     root.append(F.pageHead(t('playlists.title'), t('playlists.sub'), saveB),
       h('div', { class: 'callout' }, icon('terminal'), h('div', null, F.rich(t('playlists.hint')))),
       list);
+    F.fitPage(list);
 
     async function load() {
       try {
@@ -690,13 +695,11 @@
           }));
         } catch (e) { F.fail(e); items.replaceChildren(h('li', null, F.empty('alert', t('err.loadFailed')))); }
       }
+      // songs open in a dialog instead of expanding the page
       toggle.addEventListener('click', () => {
-        const open = items.hidden;
-        items.hidden = !open;
-        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-        toggle.title = open ? t('playlists.hide') : t('playlists.show');
-        el.classList.toggle('open', open);
-        if (open && !loaded) loadItems();
+        items.hidden = false;
+        F.modal({ title: [icon('playlist'), ' ', p.name], size: 'wide', body: items, actions: [{ label: t('common.close') }] });
+        if (!loaded) loadItems();
       });
       const target = F.selectedBot();
       const actions = can ? h('div', { class: 'pl-actions' },
@@ -713,7 +716,7 @@
           if (!(await F.confirm(t('playlists.deleteConfirm', { name: p.name }), { danger: true, ok: t('common.delete') }))) return;
           try { await F.api('DELETE', 'playlists/' + enc(String(p.id))); F.toast(t('common.deleted')); load(); } catch (e) { F.fail(e); }
         }, 'danger')) : null;
-      const el = h('article', { class: 'card pl-card' }, h('div', { class: 'pl-row' }, toggle, actions), items);
+      const el = h('article', { class: 'card pl-card' }, h('div', { class: 'pl-row' }, toggle, actions));
       return el;
     }
     load();

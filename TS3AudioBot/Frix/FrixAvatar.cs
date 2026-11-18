@@ -129,15 +129,16 @@ public static class FrixAvatar
 	}
 
 	// Marka renkleri (lacivert tema)
-	private static readonly Color Page = Color.ParseHex("16212D");
-	private static readonly Color Surface = Color.ParseHex("1D2B3A");
-	private static readonly Color Line = Color.ParseHex("2F4255");
+	private static readonly Color Page = Color.ParseHex("17181B");
+	private static readonly Color Surface = Color.ParseHex("202125");
+	private static readonly Color Line = Color.ParseHex("393A41");
 	private static readonly Color Cream = Color.ParseHex("FFF6EA");
-	private static readonly Color Muted = Color.ParseHex("9FB0C2");
+	private static readonly Color Muted = Color.ParseHex("9A9BA5");
 	private static readonly Color Orange = Color.ParseHex("EC6B2D");
 	private static readonly Color OrangeDark = Color.ParseHex("C9531C");
 	private static readonly Color Ink = Color.ParseHex("2A201C");
-	private static readonly Color Headphone = Color.ParseHex("F3E7D6");
+	private static readonly Color Headphone = Color.ParseHex("93B4F3");
+	private static readonly Color Accent = Color.ParseHex("93B4F3");
 
 	/// <summary>Kulaklıklı tilki (packaging/tools/make_brand.py ile aynı 100x100 koordinatlar).</summary>
 	private static void DrawFox(IImageProcessingContext ctx, float ox, float oy, float size)
@@ -194,7 +195,7 @@ public static class FrixAvatar
 
 			// Başlık: tilki + "frix"
 			ctx.Fill(Surface, new RectangleF(0, 0, S(Width), S(88)));
-			ctx.Fill(Orange, new RectangleF(0, S(88), S(Width), S(2)));
+			ctx.Fill(Accent, new RectangleF(0, S(88), S(Width), S(2)));
 			DrawFox(ctx, S(8), S(8), S(72));
 			ctx.DrawText("frix", title, Cream, new PointF(S(86), S(12)));
 			ctx.DrawText(Fit(FrixText.Raw("avatar.subtitle"), sub, S(Width - 96)), sub, Muted, new PointF(S(88), S(56)));
@@ -204,7 +205,7 @@ public static class FrixAvatar
 				var y = S(top + i * rowH);
 				var (cmd, desc) = rows[i];
 				if (i > 0) ctx.Fill(Line, new RectangleF(S(12), y - S(8), S(Width - 24), S(1)));
-				ctx.DrawText(Fit(cmd, cmdFont, S(120)), cmdFont, Orange, new PointF(S(12), y));
+				ctx.DrawText(Fit(cmd, cmdFont, S(120)), cmdFont, Accent, new PointF(S(12), y));
 				ctx.DrawText(Fit(desc, descFont, S(Width - 148)), descFont, Cream, new PointF(S(138), y + S(2)));
 			}
 

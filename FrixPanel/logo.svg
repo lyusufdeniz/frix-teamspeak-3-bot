@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Frix">
-<rect width="100" height="100" rx="22" fill="#1d2b3a"/>
+<rect width="100" height="100" rx="22" fill="#26272c"/>
 <g transform="translate(6 6.6) scale(0.88)">
-<path fill="none" stroke="#f3e7d6" stroke-width="6" d="M17.32 37.63 A34.0 34.0 0 0 1 82.68 37.63"/>
+<path fill="none" stroke="#93b4f3" stroke-width="6" d="M17.32 37.63 A34.0 34.0 0 0 1 82.68 37.63"/>
 <polygon fill="#ec6b2d" points="26,44 34,14 48,36"/>
 <polygon fill="#ec6b2d" points="74,44 66,14 52,36"/>
 <polygon fill="#2a201c" points="31.5,38 35,23 42,34"/>
@@ -13,8 +13,8 @@
 <path fill="none" stroke="#2a201c" stroke-width="2.2" d="M32.30 49.63 A5.0 4.0 0 0 1 41.70 49.63"/>
 <path fill="none" stroke="#2a201c" stroke-width="2.2" d="M58.30 49.63 A5.0 4.0 0 0 1 67.70 49.63"/>
 <ellipse fill="#2a201c" cx="50.0" cy="82.0" rx="3.5" ry="3.0"/>
-<rect fill="#f3e7d6" x="12" y="41" width="13" height="23" rx="5"/>
-<rect fill="#f3e7d6" x="75" y="41" width="13" height="23" rx="5"/>
+<rect fill="#93b4f3" x="12" y="41" width="13" height="23" rx="5"/>
+<rect fill="#93b4f3" x="75" y="41" width="13" height="23" rx="5"/>
 <rect fill="#ec6b2d" x="15" y="46" width="4" height="13" rx="2"/>
 <rect fill="#ec6b2d" x="81" y="46" width="4" height="13" rx="2"/>
 </g></svg>
