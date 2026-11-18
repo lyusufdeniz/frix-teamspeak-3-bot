@@ -34,8 +34,8 @@ The bot connects to your TeamSpeak server by itself and streams audio directly w
 - **Dashboard**: live server CPU / RAM chart, Frix memory usage, plays today / this week, top songs and requesters, and the status of **multiple bots**
 - Left sidebar layout with a dark (charcoal + violet) and a light theme
 - Player with search results, "adding song" progress, queue move/remove, seek, volume
-- **21 plugins**, each enabled and configured per bot:
-  - *Core:* music, radio (turn either off to disable its commands), song title as the bot's nickname/description, avatar (idle command card, song cover)
+- **22 plugins**, each enabled and configured per bot:
+  - *Core:* music, radio (turn either off to disable its commands), song title as the bot's nickname/description, avatar (idle command card, song cover), auto reconnect (rejoins the same channel)
   - *Welcome & announcements:* welcome message, announcements/ads, scheduled messages
   - *Music:* pause when alone, idle radio, vote skip, DJ mode & queue limit
   - *Moderation:* AFK mover, nickname filter, channel guard, anti-flood

@@ -70,7 +70,7 @@
   const PLUGIN_ICONS = {
     music: 'music', radio: 'radio', npstatus: 'idcard', avatar: 'image', welcome: 'hand', advertisement: 'megaphone', scheduled: 'calendar',
     alonepause: 'pause', idleradio: 'radio', voteskip: 'vote', djmode: 'headphones', afkmover: 'moon', namefilter: 'filter', channelguard: 'shield',
-    antiflood: 'zap', registration: 'userPlus', tempchannel: 'folderPlus', ranks: 'trophy', supportnotify: 'bell', channelinfo: 'info', fun: 'dice',
+    antiflood: 'zap', autoreconnect: 'refresh', registration: 'userPlus', tempchannel: 'folderPlus', ranks: 'trophy', supportnotify: 'bell', channelinfo: 'info', fun: 'dice',
   };
 
   // ================================================================== PLUGINS
@@ -84,12 +84,7 @@
     const sel = h('select', { class: 'input', 'aria-label': t('plugins.bot') });
     sel.addEventListener('change', () => { botName = sel.value; load(); });
     const list = h('div', { class: 'plugin-list' }, F.skeleton(3, 'sk-row'));
-    const setAll = (open) => list.querySelectorAll('.plugin-card').forEach((c) => c.setOpen(open));
-    root.append(F.pageHead(t('plugins.title'), t('plugins.sub'), h('label', { class: 'inline-field' }, h('span', { class: 'label-inline', text: t('plugins.bot') }), sel)),
-      h('div', { class: 'toolbar' }, h('span', { class: 'grow' }),
-        F.btn(t('plugins.expandAll'), { kind: 'ghost', icon: 'down', onClick: () => setAll(true) }),
-        F.btn(t('plugins.collapseAll'), { kind: 'ghost', icon: 'up', onClick: () => setAll(false) })),
-      list);
+    root.append(F.pageHead(t('plugins.title'), t('plugins.sub'), h('label', { class: 'inline-field' }, h('span', { class: 'label-inline', text: t('plugins.bot') }), sel)), list);
     let radios = [];
     let sig = '';
 
@@ -111,13 +106,13 @@
         list.replaceChildren(...grouped(pl || []));
         const general = commandsBlock(builtins, null);
         if (general) list.append(h('section', { class: 'plugin-group' }, h('div', { class: 'plugin-group-head' }, h('h2', { text: t('plugins.generalCmds') })),
-          h('article', { class: 'card plugin-card open' }, h('div', { class: 'plugin-body' }, general))));
+          h('article', { class: 'card plugin-general' }, general)));
         if (!pl || !pl.length) list.append(F.empty('box', t('plugins.none')));
       } catch (e) { F.fail(e); list.replaceChildren(F.empty('alert', t('err.loadFailed'))); }
     }
     // sections keep the (now 17) plugins scannable; unknown ids land in "other"
     const GROUPS = [
-      ['core', ['music', 'radio', 'npstatus', 'avatar']],
+      ['core', ['music', 'radio', 'npstatus', 'avatar', 'autoreconnect']],
       ['welcome', ['welcome', 'advertisement', 'scheduled']],
       ['music', ['alonepause', 'idleradio', 'voteskip', 'djmode']],
       ['moderation', ['afkmover', 'namefilter', 'channelguard', 'antiflood']],
@@ -140,7 +135,7 @@
         paint();
         const hid = F.uid('pg');
         return h('section', { class: 'plugin-group', 'aria-labelledby': hid },
-          h('div', { class: 'plugin-group-head' }, h('h2', { id: hid, text: t('plugins.group.' + key) }), count), cards);
+          h('div', { class: 'plugin-group-head' }, h('h2', { id: hid, text: t('plugins.group.' + key) }), count), h('div', { class: 'plugin-grid' }, cards));
       });
     }
     function card(p) {
@@ -166,8 +161,7 @@
       });
       const collect = () => { const c = {}; getters.forEach(([k, g]) => { c[k] = g(); }); return c; };
       const enabled = F.switchEl(p.enabled, null, { 'aria-label': t('plugins.enabled') + ': ' + F.loc(p.name) });
-      const el = h('article', { class: 'card plugin-card' + (p.enabled ? ' on' : '') });
-      const bodyId = F.uid('pl');
+      const el = h('article', { class: 'card plugin-tile' + (p.enabled ? ' on' : '') });
       const save = async (btn, quiet) => F.busy(btn, async () => {
         try {
           await F.api('PUT', 'plugins/' + enc(botName) + '/' + enc(p.id), { enabled: enabled.input.checked, config: collect() });
@@ -175,32 +169,29 @@
           if (el.onToggle) el.onToggle();
           F.toast(quiet ? (enabled.input.checked ? t('plugins.on', { name: F.loc(p.name) }) : t('plugins.off', { name: F.loc(p.name) })) : t('common.saved'));
           F.refreshBots();
-        } catch (e) { F.fail(e); if (quiet) enabled.input.checked = !enabled.input.checked; }
+          return true;
+        } catch (e) { F.fail(e); if (quiet) enabled.input.checked = !enabled.input.checked; return false; }
       });
       enabled.input.addEventListener('change', () => save(null, true));
-      const saveBtn = F.btn(t('common.save'), { kind: 'primary', icon: 'check' });
-      saveBtn.addEventListener('click', () => save(saveBtn, false));
-      const toggle = h('button', { type: 'button', class: 'plugin-row', 'aria-expanded': 'false', 'aria-controls': bodyId },
-        h('span', { class: 'plugin-ic' }, icon(PLUGIN_ICONS[p.id] || 'box')),
-        h('span', { class: 'plugin-name', text: F.loc(p.name) }),
-        h('span', { class: 'plugin-desc', text: F.loc(p.description), title: F.loc(p.description) }),
-        h('span', { class: 'plugin-chev' }, icon('chevron')));
-      const body = h('div', { class: 'plugin-body', id: bodyId, hidden: true },
-        h('p', { class: 'muted small', text: F.loc(p.description) }),
-        p.id === 'avatar' ? avatarPreview() : null,
-        fields.length ? h('div', { class: 'form-grid' }, fields) : null,
-        fields.length ? h('div', { class: 'card-foot' }, saveBtn) : null,
-        commandsBlock(builtins, p.id));
-      const lsKey = 'frix.plugin.' + p.id + '.open';
-      el.setOpen = (open) => {
-        body.hidden = !open;
-        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-        el.classList.toggle('open', open);
-        lsSet(lsKey, open ? '1' : null);
-      };
-      toggle.addEventListener('click', () => el.setOpen(body.hidden));
-      el.append(h('div', { class: 'plugin-head' }, toggle, enabled), body);
-      el.setOpen(lsGet(lsKey) === '1');
+      const cmds = commandsBlock(builtins, p.id);
+      const preview = p.id === 'avatar' ? avatarPreview() : null;
+      const hasSettings = fields.length || cmds || preview;
+      // settings + commands open in a dialog; the tile stays compact
+      const body = h('div', { class: 'plugin-body' },
+        h('p', { class: 'muted small', text: F.loc(p.description) }), preview,
+        fields.length ? h('div', { class: 'form-grid' }, fields) : null, cmds);
+      const openSettings = () => F.modal({
+        title: [h('span', { class: 'plugin-ic sm' }, icon(PLUGIN_ICONS[p.id] || 'box')), ' ', F.loc(p.name)], size: 'wide', body,
+        actions: fields.length ? [{ label: t('common.cancel') }, { label: t('common.save'), kind: 'primary', primary: true, icon: 'check', onClick: () => save(null, false) }] : [{ label: t('common.close') }],
+      });
+      const cfgBtn = hasSettings ? F.btn(t('plugins.configure'), { kind: 'ghost', icon: 'sliders', cls: 'btn-sm', onClick: openSettings }) : null;
+      el.append(
+        h('div', { class: 'tile-top' }, h('span', { class: 'plugin-ic' }, icon(PLUGIN_ICONS[p.id] || 'box')),
+          h('div', { class: 'tile-titles' }, h('h3', { class: 'plugin-name', text: F.loc(p.name) }),
+            h('span', { class: 'plugin-state', text: p.enabled ? t('plugins.stateOn') : t('plugins.stateOff') })), enabled),
+        h('p', { class: 'plugin-desc', text: F.loc(p.description), title: F.loc(p.description) }),
+        h('div', { class: 'tile-foot' }, cfgBtn, cmds ? h('span', { class: 'muted small', text: t('plugins.cmdCount', { n: cmds.querySelectorAll('.builtin-row').length }) }) : null));
+      enabled.input.addEventListener('change', () => { el.querySelector('.plugin-state').textContent = enabled.input.checked ? t('plugins.stateOn') : t('plugins.stateOff'); });
       return el;
     }
     let first = true;

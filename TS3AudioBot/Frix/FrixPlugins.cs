@@ -131,6 +131,7 @@ public sealed class FrixPluginHost
 		() => new RadioPlugin(),
 		() => new NowPlayingStatusPlugin(),
 		() => new AvatarPlugin(),
+		() => new AutoReconnectPlugin(),
 		() => new WelcomePlugin(),
 		() => new AdvertisementPlugin(),
 		() => new AlonePausePlugin(),

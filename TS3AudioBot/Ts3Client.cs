@@ -560,6 +560,14 @@ public sealed class Ts3Client
 		await OnBotStoppedReconnecting.InvokeAsync(this);
 	}
 
+	/// <summary>
+	/// Frix: yeniden bağlanma eklentisi. (tür, deneme no) → (devral, gecikme). devral=false ise
+	/// yerleşik ayarlar kullanılır; gecikme null ise yeniden bağlanılmaz.
+	/// </summary>
+	public Func<string, int, (bool handled, TimeSpan? delay)>? FrixReconnect { get; set; }
+	/// <summary>Frix: false dönerse yeniden bağlanınca son kanal yerine varsayılan kanala girilir.</summary>
+	public Func<bool>? FrixSameChannel { get; set; }
+
 	private async Task<bool> TryReconnect(ReconnectType type)
 	{
 		if (closed)
@@ -578,6 +586,23 @@ public sealed class Ts3Client
 		}
 
 		TimeSpan? delay;
+		if (FrixReconnect?.Invoke(type.ToString(), reconnectCounter) is { handled: true } frix)
+		{
+			if (type == ReconnectType.None) return false;
+			delay = frix.delay;
+			reconnectCounter++;
+			if (delay == null)
+			{
+				Log.Info("Otomatik yeniden bağlanma: {0} için deneme yapılmayacak.", type);
+				return false;
+			}
+			if (FrixSameChannel?.Invoke() == false) reconnectChannel = null;
+			Log.Info("Yeniden bağlanılıyor ({0}), {1:0} sn sonra (deneme {2}).", type, delay.Value.TotalSeconds, reconnectCounter);
+			await Task.Delay(delay.Value);
+			if (closed) return false;
+			await ConnectClient();
+			return true;
+		}
 		switch (type)
 		{
 		case ReconnectType.Timeout: delay = config.Reconnect.OnTimeout.GetValueAsTime(reconnectCounter); break;

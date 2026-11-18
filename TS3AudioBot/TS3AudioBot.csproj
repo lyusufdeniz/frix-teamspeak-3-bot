@@ -94,7 +94,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<AssemblyMetadata Include="FrixVersion" Value="2.5.0" />
+		<AssemblyMetadata Include="FrixVersion" Value="2.6.0" />
 	</ItemGroup>
 
 </Project>

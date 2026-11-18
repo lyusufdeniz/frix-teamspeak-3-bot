@@ -223,9 +223,16 @@
   F.badge = (text, kind) => h('span', { class: 'badge' + (kind ? ' badge-' + kind : ''), text });
   F.empty = (ic, title, text, action) => h('div', { class: 'empty' }, h('div', { class: 'empty-ic' }, icon(ic)), h('div', { class: 'empty-title', text: title }), text ? (typeof text === 'string' ? h('p', { class: 'muted', text }) : h('p', { class: 'muted' }, text)) : null, action || null);
   F.skeleton = (n, cls) => Array.from({ length: n || 3 }, () => h('div', { class: 'skeleton ' + (cls || '') }));
-  F.pageHead = (title, sub, actions) => h('div', { class: 'page-head' },
-    h('div', null, h('h1', { text: title }), sub ? h('p', { class: 'muted', text: sub }) : null),
-    actions ? h('div', { class: 'page-actions' }, actions) : null);
+  /** page title, subtitle and actions live in the top bar (one place for every page) */
+  F.pageHead = function (title, sub, actions) {
+    const tt = F.$('#top-title');
+    if (!tt) return h('div', { class: 'page-head' }, h('div', null, h('h1', { text: title }), sub ? h('p', { class: 'muted', text: sub }) : null), actions ? h('div', { class: 'page-actions' }, actions) : null);
+    tt.textContent = title;
+    F.$('#top-sub').textContent = sub || '';
+    F.$('#top-page-actions').replaceChildren(...[].concat(actions || []).filter(Boolean));
+    document.title = title + ' · frix';
+    return document.createComment('page-head');
+  };
   /** text containing `code` segments → nodes */
   F.rich = function (str) {
     const out = [];
@@ -771,6 +778,7 @@
       h('div', { class: 'side-bot' }, h('div', { class: 'side-group-title', text: t('top.botSelect') }), h('label', { class: 'bot-select-wrap' }, botDot, botSel)),
       h('nav', { class: 'sidenav' }, groups.map(([g, keys]) => h('div', { class: 'side-group' },
         h('div', { class: 'side-group-title', text: t('nav.group.' + g) }), h('ul', null, keys.map(link))))),
+      h('div', { class: 'side-player', id: 'side-player' }),
       h('div', { class: 'side-foot muted small', text: 'frix ' + (S.version ? 'v' + S.version : '') }));
     const scrim = h('div', { class: 'side-scrim', onclick: () => closeDrawer() });
     const burger = h('button', { type: 'button', class: 'btn-icon burger', 'aria-label': t('nav.menu'), title: t('nav.menu'), 'aria-controls': 'sidebar', 'aria-expanded': 'false',
@@ -779,15 +787,24 @@
     closeDrawer = function () { if (!document.body.classList.contains('drawer-open')) return; document.body.classList.remove('drawer-open'); burger.setAttribute('aria-expanded', 'false'); };
 
     const top = h('header', { class: 'topbar' },
-      h('div', { class: 'top-left' }, burger, h('h1', { class: 'top-title', id: 'top-title' })),
+      h('div', { class: 'top-left' }, burger, h('div', { class: 'top-heading' }, h('h1', { class: 'top-title', id: 'top-title' }), h('p', { class: 'top-sub', id: 'top-sub' }))),
       h('div', { class: 'top-actions' },
+        h('div', { class: 'top-page-actions', id: 'top-page-actions' }),
+        h('span', { class: 'top-sep' }),
         F.themeBtn(),
         h('div', { class: 'menu-wrap' }, userBtn, userMenu)));
 
     const banner = h('div', { id: 'conn-banner', class: 'conn-banner', hidden: S.online, role: 'status' }, h('span', { class: 'spinner' }), h('span', { text: t('top.offline') }));
     const main = h('main', { id: 'main', class: 'main', tabindex: '-1' });
     const skip = h('a', { href: '#main', class: 'skip', text: t('common.skip'), onclick: (e) => { e.preventDefault(); main.focus(); } });
-    app.append(skip, side, scrim, h('div', { class: 'content' }, top, banner, main, h('div', { class: 'dock' }, mini.build())));
+    const dock = h('div', { class: 'dock' });
+    app.append(skip, side, scrim, h('div', { class: 'content' }, top, banner, main, dock));
+    // now-playing card: bottom of the sidebar on desktop, pinned to the bottom on phones
+    const miniEl = mini.build();
+    const mq = matchMedia('(max-width: 999px)');
+    const place = () => (mq.matches ? dock : side.querySelector('#side-player')).append(miniEl);
+    place();
+    mq.onchange = place;
     updateBotSelect();
   }
   let closeDrawer = () => {};
@@ -856,6 +873,8 @@
       || subs.find((a) => r.children && a.dataset.sub === r.children[0][0] && (path === r.path));
     subs.forEach((a) => { if (a === best) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     const tt = F.$('#top-title'); if (tt) tt.textContent = t('nav.' + r.key);
+    const tsb = F.$('#top-sub'); if (tsb) tsb.textContent = '';
+    const tpa = F.$('#top-page-actions'); if (tpa) tpa.replaceChildren();
     closeDrawer();
     const main = F.$('#main');
     main.replaceChildren();

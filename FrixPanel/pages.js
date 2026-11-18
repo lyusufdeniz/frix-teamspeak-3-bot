@@ -87,8 +87,8 @@
         npTitle.title = npTitle.textContent;
         prog.set(b);
         plugins.replaceChildren((b.plugins || []).length
-          ? [h('span', { class: 'mono muted small', text: t('bots.k.plugins') + ' ' }), ...(b.plugins || []).map((id) => h('span', { class: 'tag', text: pluginName(id) }))]
-          : h('span', { class: 'mono muted small', text: t('bots.k.plugins') + ' –' }));
+          ? [h('span', { class: 'muted small', text: t('bots.k.plugins') + ' ' }), ...(b.plugins || []).map((id) => h('span', { class: 'tag', text: pluginName(id) }))]
+          : h('span', { class: 'muted small', text: t('bots.k.plugins') + ' –' }));
         const sig = b.status + (b.live ? 1 : 0) + F.state.lang;
         if (sig !== actSig) { actSig = sig; buildActions(b); }
       }

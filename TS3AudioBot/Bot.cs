@@ -216,6 +216,14 @@ public sealed class Bot
 			BaseNickname = () => config.Connect.Name.Value,
 			RefreshAvatar = () => GenerateStatusImage(playManager.IsPlaying, playManager.CurrentPlayData),
 		});
+		// Frix: yeniden bağlanma eklentisi (kapalıysa bot düşünce yeniden bağlanmaz)
+		ts3client.FrixReconnect = (type, attempt) =>
+		{
+			if (config.Name is not { } bn || Frix.FrixPluginHost.For(bn) is null) return (false, null);
+			var rp = Frix.FrixPluginHost.Enabled<Frix.AutoReconnectPlugin>(bn);
+			return (true, rp?.Delay(type, attempt));
+		};
+		ts3client.FrixSameChannel = () => config.Name is not { } bn2 || Frix.FrixPluginHost.Enabled<Frix.AutoReconnectPlugin>(bn2) is not { SameChannel: false };
 		ts3FullClient.OnEachClientEnterView += (s, e) =>
 		{
 			var host = plugins;

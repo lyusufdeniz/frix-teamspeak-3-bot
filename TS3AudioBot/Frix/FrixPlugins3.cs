@@ -161,3 +161,43 @@ public sealed class AvatarPlugin : FrixPlugin
 	protected override void OnConfigChanged() => Refresh();
 	private void Refresh() { if (Ctx is { Connected: true }) _ = Ctx.RefreshAvatar(); }
 }
+
+/// <summary>Bot sunucudan düşünce (zaman aşımı, atılma, sunucu kapanması) kendiliğinden tekrar bağlanır ve aynı kanala girer.</summary>
+public sealed class AutoReconnectPlugin : FrixPlugin
+{
+	public override string Id => "autoreconnect";
+	public override bool DefaultEnabled => true;
+	public override string NameTr => "Otomatik yeniden bağlan";
+	public override string NameEn => "Auto reconnect";
+	public override string DescTr => "Bot sunucudan düşünce kendiliğinden tekrar bağlanır ve aynı kanala geri girer. Kapalıysa bot düşünce kapalı kalır.";
+	public override string DescEn => "When the bot drops from the server it reconnects by itself and rejoins the same channel. If off, the bot stays offline after a drop.";
+	public override PluginField[] Schema =>
+	[
+		new("delay", "number", "İlk deneme (saniye)", "First retry (seconds)", 3, null,
+			"Sonraki denemeler bu sürenin katlarıyla en fazla 2 dakikaya kadar uzar.", "Later retries back off up to 2 minutes."),
+		new("maxTries", "number", "En fazla deneme (0 = sınırsız)", "Max retries (0 = unlimited)", 0),
+		new("sameChannel", "bool", "Aynı kanala geri dön", "Rejoin the same channel", true, null,
+			"Kapalıysa bot ayarlardaki varsayılan kanala girer.", "If off, the bot joins its default channel from the bot settings."),
+		new("onKick", "bool", "Sunucudan atılınca da geri gir", "Also reconnect after being kicked from the server", true),
+		new("onShutdown", "bool", "Sunucu kapanıp açılınca tekrar dene", "Retry when the server shuts down or restarts", true),
+	];
+
+	public bool SameChannel => B("sameChannel");
+
+	/// <summary>Bekleme süresi; null = yeniden bağlanma.</summary>
+	public TimeSpan? Delay(string type, int attempt)
+	{
+		var max = Math.Max(0, I("maxTries"));
+		if (max > 0 && attempt >= max) return null;
+		switch (type)
+		{
+		case "Ban": return null;
+		case "Kick" when !B("onKick"): return null;
+		case "ServerShutdown" when !B("onShutdown"): return null;
+		}
+		var first = Math.Clamp(I("delay"), 1, 600);
+		var secs = Math.Min(first * Math.Pow(2, Math.Min(attempt, 6)), Math.Max(first, 120));
+		if (type == "ServerShutdown") secs = Math.Max(secs, 15);
+		return TimeSpan.FromSeconds(secs);
+	}
+}

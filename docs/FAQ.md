@@ -126,6 +126,9 @@ Evet: Panel → Eklentiler → *Temel*. *Müzik* kapalıyken `!ara`, `!link`, `!
 **!ara yazınca şarkı kuyruğa değil direkt çalsın**
 Panel → Eklentiler → *Müzik* → *Direkt çal (kuyruğa ekleme)*. Açıkken yeni şarkı çalanı bırakıp hemen başlar, kuyruk korunur. Aynı seçenek *Radyo* eklentisinde de var (varsayılan açık); kapatırsan radyo kuyruğa eklenir.
 
+**Bot sunucudan düşünce kendi geri girsin**
+Panel → Eklentiler → *Otomatik yeniden bağlan* (varsayılan açık). Bot zaman aşımı, sunucu yeniden başlaması ya da sunucudan atılma sonrası kendiliğinden bağlanır ve aynı kanala döner. İlk deneme süresini, en fazla deneme sayısını ve atılınca geri girip girmeyeceğini ayarlayabilirsin. Banlanınca tekrar denemez.
+
 **Çalan şarkı botun adında / açıklamasında görünsün**
 Panel → Eklentiler → *Şarkı adı → bot adı/açıklaması*. Ad ve açıklama biçimini ayrı ayrı ayarlarsın (`{title}`, `{user}`, `{bot}`). TeamSpeak adları en fazla 30 karakter olduğu için uzun adlar kısaltılır. Çalma bitince bot eski adına döner.
 
@@ -266,6 +269,9 @@ Yes: Panel → Plugins → *Core*. With *Music* off, `!ara`, `!link`, `!liste` a
 
 **Make !ara play right away instead of queueing**
 Panel → Plugins → *Music* → *Play now (don't queue)*. When on, the new song replaces the current one immediately and the queue is kept. The *Radio* plugin has the same option (on by default); turn it off to queue radios instead.
+
+**Make the bot rejoin by itself after it drops**
+Panel → Plugins → *Auto reconnect* (on by default). After a timeout, a server restart or a kick, the bot reconnects and goes back to the same channel. You can set the first retry delay, the maximum number of retries and whether to come back after a kick. It never retries after a ban.
 
 **Show the playing song in the bot's nickname / description**
 Panel → Plugins → *Song → bot name/description*. Set the nickname and description formats separately (`{title}`, `{user}`, `{bot}`). TeamSpeak nicknames are max 30 characters, so long titles are cut. The bot gets its own name back when playback stops.
