@@ -236,7 +236,9 @@ public sealed class FrixPluginHost
 		foreach (var p in Plugins)
 		{
 			if (!p.Enabled) continue;
-			try { await action(p); }
+			// TeamSpeak komutları sadece botun kendi zamanlayıcısından gönderilebilir
+			// ("Cannot call from an outside thread"); bu yüzden her eklenti olayı orada çalışır.
+			try { await Ctx.RunOnBot(() => action(p)); }
 			catch (Exception ex) { Log.Warn("Eklenti hatası ({0}): {1}", p.Id, ex.Message); }
 		}
 	}
