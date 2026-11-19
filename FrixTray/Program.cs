@@ -50,8 +50,8 @@ internal sealed class TrayContext : ApplicationContext
 		botExe = Path.Combine(baseDir, "TS3AudioBot.exe");
 		uiInvoker.CreateControl();
 
-		statusItem = new ToolStripMenuItem("Başlatılıyor…") { Enabled = false };
-		autostartItem = new ToolStripMenuItem("Windows açılışında başlat", null, (_, _) => ToggleAutostart())
+		statusItem = new ToolStripMenuItem("Starting…") { Enabled = false };
+		autostartItem = new ToolStripMenuItem("Start with Windows", null, (_, _) => ToggleAutostart())
 		{
 			Checked = IsAutostartEnabled(),
 		};
@@ -59,13 +59,13 @@ internal sealed class TrayContext : ApplicationContext
 		var menu = new ContextMenuStrip();
 		menu.Items.Add(statusItem);
 		menu.Items.Add(new ToolStripSeparator());
-		menu.Items.Add(new ToolStripMenuItem("Web paneli aç", null, (_, _) => OpenPanel(ReadPort(baseDir))) { Font = new Font(menu.Font, FontStyle.Bold) });
-		menu.Items.Add(new ToolStripMenuItem("Botu yeniden başlat", null, (_, _) => RestartBot()));
-		menu.Items.Add(new ToolStripMenuItem("Bot klasörünü aç", null, (_, _) => Process.Start(new ProcessStartInfo(baseDir) { UseShellExecute = true })));
+		menu.Items.Add(new ToolStripMenuItem("Open web panel", null, (_, _) => OpenPanel(ReadPort(baseDir))) { Font = new Font(menu.Font, FontStyle.Bold) });
+		menu.Items.Add(new ToolStripMenuItem("Restart bot", null, (_, _) => RestartBot()));
+		menu.Items.Add(new ToolStripMenuItem("Open bot folder", null, (_, _) => Process.Start(new ProcessStartInfo(baseDir) { UseShellExecute = true })));
 		menu.Items.Add(new ToolStripSeparator());
 		menu.Items.Add(autostartItem);
 		menu.Items.Add(new ToolStripSeparator());
-		menu.Items.Add(new ToolStripMenuItem("Çıkış (botu kapat)", null, (_, _) => ExitAll()));
+		menu.Items.Add(new ToolStripMenuItem("Exit (stop the bot)", null, (_, _) => ExitAll()));
 
 		tray = new NotifyIcon
 		{
@@ -100,10 +100,10 @@ internal sealed class TrayContext : ApplicationContext
 
 		var port = ReadPort(baseDir);
 		var firstRun = !File.Exists(Path.Combine(baseDir, "frix.db")) || File.Exists(Path.Combine(baseDir, "KURULUM_KODU.txt"));
-		tray.ShowBalloonTip(5000, "Frix çalışıyor",
+		tray.ShowBalloonTip(5000, "Frix is running",
 			firstRun
-				? $"İlk kurulum: http://localhost:{port} adresini açıp yönetici hesabını oluştur."
-				: $"Panel: http://localhost:{port}\nSimgeye çift tıklayarak paneli açabilirsin.",
+				? $"First run: open http://localhost:{port} and create the admin account."
+				: $"Panel: http://localhost:{port}\nDouble-click the icon to open the panel.",
 			ToolTipIcon.Info);
 	}
 
@@ -113,8 +113,8 @@ internal sealed class TrayContext : ApplicationContext
 			return;
 		if (!File.Exists(botExe))
 		{
-			SetStatus("TS3AudioBot.exe bulunamadı!");
-			MessageBox.Show($"TS3AudioBot.exe bulunamadı:\n{botExe}", "Frix", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			SetStatus("TS3AudioBot.exe not found!");
+			MessageBox.Show($"TS3AudioBot.exe not found:\n{botExe}", "Frix", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			return;
 		}
 
@@ -130,12 +130,12 @@ internal sealed class TrayContext : ApplicationContext
 			bot = new Process { StartInfo = psi, EnableRaisingEvents = true, SynchronizingObject = uiInvoker };
 			bot.Exited += OnBotExited;
 			bot.Start();
-			SetStatus("Bot çalışıyor");
+			SetStatus("Bot is running");
 		}
 		catch (Exception ex)
 		{
-			SetStatus("Bot başlatılamadı");
-			tray.ShowBalloonTip(5000, "Frix", "Bot başlatılamadı: " + ex.Message, ToolTipIcon.Error);
+			SetStatus("Bot could not start");
+			tray.ShowBalloonTip(5000, "Frix", "Bot could not start: " + ex.Message, ToolTipIcon.Error);
 			ScheduleRestart(TimeSpan.FromSeconds(15));
 		}
 	}
@@ -162,7 +162,7 @@ internal sealed class TrayContext : ApplicationContext
 		{
 			// Panelden veya menüden istenen yeniden başlatma
 			manualRestart = false;
-			SetStatus("Yeniden başlatılıyor…");
+			SetStatus("Restarting…");
 			ScheduleRestart(TimeSpan.FromSeconds(1));
 			return;
 		}
@@ -171,9 +171,9 @@ internal sealed class TrayContext : ApplicationContext
 		crashTimes.Add(now);
 		crashTimes.RemoveAll(t => now - t > TimeSpan.FromMinutes(2));
 		var delay = crashTimes.Count >= 4 ? TimeSpan.FromSeconds(60) : TimeSpan.FromSeconds(3);
-		SetStatus($"Bot kapandı (kod {code}), {delay.TotalSeconds:0} sn sonra yeniden açılıyor…");
+		SetStatus($"Bot stopped (code {code}), restarting in {delay.TotalSeconds:0} s…");
 		if (crashTimes.Count == 4)
-			tray.ShowBalloonTip(5000, "Frix", "Bot art arda çöktü. Web paneldeki Loglar sekmesine bak.", ToolTipIcon.Warning);
+			tray.ShowBalloonTip(5000, "Frix", "The bot crashed repeatedly. Check Logs in the web panel.", ToolTipIcon.Warning);
 		ScheduleRestart(delay);
 	}
 
@@ -184,8 +184,8 @@ internal sealed class TrayContext : ApplicationContext
 	/// </summary>
 	private void ApplyUpdate()
 	{
-		SetStatus("Güncelleme kuruluyor…");
-		tray.ShowBalloonTip(4000, "Frix", "Güncelleme kuruluyor, birkaç saniye içinde yeniden açılacak.", ToolTipIcon.Info);
+		SetStatus("Installing update…");
+		tray.ShowBalloonTip(4000, "Frix", "Installing the update, Frix will be back in a few seconds.", ToolTipIcon.Info);
 		var script = Path.Combine(Path.GetTempPath(), "frix_update.cmd");
 		var dir = baseDir.TrimEnd('\\');
 		File.WriteAllText(script, string.Join("\r\n",
@@ -225,7 +225,7 @@ internal sealed class TrayContext : ApplicationContext
 		if (bot is { HasExited: false })
 		{
 			manualRestart = true;
-			SetStatus("Yeniden başlatılıyor…");
+			SetStatus("Restarting…");
 			try { bot.Kill(true); } catch { }
 		}
 		else
@@ -237,7 +237,7 @@ internal sealed class TrayContext : ApplicationContext
 
 	private void ExitAll()
 	{
-		var answer = MessageBox.Show("Bot tamamen kapatılsın mı?\nWeb panel de kapanır.", "Frix",
+		var answer = MessageBox.Show("Stop the bot completely?\nThe web panel will close too.", "Frix",
 			MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 		if (answer != DialogResult.Yes)
 			return;
@@ -314,7 +314,7 @@ internal sealed class TrayContext : ApplicationContext
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show("Ayar değiştirilemedi: " + ex.Message, "Frix", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			MessageBox.Show("Could not change the setting: " + ex.Message, "Frix", MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
 	}
 

@@ -232,7 +232,7 @@ public static partial class FrixText
 	};
 
 	private static readonly ConcurrentDictionary<string, string> Overrides = new();
-	private static string language = "tr";
+	private static string language = "en";
 
 	public static string Language => language;
 
@@ -240,7 +240,7 @@ public static partial class FrixText
 	{
 		try
 		{
-			language = Frix.FrixDb.GetMeta("lang") is { } l && Languages.Contains(l) ? l : "tr";
+			language = Frix.FrixDb.GetMeta("lang") is { } l && Languages.Contains(l) ? l : "en";
 			Overrides.Clear();
 			foreach (var row in Frix.FrixDb.Query("SELECT lang, key, value FROM texts"))
 				Overrides[$"{row["lang"]}:{row["key"]}"] = (string)row["value"]!;

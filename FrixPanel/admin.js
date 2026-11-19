@@ -591,24 +591,42 @@
       if (k === 'maintenance') k = 'system';
       return SETTINGS_SECTIONS.some((x) => x.key === k) ? k : 'general';
     };
-    const body = h('div', { class: 'settings-body' }, F.skeleton(2, 'sk-card'));
-    root.append(F.pageHead(t('settings.sec.' + secKey()), t('settings.secDesc.' + secKey())), body);
+    // one page, categories stacked as collapsible sections (open state remembered)
+    const body = h('div', { class: 'settings-body set-acc' }, F.skeleton(2, 'sk-card'));
+    root.append(F.pageHead(t('settings.title'), t('settings.sub')), body);
     let s = null;
     async function load() {
       try { s = await F.api('GET', 'settings'); render(); }
       catch (e) { F.fail(e); body.replaceChildren(F.empty('alert', t('err.loadFailed'))); }
     }
     function render() {
-      const k = secKey();
       if (!s) return;
-      const cards = {
+      const wanted = location.pathname.split('/')[2] ? secKey() : null;
+      const build = {
         general: () => [langCard(), panelCard()],
         youtube: () => [ytdlpCard(), cookieCard()],
         updates: () => [updateCard()],
         system: () => [sysCard(), restartCard()],
-      }[k]();
-      body.replaceChildren(...cards);
-      document.title = t('settings.sec.' + k) + ' · ' + t('nav.settings') + ' · frix';
+      };
+      body.replaceChildren(...SETTINGS_SECTIONS.map((sec) => {
+        const lsKey = 'frix.set.' + sec.key;
+        const stored = lsGet(lsKey);
+        const open = wanted ? wanted === sec.key : stored != null ? stored === '1' : sec.key === 'general';
+        const id = F.uid('sa');
+        const content = h('div', { class: 'acc-body', id, hidden: !open }, build[sec.key]());
+        const head = h('button', { type: 'button', class: 'acc-head', 'aria-expanded': open ? 'true' : 'false', 'aria-controls': id },
+          h('span', { class: 'acc-ic' }, icon(sec.icon)),
+          h('span', { class: 'acc-text' }, h('strong', { text: t('settings.sec.' + sec.key) }), h('span', { class: 'muted small', text: t('settings.secDesc.' + sec.key) })),
+          h('span', { class: 'acc-chev' }, icon('chevron')));
+        const el = h('section', { class: 'acc' + (open ? ' open' : ''), id: 'set-' + sec.key }, head, content);
+        head.addEventListener('click', () => {
+          const o = content.hidden;
+          content.hidden = !o; el.classList.toggle('open', o); head.setAttribute('aria-expanded', o ? 'true' : 'false');
+          lsSet(lsKey, o ? '1' : '0');
+        });
+        return el;
+      }));
+      if (wanted) setTimeout(() => { const el = document.getElementById('set-' + wanted); if (el) el.scrollIntoView({ block: 'start' }); });
     }
     // settings row: title + explanation on the left, controls on the right
     const card = (ic, title, desc, ...kids) => h('section', { class: 'card set-card' },
