@@ -1596,3 +1596,16 @@ html[data-theme="krem"] .side-scrim { background: rgba(0, 0, 0, .25); }
 .bot-plugins { flex-wrap: nowrap; overflow: hidden; }
 .bot-plugins .tag { white-space: nowrap; }
 .tag-more { background: var(--accent-tint); color: var(--accent-2); border-color: transparent; cursor: help; }
+
+/* radios as a table */
+.radio-table { border: 1px solid var(--line); border-radius: 12px; }
+.radio-trow { grid-template-columns: minmax(180px, 1.2fr) 140px minmax(0, 2fr) 270px; padding-top: 8px; padding-bottom: 8px; }
+.radio-trow:last-child { border-bottom: 0; }
+.radio-cell { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.radio-trow .radio-ic { width: 32px; height: 32px; border-radius: 8px; flex: none; display: grid; place-items: center; background: var(--raised); color: var(--muted); }
+.radio-trow.is-playing { background: var(--accent-tint); }
+.radio-trow.is-playing .radio-ic { background: var(--accent); color: #fff; }
+@media (max-width: 900px) {
+  .radio-trow { grid-template-columns: minmax(0, 1fr) auto; }
+  .radio-trow > :nth-child(2), .radio-trow > :nth-child(3), .radio-table > .tbl-head { display: none; }
+}

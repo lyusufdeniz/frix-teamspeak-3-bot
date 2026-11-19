@@ -674,20 +674,26 @@ public static class PanelApi
 	private static object ImportRadios(string text)
 	{
 		int added = 0, skipped = 0;
-		string? pendingName = null;
+		string? pendingName = null, pendingGenre = null;
+		var groupRx = new System.Text.RegularExpressions.Regex("group-title=\"([^\"]*)\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 		foreach (var raw in text.Split('\n'))
 		{
 			var line = raw.Trim();
 			if (line.StartsWith("#EXTINF", StringComparison.OrdinalIgnoreCase))
 			{
-				var comma = line.IndexOf(',');
+				// #EXTINF:-1 group-title="Pop" tvg-logo="…",Station name — the name follows the comma after the attributes
+				var lastQuote = line.LastIndexOf('"');
+				var comma = line.IndexOf(',', Math.Max(0, lastQuote));
 				pendingName = comma >= 0 ? line[(comma + 1)..].Trim() : null;
+				var g = groupRx.Match(line);
+				pendingGenre = g.Success && g.Groups[1].Value.Trim().Length > 0 ? g.Groups[1].Value.Trim() : null;
 				continue;
 			}
 			if (!line.StartsWith("http", StringComparison.OrdinalIgnoreCase)) continue;
 			var name = pendingName ?? new Uri(line).Host;
-			pendingName = null;
-			try { FrixRadio.Add(name.Length > 40 ? name[..40] : name, line, null); added++; }
+			var genre = pendingGenre is { Length: > 40 } gl ? gl[..40] : pendingGenre;
+			pendingName = pendingGenre = null;
+			try { FrixRadio.Add(name.Length > 40 ? name[..40] : name, line, genre); added++; }
 			catch { skipped++; }
 		}
 		return new { added, skipped };

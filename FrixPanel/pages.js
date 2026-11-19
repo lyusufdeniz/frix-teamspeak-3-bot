@@ -458,7 +458,7 @@
       F.btn(t('radios.import'), { kind: 'ghost', icon: 'upload', onClick: () => fileIn.click() }),
       F.btn(t('radios.add'), { kind: 'primary', icon: 'plus', onClick: () => radioForm(null) }), fileIn] : null),
     h('div', { class: 'callout' }, icon('info'), h('div', null, h('p', null, F.rich(t('radios.hint'))), can ? playOn : null)));
-    const list = h('div', { class: 'radio-grid' }, F.skeleton(4, 'sk-row'));
+    const list = h('div', { class: 'radio-table' }, F.skeleton(4, 'sk-row'));
     root.append(list);
     F.fitPage(list);
     let radios = [];
@@ -471,15 +471,20 @@
       if (!radios.length) { list.replaceChildren(F.empty('radio', t('radios.none'), admin ? t('radios.noneAdmin') : null)); return; }
       const b = F.selectedBot();
       const playingRadio = b && b.live && b.live.playing && b.live.playing.radio;
-      list.replaceChildren(...radios.map((r) => h('article', { class: 'card radio-card' + (playingRadio === r.name ? ' is-playing' : '') },
-        h('div', { class: 'radio-ic' }, playingRadio === r.name ? h('span', { class: 'eq' }, h('i'), h('i'), h('i')) : icon('radio')),
-        h('div', { class: 'radio-main' },
-          h('div', { class: 'radio-name' }, h('strong', { text: r.name }), r.genre ? F.badge(r.genre) : null),
-          h('div', { class: 'radio-url muted small', text: r.url, title: r.url })),
-        h('div', { class: 'radio-actions' },
-          can ? F.btn(t('radios.play'), { kind: 'primary', icon: 'play', onClick: (e) => playRadio(e.currentTarget, r) }) : null,
-          admin ? F.iconBtn('edit', t('common.edit'), () => radioForm(r)) : null,
-          admin ? F.iconBtn('trash', t('common.delete'), () => delRadio(r), 'danger') : null))));
+      // table: station | genre | stream address | actions
+      const head = h('div', { class: 'tbl-row radio-trow tbl-head fit-skip' },
+        h('span', { text: t('radios.f.name') }), h('span', { text: t('radios.f.genre') }), h('span', { text: t('radios.f.url') }), h('span'));
+      list.replaceChildren(head, ...radios.map((r) => {
+        const on = playingRadio === r.name;
+        return h('div', { class: 'tbl-row radio-trow' + (on ? ' is-playing' : '') },
+          h('span', { class: 'radio-cell' }, h('span', { class: 'radio-ic' }, on ? h('span', { class: 'eq' }, h('i'), h('i'), h('i')) : icon('radio')), h('strong', { class: 'tbl-ellipsis', text: r.name, title: r.name })),
+          h('span', null, r.genre ? F.badge(r.genre) : h('span', { class: 'muted', text: '–' })),
+          h('span', { class: 'muted small tbl-ellipsis mono', text: r.url, title: r.url }),
+          h('span', { class: 'tbl-actions' },
+            can ? F.btn(on ? t('radios.playingNow') : t('radios.play'), { kind: on ? 'primary' : 'ghost', icon: 'play', cls: 'btn-sm', onClick: (e) => playRadio(e.currentTarget, r) }) : null,
+            admin ? F.btn(t('common.edit'), { kind: 'ghost', icon: 'edit', cls: 'btn-sm', onClick: () => radioForm(r) }) : null,
+            admin ? F.iconBtn('trash', t('common.delete'), () => delRadio(r), 'danger') : null));
+      }));
     }
     async function playRadio(btn, r) {
       const b = F.selectedBot();
