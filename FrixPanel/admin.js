@@ -606,7 +606,7 @@
         general: () => [langCard(), panelCard()],
         youtube: () => [ytdlpCard(), cookieCard()],
         updates: () => [updateCard()],
-        system: () => [sysCard(), restartCard()],
+        system: () => [sysCard(), supportCard(), restartCard()],
       };
       body.replaceChildren(...SETTINGS_SECTIONS.map((sec) => {
         const lsKey = 'frix.set.' + sec.key;
@@ -659,6 +659,10 @@
           h('dt', { text: t('settings.versionLabel') }), h('dd', { text: s.version }),
           h('dt', { text: t('settings.os') }), h('dd', { text: s.os }),
           h('dt', { text: 'yt-dlp' }), h('dd', { text: s.ytdlp ? t('settings.found') : t('settings.notFound') })));
+    }
+    function supportCard() {
+      return card('coffee', t('support.title'), t('support.text'),
+        h('div', null, h('a', { href: F.SUPPORT_URL, target: '_blank', rel: 'noopener noreferrer', class: 'btn btn-support' }, icon('coffee'), h('span', { text: 'Buy me a coffee' }))));
     }
     function cmdCard() {
       return card('terminal', t('nav.commands'), t('settings.cmdHelp'),

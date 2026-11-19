@@ -82,6 +82,7 @@
     plus: 'p:M12 5v14M5 12h14',
     menu: 'p:M4 7h16M4 12h16M4 17h16',
     clock: 'c:12 12 8.5|p:M12 7.5V12l3 2',
+    coffee: 'p:M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z|p:M16 10.5h1.5a2.5 2.5 0 0 1 0 5H16|p:M8.5 3.5c-.6.8-.6 1.7 0 2.5M12 3.5c-.6.8-.6 1.7 0 2.5',
     star: 'p:M12 4l2.5 5.2 5.7.8-4.1 4 1 5.6L12 17l-5.1 2.6 1-5.6-4.1-4 5.7-.8z',
     idcard: 'r:3 5 18 14 2|c:9 11 2.2|p:M5.5 16.5c.8-1.8 2-2.5 3.5-2.5s2.7.7 3.5 2.5|p:M14 10h4M14 13.5h3',
     hand: 'p:M8 13V6.5a1.5 1.5 0 0 1 3 0V11|p:M11 10.5v-6a1.5 1.5 0 0 1 3 0v6|p:M14 10.5V6a1.5 1.5 0 0 1 3 0v8a6 6 0 0 1-6 6h-.5a6 6 0 0 1-4.6-2.2L4 14.6a1.5 1.5 0 0 1 2.3-1.9L8 14.5',
@@ -381,6 +382,7 @@
     }
   }).observe(document.documentElement, { childList: true, subtree: true });
 
+  F.SUPPORT_URL = 'https://buymeacoffee.com/lyusufdeniz';
   /** text containing `code` segments → nodes */
   F.rich = function (str) {
     const out = [];
@@ -942,7 +944,8 @@
       h('div', { class: 'side-bot', title: t('top.botSelect') }, h('label', { class: 'bot-select-wrap' }, botDot, botSel)),
       h('nav', { class: 'sidenav' }, groups.map(([, keys]) => h('div', { class: 'side-group' }, h('ul', null, keys.map(link))))),
       h('div', { class: 'side-player', id: 'side-player' }),
-      h('div', { class: 'side-foot muted small', text: 'frix ' + (S.version ? 'v' + S.version : '') }));
+      h('div', { class: 'side-foot muted small' }, h('span', { text: 'frix ' + (S.version ? 'v' + S.version : '') }),
+        h('a', { href: F.SUPPORT_URL, target: '_blank', rel: 'noopener noreferrer', class: 'side-support', title: t('support.title') }, icon('coffee'), h('span', { text: t('support.short') }))));
     const scrim = h('div', { class: 'side-scrim', onclick: () => closeDrawer() });
     const burger = h('button', { type: 'button', class: 'btn-icon burger', 'aria-label': t('nav.menu'), title: t('nav.menu'), 'aria-controls': 'sidebar', 'aria-expanded': 'false',
       onclick: () => (document.body.classList.contains('drawer-open') ? closeDrawer() : openDrawer()) }, icon('menu'));

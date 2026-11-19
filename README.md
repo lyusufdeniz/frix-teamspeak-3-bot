@@ -9,6 +9,8 @@ Plays YouTube (incl. live streams), SoundCloud, Twitch, internet radio and more 
 
 [Türkçe](README.tr.md) · [FAQ](docs/FAQ.md) · [API](docs/API.md)
 
+<a href="https://buymeacoffee.com/lyusufdeniz"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-support%20Frix-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy me a coffee"></a>
+
 </div>
 
 ---
@@ -151,3 +153,7 @@ See the [FAQ](docs/FAQ.md) (also available inside the panel).
 ## 📄 License
 Open Software License 3.0 (OSL-3.0), same as the upstream [TS3AudioBot](https://github.com/Splamy/TS3AudioBot).
 See [LICENSE](LICENSE). Frix is not affiliated with TeamSpeak Systems GmbH.
+
+## ☕ Support
+
+Frix is free and open source. If it is useful to you, you can support its development on [Buy Me a Coffee](https://buymeacoffee.com/lyusufdeniz).

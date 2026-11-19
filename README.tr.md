@@ -9,6 +9,8 @@ YouTube (canlı yayınlar dahil), SoundCloud, Twitch, internet radyoları ve dah
 
 [English](README.md) · [SSS](docs/FAQ.md) · [API](docs/API.md)
 
+<a href="https://buymeacoffee.com/lyusufdeniz"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-Frix'e%20destek%20ol-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy me a coffee"></a>
+
 </div>
 
 ---
@@ -142,3 +144,7 @@ Paket `dist/` klasöründe oluşur. `v2.0.1` gibi bir etiket gönderildiğinde G
 ## 📄 Lisans
 Open Software License 3.0 (OSL-3.0), [TS3AudioBot](https://github.com/Splamy/TS3AudioBot) ile aynı. Ayrıntılar: [LICENSE](LICENSE).
 Frix'in TeamSpeak Systems GmbH ile bir bağlantısı yoktur.
+
+## ☕ Destek
+
+Frix ücretsiz ve açık kaynaktır. İşine yaradıysa geliştirilmesine [Buy Me a Coffee](https://buymeacoffee.com/lyusufdeniz) üzerinden destek olabilirsin.
