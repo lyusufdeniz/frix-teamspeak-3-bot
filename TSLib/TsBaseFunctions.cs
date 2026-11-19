@@ -350,6 +350,10 @@ public abstract partial class TsBaseFunctions : IDisposable
 	/// <param name="clientUid">The client uid where the avatar should be deleted.</param>
 	public CmdR DeleteAvatar(Uid? clientUid = null)
 	{
+		// Frix: own avatar — the old code built the path "/avatar_" (no uid), which the server always
+		// rejected with file_invalid_path. Clearing the avatar flag is what the TeamSpeak client does.
+		if (clientUid is null)
+			return SendVoid(new TsCommand("clientupdate") { { "client_flag_avatar", "" } });
 		string path = "/avatar_" + clientUid;
 		return FileTransferDeleteFile(ChannelId.Null, new[] { path });
 	}

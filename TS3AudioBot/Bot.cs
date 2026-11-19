@@ -661,6 +661,9 @@ public sealed class Bot
 			}
 
 			setStream ??= GetRandomFile(config.LocalConfigDir, "play*");
+			// Frix: nothing with a cover (e.g. radio) → keep the idle command card instead of removing the avatar
+			if (setStream == null && avatarPlugin is null or { IdleAuto: true })
+				setStream = Frix.FrixAvatar.IdleStream();
 		}
 		else
 		{
