@@ -827,7 +827,7 @@
     { path: '/stats', key: 'stats', icon: 'chart' },
     { path: '/plugins', key: 'plugins', icon: 'box', admin: true, sub: true, children: [['/plugins', 'plugins.all'], ['/plugins/custom', 'commands.custom'], ['/plugins/texts', 'commands.tabTexts']] },
     { path: '/users', key: 'users', icon: 'users', admin: true },
-    { path: '/settings', key: 'settings', icon: 'sliders', admin: true, sub: true, children: [['/settings/general', 'settings.sec.general'], ['/settings/youtube', 'settings.sec.youtube'], ['/settings/updates', 'settings.sec.updates'], ['/settings/maintenance', 'settings.sec.maintenance']] },
+    { path: '/settings', key: 'settings', icon: 'sliders', admin: true, sub: true, children: [['/settings/general', 'settings.sec.general'], ['/settings/youtube', 'settings.sec.youtube'], ['/settings/updates', 'settings.sec.updates'], ['/settings/system', 'settings.sec.system']] },
     { path: '/logs', key: 'logs', icon: 'file', admin: true, sub: true, children: [['/logs/live', 'logs.tabLive'], ['/logs/history', 'logs.tabHistory'], ['/logs/audit', 'settings.sec.audit']] },
     { path: '/faq', key: 'faq', icon: 'help' },
   ];

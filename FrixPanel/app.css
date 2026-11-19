@@ -1534,3 +1534,43 @@ html[data-theme="krem"] .bb-preview, html[data-theme="krem"] .text-prev { backgr
 html[data-theme="krem"] .bb-preview .bb-link { color: #2a5fc7; }
 html[data-theme="krem"] .heat-cell { background: var(--raised); }
 html[data-theme="krem"] .side-scrim { background: rgba(0, 0, 0, .25); }
+
+/* ================================================================ tables: custom commands, bot texts */
+.tbl-row { display: grid; align-items: center; gap: 16px; padding: 10px 12px; border-bottom: 1px solid var(--line); min-width: 0; }
+.tbl-row > * { min-width: 0; }
+.tbl-head { background: var(--raised); border-radius: 10px 10px 0 0; border-bottom: 1px solid var(--line2); font: 600 .72rem var(--ui); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding-top: 9px; padding-bottom: 9px; }
+.tbl-row:not(.tbl-head):hover { background: color-mix(in srgb, var(--raised) 40%, transparent); }
+.tbl-actions { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+.tbl-ellipsis, .cmd-trow .cmd-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmd-list { border: 1px solid var(--line); border-radius: 12px; margin-top: 8px; }
+.cmd-trow, .cmd-list > .tbl-head { grid-template-columns: minmax(110px, .7fr) 110px minmax(0, 2fr) minmax(0, 1.2fr) 70px 150px; }
+.cmd-trow.disabled > :not(.switch):not(.tbl-actions) { opacity: .45; }
+.text-list.text-list { display: block; border: 1px solid var(--line); border-radius: 12px; }
+.text-trow { grid-template-columns: minmax(150px, .8fr) minmax(0, 3fr) 120px 150px; }
+.text-trow .text-key { font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: none; border: 0; padding: 0; }
+.text-trow .text-prev { -webkit-line-clamp: 1; padding: 5px 10px; }
+.text-trow:last-child, .cmd-trow:last-child { border-bottom: 0; }
+@media (max-width: 900px) {
+  .cmd-trow, .cmd-list > .tbl-head { grid-template-columns: 1fr auto; }
+  .cmd-trow > :nth-child(2), .cmd-trow > :nth-child(4), .cmd-list > .tbl-head { display: none; }
+  .text-trow { grid-template-columns: 1fr auto; }
+  .text-trow > :nth-child(3), .text-list .tbl-head { display: none; }
+}
+
+/* ================================================================ settings: title left, controls right */
+.set-card { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 8px 40px; padding: 22px 0; align-items: start; }
+.set-head .card-title { margin-bottom: 4px; }
+.set-head .card-desc { margin: 0; }
+.set-body { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.settings-body { max-width: 1100px; }
+@media (max-width: 900px) { .set-card { grid-template-columns: minmax(0, 1fr); } }
+
+/* users (and other <table>s) in the same table style */
+.table-wrap { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.main > .card > .table-wrap, .main > .card.users-card { padding: 0; }
+.table { border-collapse: separate; border-spacing: 0; width: 100%; }
+.table thead th { background: var(--raised); border-bottom: 1px solid var(--line2); font: 600 .72rem var(--ui); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 10px 14px; }
+.table tbody td { padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.table tbody tr:last-child td { border-bottom: 0; }
+.table tbody tr:hover td { background: color-mix(in srgb, var(--raised) 40%, transparent); }
+.table .fx { max-width: 200px; }

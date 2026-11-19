@@ -295,6 +295,64 @@ public static partial class FrixText
 		}
 	}
 
+	/// <summary>Her cevaba kodda gönderilen değişkenler (panelde "değişken ekle" listesi).</summary>
+	public static readonly Dictionary<string, string[]> Vars = new()
+	{
+		["ara.found"] = ["title"],
+		["ara.queued"] = ["title", "pos"],
+		["autoplay.next"] = ["title"],
+		["cmd.np"] = ["title", "user", "time"],
+		["cmd.queue.header"] = ["count"],
+		["cmd.queue.line"] = ["pos", "title"],
+		["cmd.volume.now"] = ["volume"],
+		["cmd.volume.set"] = ["volume"],
+		["dice"] = ["user", "dice", "result"],
+		["coin.heads"] = ["user"],
+		["coin.tails"] = ["user"],
+		["dj.limit"] = ["max"],
+		["failed"] = ["title", "reason"],
+		["fav.added"] = ["title"],
+		["fav.exists"] = ["title"],
+		["fav.header"] = ["count"],
+		["fav.limit"] = ["max"],
+		["fav.queued"] = ["count"],
+		["fav.removed"] = ["title"],
+		["fx.rate"] = ["amount", "code", "value", "base"],
+		["fx.unknown"] = ["code"],
+		["lyrics.notfound"] = ["title"],
+		["lyrics.sent"] = ["user"],
+		["nowplaying"] = ["title", "user"],
+		["nowplaying.radio"] = ["title", "user"],
+		["online.me"] = ["time", "rank"],
+		["pick"] = ["choice"],
+		["pl.added"] = ["title", "name"],
+		["pl.deleted"] = ["name"],
+		["pl.header"] = ["name", "count"],
+		["pl.list"] = ["list"],
+		["pl.notfound"] = ["name"],
+		["pl.queued"] = ["name", "count"],
+		["pl.saved"] = ["name", "count"],
+		["poll.badoption"] = ["max"],
+		["poll.header"] = ["question"],
+		["poll.result"] = ["question"],
+		["poll.howto"] = ["minutes"],
+		["poll.voted"] = ["option"],
+		["poll.changed"] = ["option"],
+		["radio.empty"] = ["list"],
+		["radio.invalid"] = ["reason"],
+		["radio.notfound"] = ["name", "list"],
+		["radio.opening"] = ["name"],
+		["reg.ambiguous"] = ["list"],
+		["reg.done"] = ["user"],
+		["reg.failed"] = ["reason"],
+		["reg.notfound"] = ["user"],
+		["stats.header"] = ["count"],
+		["stream.error"] = ["reason"],
+		["vote.count"] = ["count", "needed"],
+		["weather"] = ["place", "temp", "feels", "desc", "humidity", "wind"],
+		["weather.notfound"] = ["city"],
+	};
+
 	public static IEnumerable<object> All(string lang)
 		=> Defaults["tr"].Keys.Select(k => new
 		{
@@ -302,5 +360,6 @@ public static partial class FrixText
 			value = Raw(k, lang),
 			defaultValue = Defaults.GetValueOrDefault(lang)?.GetValueOrDefault(k) ?? Defaults["tr"][k],
 			custom = Overrides.ContainsKey($"{lang}:{k}"),
+			vars = Vars.GetValueOrDefault(k) ?? [],
 		});
 }

@@ -217,18 +217,22 @@
     function render() {
       const items = data.custom || [];
       if (!items.length) { custom.replaceChildren(F.empty('terminal', t('commands.none'), t('commands.noneHint'))); return; }
-      custom.replaceChildren(...items.map((c) => {
+      const head = h('div', { class: 'tbl-row tbl-head fit-skip' },
+        h('span', { text: t('commands.f.trigger') }), h('span', { text: t('commands.f.kind') }), h('span', { text: t('commands.f.value') }),
+        h('span', { text: t('commands.f.desc') }), h('span', { text: t('plugins.enabled') }), h('span'));
+      custom.replaceChildren(head, ...items.map((c) => {
         const sw = F.switchEl(c.enabled, null, { 'aria-label': t('commands.enabled') + ': !' + c.trigger });
         sw.input.addEventListener('change', async () => {
           try { await F.api('PUT', 'commands/' + c.id, Object.assign({}, c, { enabled: sw.input.checked })); c.enabled = sw.input.checked; row.classList.toggle('disabled', !c.enabled); F.toast(t('common.saved')); bumpAvatar(); }
           catch (e) { sw.input.checked = !sw.input.checked; F.fail(e); }
         });
-        const row = h('div', { class: 'cmd-row' + (c.enabled ? '' : ' disabled') },
-          h('div', { class: 'cmd-main' },
-            h('div', { class: 'row gap-s wrap' }, h('code', { class: 'cmd-trigger', text: '!' + c.trigger }), F.badge(t('commands.kind.' + c.kind), c.kind === 'alias' ? 'info' : 'accent')),
-            h('div', { class: 'cmd-value', text: c.value }),
-            c.description ? h('div', { class: 'muted small', text: c.description }) : null),
-          h('div', { class: 'cmd-actions' }, sw, F.iconBtn('edit', t('common.edit'), () => form(c)), F.iconBtn('trash', t('common.delete'), () => del(c), 'danger')));
+        const row = h('div', { class: 'tbl-row cmd-trow' + (c.enabled ? '' : ' disabled') },
+          h('code', { class: 'cmd-trigger', text: '!' + c.trigger }),
+          h('span', null, F.badge(t('commands.kind.' + c.kind), c.kind === 'alias' ? 'info' : 'accent')),
+          h('span', { class: 'cmd-value', text: c.value, title: c.value }),
+          h('span', { class: 'muted small tbl-ellipsis', text: c.description || '–', title: c.description || '' }),
+          sw,
+          h('span', { class: 'tbl-actions' }, F.btn(t('common.edit'), { kind: 'ghost', icon: 'edit', cls: 'btn-sm', onClick: () => form(c) }), F.iconBtn('trash', t('common.delete'), () => del(c), 'danger')));
         return row;
       }));
     }
@@ -388,26 +392,30 @@
       list.replaceChildren(...F.skeleton(4, 'sk-row'));
       try {
         const items = (await F.api('GET', 'texts?lang=' + enc(lang))) || [];
-        list.replaceChildren(...items.map(row));
+        list.replaceChildren(h('div', { class: 'tbl-row text-trow tbl-head fit-skip' },
+          h('span', { text: t('texts.key') }), h('span', { text: t('texts.bb.preview') }), h('span', { text: t('texts.state') }), h('span')), ...items.map(row));
         applyFilter();
       } catch (e) { F.fail(e); list.replaceChildren(F.empty('alert', t('err.loadFailed'))); }
     }
-    // list row: key + how the reply looks in TeamSpeak; click opens the editor dialog
+    // table row: key | preview | state | edit / reset
     function row(it) {
       const isErr = ['failed', 'stream.error'].includes(it.key);
       const lookFor = () => (isErr ? Object.assign({}, look, { color: look.errorColor }) : look);
       const prev = h('div', { class: 'text-prev' });
-      const badge = F.badge(t('texts.custom'), 'accent');
+      const state = h('span');
+      const resetB = F.iconBtn('refresh', t('texts.reset'), async () => {
+        try { await F.api('PUT', 'texts', { lang, key: it.key, value: '' }); it.custom = false; it.value = it.defaultValue; paint(); F.toast(t('texts.wasReset')); if (it.key.startsWith('avatar.')) bumpAvatar(); }
+        catch (e) { F.fail(e); }
+      });
       const paint = () => {
         prev.replaceChildren(bbRender(it.value, lookFor()));
-        badge.hidden = !it.custom;
+        state.replaceChildren(it.custom ? F.badge(t('texts.custom'), 'accent') : F.badge(t('texts.defaultState')));
+        resetB.disabled = !it.custom;
         el.dataset.search = (it.key + ' ' + it.value + ' ' + it.defaultValue).toLowerCase();
       };
-      const el = h('button', { type: 'button', class: 'text-item', 'aria-label': t('common.edit') + ': ' + it.key },
-        h('div', { class: 'text-item-head' }, h('code', { class: 'text-key', text: it.key }), badge, h('span', { class: 'text-edit-ic' }, icon('edit', 'sm'))),
-        prev);
-      el.classList.add('text-row');
-      el.addEventListener('click', () => edit(it, lookFor, paint));
+      const el = h('div', { class: 'tbl-row text-row text-trow' },
+        h('code', { class: 'text-key', text: it.key, title: it.key }), prev, state,
+        h('span', { class: 'tbl-actions' }, F.btn(t('common.edit'), { kind: 'ghost', icon: 'edit', cls: 'btn-sm', onClick: () => edit(it, lookFor, paint) }), resetB));
       previews.push(paint);
       paint();
       return el;
@@ -431,7 +439,7 @@
         } catch (e) { F.fail(e); return false; }
       };
       const insertVar = (v) => { const i = ta.selectionStart; ta.value = ta.value.slice(0, i) + v + ta.value.slice(ta.selectionEnd); ta.focus(); ta.setSelectionRange(i + v.length, i + v.length); paint(); };
-      const vars = [...new Set((it.defaultValue.match(/\{\w+\}/g) || []))];
+      const vars = [...new Set((it.vars || []).map((v) => '{' + v + '}').concat(it.defaultValue.match(/\{\w+\}/g) || []))];
       F.modal({
         title: [h('code', { class: 'text-key', text: it.key })],
         size: 'wide',
@@ -575,11 +583,12 @@
     { key: 'general', icon: 'sliders' },
     { key: 'youtube', icon: 'music' },
     { key: 'updates', icon: 'download' },
-    { key: 'maintenance', icon: 'power' },
+    { key: 'system', icon: 'info' },
   ];
   Pages.settings = function (root) {
     const secKey = () => {
-      const k = location.pathname.replace(/\/+$/, '').split('/')[2] || 'general';
+      let k = location.pathname.replace(/\/+$/, '').split('/')[2] || 'general';
+      if (k === 'maintenance') k = 'system';
       return SETTINGS_SECTIONS.some((x) => x.key === k) ? k : 'general';
     };
     const body = h('div', { class: 'settings-body' }, F.skeleton(2, 'sk-card'));
@@ -593,15 +602,18 @@
       const k = secKey();
       if (!s) return;
       const cards = {
-        general: () => [langCard(), cmdCard(), panelCard(), sysCard()],
+        general: () => [langCard(), panelCard()],
         youtube: () => [ytdlpCard(), cookieCard()],
         updates: () => [updateCard()],
-        maintenance: () => [restartCard()],
+        system: () => [sysCard(), restartCard()],
       }[k]();
       body.replaceChildren(...cards);
       document.title = t('settings.sec.' + k) + ' · ' + t('nav.settings') + ' · frix';
     }
-    const card = (ic, title, desc, ...kids) => h('section', { class: 'card set-card' }, h('h3', { class: 'card-title' }, icon(ic), title), desc ? h('p', { class: 'muted small card-desc' }, desc) : null, kids);
+    // settings row: title + explanation on the left, controls on the right
+    const card = (ic, title, desc, ...kids) => h('section', { class: 'card set-card' },
+      h('div', { class: 'set-head' }, h('h3', { class: 'card-title' }, icon(ic), title), desc ? h('p', { class: 'muted small card-desc' }, desc) : null),
+      h('div', { class: 'set-body' }, kids));
 
     function panelCard() {
       const theme = F.select([['lacivert', t('theme.lacivert')], ['krem', t('theme.krem')]], F.theme(), { class: 'input theme-sel' });
