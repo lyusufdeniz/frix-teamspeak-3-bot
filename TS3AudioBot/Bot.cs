@@ -183,7 +183,13 @@ public sealed class Bot
 		{
 			var title = e.ResourceData.ResourceTitle ?? "?";
 			var who = FrixChat.NameOf(e.EffectiveOwnerUid);
-			var key = e.ResourceData.Get("radio") != null ? "nowplaying.radio" : "nowplaying";
+			var isRadio = e.ResourceData.Get("radio") != null;
+			var key = isRadio ? "nowplaying.radio" : "nowplaying";
+			// Müzik / Radyo eklentilerindeki "kanala duyur" ayarı kapalıysa mesaj gönderilmez
+			if (config.Name is { } an && (isRadio
+				? Frix.FrixPluginHost.Enabled<Frix.RadioPlugin>(an) is { Announce: false }
+				: Frix.FrixPluginHost.Enabled<Frix.MusicPlugin>(an) is { Announce: false }))
+				return Task.CompletedTask;
 			return AnnounceChannel(FrixChat.Color(FrixText.Get(key, ("title", title), ("user", who))));
 		};
 		playManager.AfterResourceStarted += (s, e) =>

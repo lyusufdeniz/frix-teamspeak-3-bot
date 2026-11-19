@@ -22,9 +22,13 @@ public sealed class MusicPlugin : FrixPlugin
 		new("forcePlay", "bool", "Direkt çal (kuyruğa ekleme)", "Play now (don't queue)", false, null,
 			"Açıkken !ara ve !link çalan şarkıyı bırakıp yeni şarkıyı hemen çalar. Kuyruktaki diğer şarkılar korunur.",
 			"When on, !ara and !link stop the current song and play the new one right away. The rest of the queue is kept."),
+		new("announce", "bool", "Çalan şarkıyı kanala duyur", "Announce the playing song in the channel", true, null,
+			"Her şarkı başladığında kanala 'Şimdi çalıyor' mesajı yazılır (metni: Bot metinleri → nowplaying).",
+			"Posts a 'Now playing' message to the channel when each song starts (text: Bot texts → nowplaying)."),
 	];
 
 	public bool ForcePlay => B("forcePlay");
+	public bool Announce => B("announce");
 }
 
 /// <summary>!radyo komutu.</summary>
@@ -41,9 +45,13 @@ public sealed class RadioPlugin : FrixPlugin
 		new("forcePlay", "bool", "Direkt çal (kuyruğa ekleme)", "Play now (don't queue)", true, null,
 			"Açıkken radyo çalan şarkıyı bırakıp hemen başlar. Kapalıysa radyo kuyruğun sonuna eklenir.",
 			"When on, the radio starts right away and the current song stops. When off, the radio is added to the end of the queue."),
+		new("announce", "bool", "Açılan radyoyu kanala duyur", "Announce the radio in the channel", true, null,
+			"Radyo başladığında kanala mesaj yazılır (metni: Bot metinleri → nowplaying.radio).",
+			"Posts a message to the channel when a radio starts (text: Bot texts → nowplaying.radio)."),
 	];
 
 	public bool ForcePlay => B("forcePlay");
+	public bool Announce => B("announce");
 }
 
 /// <summary>Çalan şarkıyı botun adı ve/veya açıklaması yapar; boşta eski haline döner.</summary>
