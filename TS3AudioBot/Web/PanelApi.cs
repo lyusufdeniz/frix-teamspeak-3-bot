@@ -32,6 +32,7 @@ public static class PanelApi
 		FrixAvatar.RefreshAllBots = () => Bots.IterateAll(b => _ = b.RefreshIdleAvatar());
 		FrixSystem.Start();
 		FrixPluginHost.MigrateScheduled();
+		FrixGroups.Migrate();
 	}
 
 	private static BotManager Bots => injector!.GetModuleOrThrow<BotManager>();
@@ -251,7 +252,7 @@ public static class PanelApi
 				commander = c.Connect.Commander.Value,
 				bitrate = c.Audio.Bitrate.Value,
 				hasPassword = !string.IsNullOrEmpty(c.Connect.ServerPassword.Password.Value),
-				plugins = FrixDb.Query("SELECT id FROM plugins WHERE bot=$b AND enabled=1", ("$b", name)).Select(r => r["id"]).ToArray(),
+				plugins = EnabledGroups(name),
 				live,
 			});
 		}
@@ -731,31 +732,39 @@ public static class PanelApi
 
 	// ================================================================== eklentiler
 
+	/// <summary>Bot kartı için açık gruplar (kaydı olmayanlar varsayılan durumlarıyla).</summary>
+	private static string[] EnabledGroups(string bot)
+	{
+		var rows = FrixDb.Query("SELECT id, enabled FROM plugins WHERE bot=$b", ("$b", bot)).ToDictionary(r => (string)r["id"]!, r => (long)r["enabled"]! != 0);
+		return FrixGroups.All.Where(g => rows.TryGetValue(g.Id, out var on) ? on : FrixGroups.DefaultOn(g)).Select(g => g.Id).ToArray();
+	}
+
 	private static object ListPlugins(string bot)
 	{
 		var rows = FrixDb.Query("SELECT id, enabled, config FROM plugins WHERE bot=$b", ("$b", bot)).ToDictionary(r => (string)r["id"]!);
-		return FrixPluginHost.Catalog.Select(p => new
+		return FrixGroups.All.Select(g =>
 		{
-			id = p.Id,
-			name = new { tr = p.NameTr, en = p.NameEn },
-			description = new { tr = FrixCommands.ApplyNames(p.DescTr), en = FrixCommands.ApplyNames(p.DescEn) },
-			enabled = rows.TryGetValue(p.Id, out var r) ? (long)r["enabled"]! != 0 : p.DefaultEnabled,
-			config = rows.TryGetValue(p.Id, out var r2) ? JsonNode.Parse((r2["config"] as string) ?? "{}") : new JsonObject(),
-			schema = p.Schema.Select(f => new
+			var has = rows.TryGetValue(g.Id, out var row);
+			return new
 			{
-				key = f.Key,
-				type = f.Type,
-				label = new { tr = FrixCommands.ApplyNames(f.LabelTr), en = FrixCommands.ApplyNames(f.LabelEn) },
-				help = f.HelpTr is null ? null : new { tr = FrixCommands.ApplyNames(f.HelpTr), en = FrixCommands.ApplyNames(f.HelpEn!) },
-				@default = f.Default,
-				options = f.Options,
-			}),
-		});
+				id = g.Id,
+				name = new { tr = g.NameTr, en = g.NameEn },
+				description = new { tr = FrixCommands.ApplyNames(g.DescTr), en = FrixCommands.ApplyNames(g.DescEn) },
+				parts = g.Parts.Select(p => new { id = p, name = new { tr = FrixGroups.Proto(p).NameTr, en = FrixGroups.Proto(p).NameEn } }),
+				schema = FrixGroups.Schema(g).Select(f => new
+				{
+					key = f.Key, type = f.Type, label = new { tr = FrixCommands.ApplyNames(f.LabelTr), en = FrixCommands.ApplyNames(f.LabelEn) }, @default = f.Default, options = f.Options,
+					help = f.HelpTr is null ? null : new { tr = FrixCommands.ApplyNames(f.HelpTr), en = FrixCommands.ApplyNames(f.HelpEn ?? f.HelpTr) },
+				}),
+				enabled = has ? (long)row!["enabled"]! != 0 : FrixGroups.DefaultOn(g),
+				config = has ? JsonNode.Parse((row!["config"] as string) ?? "{}") : new JsonObject(),
+			};
+		}).ToArray();
 	}
 
 	private static object SavePlugin(string bot, string id, JsonObject body)
 	{
-		if (!FrixPluginHost.Catalog.Any(p => p.Id == id)) throw NotFound("plugin_not_found");
+		if (FrixGroups.Get(id) is null) throw NotFound("plugin_not_found");
 		if (!AllConfigs().Any(c => c.Name == bot)) throw NotFound("bot_not_found");
 		var config = body["config"] as JsonObject ?? [];
 		FrixPluginHost.Save(bot, id, body.Bool("enabled") ?? false, (JsonObject)config.DeepClone());

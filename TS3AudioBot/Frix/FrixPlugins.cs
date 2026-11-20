@@ -76,7 +76,7 @@ public abstract class FrixPlugin
 		try
 		{
 			Config[key] = value;
-			FrixDb.Exec("UPDATE plugins SET config=$c WHERE bot=$b AND id=$i", ("$c", Config.ToJsonString()), ("$b", Ctx.BotName), ("$i", Id));
+			FrixGroups.PersistPart(Ctx.BotName, Id, key, value);
 		}
 		catch (Exception ex) { NLog.LogManager.GetCurrentClassLogger().Debug(ex, "Eklenti ayarı kaydedilemedi"); }
 	}
@@ -201,6 +201,7 @@ public sealed class FrixPluginHost
 	public FrixPluginHost(PluginContext ctx)
 	{
 		MigrateScheduled();
+		FrixGroups.Migrate();
 		Ctx = ctx;
 		Plugins = Factories.Select(f => f()).ToList();
 		foreach (var p in Plugins)
@@ -220,10 +221,13 @@ public sealed class FrixPluginHost
 		{
 			try
 			{
-				if (rows.TryGetValue(p.Id, out var row))
-					p.Apply((long)row["enabled"]! != 0, JsonNode.Parse((row["config"] as string) ?? "{}") as JsonObject ?? []);
-				else
-					p.Apply(p.DefaultEnabled, []);
+				var g = FrixGroups.GroupOf(p.Id);
+				if (g is null) { p.Apply(p.DefaultEnabled, []); continue; }
+				var has = rows.TryGetValue(g.Id, out var row);
+				var master = has && (long)row!["enabled"]! != 0;
+				var gcfg = has ? JsonNode.Parse((row!["config"] as string) ?? "{}") as JsonObject ?? [] : [];
+				var (on, cfg) = FrixGroups.PartState(g, p.Id, has, master, gcfg);
+				p.Apply(on, cfg);
 			}
 			catch (Exception ex)
 			{
@@ -301,13 +305,14 @@ public sealed class FrixPluginHost
 			return p is not null && p.Enabled && (flag is null || p.Flag(flag));
 		}
 		var proto = Factories.Select(f => f()).FirstOrDefault(x => x.Id == id);
-		if (proto is null) return false;
-		var row = FrixDb.Query("SELECT enabled, config FROM plugins WHERE bot=$b AND id=$i", ("$b", bot), ("$i", id)).FirstOrDefault();
-		if (row is null) return proto.DefaultEnabled && (flag is null || proto.Flag(flag));
-		if ((long)row["enabled"]! == 0) return false;
+		var g = FrixGroups.GroupOf(id);
+		if (proto is null || g is null) return false;
+		var row = FrixDb.Query("SELECT enabled, config FROM plugins WHERE bot=$b AND id=$i", ("$b", bot), ("$i", g.Id)).FirstOrDefault();
+		var has = row is not null;
+		var (on, cfg) = FrixGroups.PartState(g, id, has, has && (long)row!["enabled"]! != 0, has ? JsonNode.Parse((row!["config"] as string) ?? "{}") as JsonObject ?? [] : []);
+		if (!on) return false;
 		if (flag is null) return true;
-
-		proto.Load(JsonNode.Parse((row["config"] as string) ?? "{}") as JsonObject ?? []);
+		proto.Load(cfg);
 		return proto.Flag(flag);
 	}
 

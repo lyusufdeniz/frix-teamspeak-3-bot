@@ -88,7 +88,7 @@
         npTitle.title = npTitle.textContent;
         prog.set(b);
         plugins.replaceChildren((b.plugins || []).length
-          ? [h('span', { class: 'muted small', text: t('bots.k.plugins') + ' ' }), ...(b.plugins || []).slice(0, 3).map((id) => h('span', { class: 'tag', text: pluginName(id) })),
+          ? [h('span', { class: 'muted small', text: t('bots.k.plugins') + ' ' }), ...(b.plugins || []).slice(0, 3).map((id) => h('span', { class: 'tag', text: pluginName(id), title: pluginName(id) })),
             (b.plugins || []).length > 3 ? h('span', { class: 'tag tag-more', text: '+' + ((b.plugins || []).length - 3), title: (b.plugins || []).slice(3).map(pluginName).join(', ') }) : null]
           : h('span', { class: 'muted small', text: t('bots.k.plugins') + ' –' }));
         const sig = b.status + (b.live ? 1 : 0) + F.state.lang;

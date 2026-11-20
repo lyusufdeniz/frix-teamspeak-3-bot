@@ -51,7 +51,7 @@ Panel → Botlar → Yeni bot. Örneğin bir müzik botu ve sadece karşılama/d
 
 ### Eklentiler
 
-Eklentiler her bot için ayrı ayrı açılır: Panel → Eklentiler → bot seç → kartı aç → ayarla → Kaydet. Kanal alanlarına kanalın **adını** ya da **ID'sini** (`5` veya `/5`) yazabilirsin. Grup alanlarına sunucu grubu ID'lerini virgülle yaz (TeamSpeak'te *İzinler → Sunucu Grupları* penceresinde görünür).
+Eklentiler her bot için ayrı ayrı açılır: Panel → Eklentiler → bot seç → eklentiye tıkla → içindeki özellikleri tek tek aç, ayarla → Kaydet. Benzer özellikler tek eklentide toplanır (ör. AFK taşıyıcı ve flood koruması *Moderasyon* içinde). Kanal alanlarının yanındaki düğmeyle kanalı listeden seçebilirsin. Kanal alanlarına kanalın **adını** ya da **ID'sini** (`5` veya `/5`) yazabilirsin. Grup alanlarına sunucu grubu ID'lerini virgülle yaz (TeamSpeak'te *İzinler → Sunucu Grupları* penceresinde görünür).
 
 | Eklenti | Ne yapar | Botun TeamSpeak'te ihtiyacı olan yetki |
 |---|---|---|
@@ -121,7 +121,7 @@ Evet: Panel → Eklentiler (her eklenti kartının altındaki *Komutlar*). Yeni 
 Panel → Eklentiler → *Özel komutlar*. *Metin* türü sabit bir cevap verir (ör. `!discord` → davet linki; `{user}`, `{args}`, `{time}`, `{date}` kullanılabilir). *Yönlendirme* türü başka bir komutu çalıştırır (ör. `!sarki` → `!ara`). Özel komut adı yerleşik bir komutla aynı olamaz.
 
 **Müzik ya da radyoyu kapatabilir miyim?**
-Evet: Panel → Eklentiler → *Temel*. *Müzik* kapalıyken `!ara`, `!link`, `!liste`, `!istatistik` çalışmaz; *Radyo* kapalıyken `!radyo` çalışmaz. `!gec`, `!dur`, `!ses` gibi kontroller ikisinden biri açık olduğu sürece çalışır. Kapalı bir özelliğin komutu yazılırsa bot "bu özellik kapalı" der. Komutlar sayfası ve `!yardim` sadece açık eklentilerin komutlarını gösterir.
+Evet: Panel → Eklentiler → *Müzik* / *Radyo*. *Müzik* kapalıyken `!ara`, `!link`, `!liste`, `!istatistik` çalışmaz; *Radyo* kapalıyken `!radyo` çalışmaz. `!gec`, `!dur`, `!ses` gibi kontroller ikisinden biri açık olduğu sürece çalışır. Kapalı bir özelliğin komutu yazılırsa bot "bu özellik kapalı" der. Komutlar sayfası ve `!yardim` sadece açık eklentilerin komutlarını gösterir.
 
 **!ara yazınca şarkı kuyruğa değil direkt çalsın**
 Panel → Eklentiler → *Müzik* → *Direkt çal (kuyruğa ekleme)*. Açıkken yeni şarkı çalanı bırakıp hemen başlar, kuyruk korunur. Aynı seçenek *Radyo* eklentisinde de var (varsayılan açık); kapatırsan radyo kuyruğa eklenir.
@@ -130,10 +130,10 @@ Panel → Eklentiler → *Müzik* → *Direkt çal (kuyruğa ekleme)*. Açıkken
 Panel → Eklentiler → *Otomatik yeniden bağlan* (varsayılan açık). Bot zaman aşımı, sunucu yeniden başlaması ya da sunucudan atılma sonrası kendiliğinden bağlanır ve aynı kanala döner. İlk deneme süresini, en fazla deneme sayısını ve atılınca geri girip girmeyeceğini ayarlayabilirsin. Banlanınca tekrar denemez.
 
 **Bazı şarkılar çok yüksek, bazıları çok kısık çalıyor**
-Panel → Eklentiler → *Ses seviyesi eşitleme* (varsayılan açık). Her şarkı aynı ses seviyesine çekilir; hedef seviyeyi kısık / normal / yüksek seçebilirsin. Değişiklik bir sonraki şarkıda başlar.
+Panel → Eklentiler → *Müzik* → *Ses seviyesi eşitleme* (varsayılan açık). Her şarkı aynı ses seviyesine çekilir; hedef seviyeyi kısık / normal / yüksek seçebilirsin. Değişiklik bir sonraki şarkıda başlar.
 
 **Kuyruk bitince bot sussun istemiyorum**
-Panel → Eklentiler → *Otomatik devam*. Kuyruk bitince son çalan şarkıya benzer bir şarkı (YouTube mix) seçilip çalınır. `!dur` / `!bitir` ile durdurursan devam etmez. İstersen sadece kanalda biri varken çalışır.
+Panel → Eklentiler → *Müzik* → *Otomatik devam*. Kuyruk bitince son çalan şarkıya benzer bir şarkı (YouTube mix) seçilip çalınır. `!dur` / `!bitir` ile durdurursan devam etmez. İstersen sadece kanalda biri varken çalışır.
 
 **Favoriler nasıl çalışır?**
 *Favoriler* eklentisi açıkken `!fav` çalan şarkıyı senin favorilerine ekler, `!favs` hepsini kuyruğa ekler. `!favs liste` listeyi gösterir, `!fav sil 3` 3. favoriyi siler. Favoriler TeamSpeak kimliğine göre kişiye özeldir.
@@ -142,16 +142,16 @@ Panel → Eklentiler → *Otomatik devam*. Kuyruk bitince son çalan şarkıya b
 Panel → Eklentiler → *Zamanlanmış çalma*. Her satır bir plan: `09:00 | radyo Power Türk`, `pzt,sal,çar,per,cum 18:30 | liste akşam`, `00:30 | dur`, `20:00 | ses 40`.
 
 **Duyuru/reklam ve zamanlı duyuru nerede?**
-İkisi tek eklentide: Panel → Eklentiler → *Duyurular*. Dönen mesajlar belirli aralıklarla gider; *Zamanlı duyurular* alanına `21:00 | mesaj` biçiminde gün/saat bazlı mesajlar yazılır. Sadece zamanlı duyuru istiyorsan dönen mesajları boş bırak.
+İkisi tek eklentide: Panel → Eklentiler → *Karşılama ve duyurular* → *Duyurular*. Dönen mesajlar belirli aralıklarla gider; *Zamanlı duyurular* alanına `21:00 | mesaj` biçiminde gün/saat bazlı mesajlar yazılır. Sadece zamanlı duyuru istiyorsan dönen mesajları boş bırak.
 
 **Dashboard'daki sunucu aktivitesi**
 *Sunucu aktivitesi* eklentisi (varsayılan açık) çevrimiçi kişi sayısını 5 dakikada bir kaydeder. Dashboard'da son 24 saat grafiği ve gün × saat ısı haritası (en yoğun saatler) görünür.
 
 **Çalan şarkı botun adında / açıklamasında görünsün**
-Panel → Eklentiler → *Şarkı adı → bot adı/açıklaması*. Ad ve açıklama biçimini ayrı ayrı ayarlarsın (`{title}`, `{user}`, `{bot}`). TeamSpeak adları en fazla 30 karakter olduğu için uzun adlar kısaltılır. Çalma bitince bot eski adına döner.
+Panel → Eklentiler → *Bot görünümü* → *Şarkı adı → bot adı/açıklaması*. Ad ve açıklama biçimini ayrı ayrı ayarlarsın (`{title}`, `{user}`, `{bot}`). TeamSpeak adları en fazla 30 karakter olduğu için uzun adlar kısaltılır. Çalma bitince bot eski adına döner.
 
 **Avatarı nasıl kapatırım ya da şarkı kapağını istemiyorum**
-Panel → Eklentiler → *Avatar*: boşta komut kartı ve çalarken şarkı kapağı ayrı ayrı açılıp kapanır. Eklentiyi tamamen kapatırsan bot avatarı kaldırılır.
+Panel → Eklentiler → *Bot görünümü* → *Avatar*: boşta komut kartı ve çalarken şarkı kapağı ayrı ayrı açılıp kapanır. Avatar özelliğini kapatırsan bot avatarı kaldırılır.
 
 **Bot cevaplarını renkli / kalın yapabilir miyim?**
 Evet: Panel → Eklentiler → *Bot metinleri*. Üstteki *Mesaj görünümü* kartında tüm cevapların varsayılan rengini, hata rengini ve kalınlığı seçersin. Her cevabın üstündeki araç çubuğuyla seçili yazıyı kalın, italik, altı çizili ya da renkli yaparsın (TeamSpeak BBCode: `[b]`, `[i]`, `[u]`, `[s]`, `[color=#FF0000]`, `[url]`); altındaki önizleme TeamSpeak'te nasıl görüneceğini gösterir. Kendi `[color]` etiketi olan cevaplara varsayılan renk eklenmez.
@@ -213,7 +213,7 @@ Panel → Bots → New bot — e.g. a music bot plus a welcome bot that only has
 
 ### Plugins
 
-Plugins are enabled per bot: Panel → Plugins → pick a bot → expand the card → configure → Save. Channel fields accept the channel **name** or **ID** (`5` or `/5`). Group fields take comma-separated server group IDs (shown in TeamSpeak under *Permissions → Server Groups*).
+Plugins are enabled per bot: Panel → Plugins → pick a bot → click the plugin → switch on and configure the features inside → Save. Related features are grouped into one plugin (e.g. AFK mover and anti-flood are in *Moderation*). Channel fields have a button to pick the channel from a list. Channel fields accept the channel **name** or **ID** (`5` or `/5`). Group fields take comma-separated server group IDs (shown in TeamSpeak under *Permissions → Server Groups*).
 
 | Plugin | What it does | Permission the bot needs |
 |---|---|---|
@@ -283,7 +283,7 @@ Yes: Panel → Plugins (the *Commands* list at the bottom of each plugin card). 
 Panel → Plugins → *Custom commands*. *Text* replies with fixed text (e.g. `!discord` → invite link; `{user}`, `{args}`, `{time}`, `{date}` are available). *Alias* runs another command (e.g. `!song` → `!ara`). Custom names can't clash with built-in commands.
 
 **Can I turn music or radio off?**
-Yes: Panel → Plugins → *Core*. With *Music* off, `!ara`, `!link`, `!liste` and `!istatistik` don't work; with *Radio* off, `!radyo` doesn't. Controls like `!gec`, `!dur` and `!ses` work while either is on. If someone types a disabled command, the bot says the feature is off. The commands page and `!yardim` only list commands whose plugin is on.
+Yes: Panel → Plugins → *Music* / *Radio*. With *Music* off, `!ara`, `!link`, `!liste` and `!istatistik` don't work; with *Radio* off, `!radyo` doesn't. Controls like `!gec`, `!dur` and `!ses` work while either is on. If someone types a disabled command, the bot says the feature is off. The commands page and `!yardim` only list commands whose plugin is on.
 
 **Make !ara play right away instead of queueing**
 Panel → Plugins → *Music* → *Play now (don't queue)*. When on, the new song replaces the current one immediately and the queue is kept. The *Radio* plugin has the same option (on by default); turn it off to queue radios instead.
@@ -292,10 +292,10 @@ Panel → Plugins → *Music* → *Play now (don't queue)*. When on, the new son
 Panel → Plugins → *Auto reconnect* (on by default). After a timeout, a server restart or a kick, the bot reconnects and goes back to the same channel. You can set the first retry delay, the maximum number of retries and whether to come back after a kick. It never retries after a ban.
 
 **Some songs are much louder than others**
-Panel → Plugins → *Volume levelling* (on by default). Every song is brought to the same loudness; choose quiet / normal / loud. Changes apply from the next song.
+Panel → Plugins → *Music* → *Volume levelling* (on by default). Every song is brought to the same loudness; choose quiet / normal / loud. Changes apply from the next song.
 
 **I don't want the bot to go silent when the queue ends**
-Panel → Plugins → *Autoplay*. When the queue ends, a song similar to the last one (YouTube mix) is played. It does not continue after `!stop`. Optionally only while someone is in the channel.
+Panel → Plugins → *Music* → *Autoplay*. When the queue ends, a song similar to the last one (YouTube mix) is played. It does not continue after `!stop`. Optionally only while someone is in the channel.
 
 **How do favourites work?**
 With the *Favourites* plugin on, `!fav` adds the playing song to your favourites and `!favs` queues all of them. `!favs list` shows the list, `!fav del 3` removes the 3rd one. Favourites belong to your TeamSpeak identity.
@@ -304,16 +304,16 @@ With the *Favourites* plugin on, `!fav` adds the playing song to your favourites
 Panel → Plugins → *Scheduled playback*. One plan per line: `09:00 | radio Power Türk`, `mon,tue,wed,thu,fri 18:30 | playlist evening`, `00:30 | stop`, `20:00 | volume 40`.
 
 **Where are announcements and scheduled messages?**
-Both are one plugin now: Panel → Plugins → *Announcements*. Rotating messages go out at an interval; put day/time based messages like `21:00 | message` in *Scheduled messages*. Leave the rotating messages empty if you only want scheduled ones.
+Both are one plugin now: Panel → Plugins → *Welcome & announcements* → *Announcements*. Rotating messages go out at an interval; put day/time based messages like `21:00 | message` in *Scheduled messages*. Leave the rotating messages empty if you only want scheduled ones.
 
 **Server activity on the dashboard**
 The *Server activity* plugin (on by default) records how many people are online every 5 minutes. The dashboard shows the last 24 hours and a day × hour heat map of the busiest times.
 
 **Show the playing song in the bot's nickname / description**
-Panel → Plugins → *Song → bot name/description*. Set the nickname and description formats separately (`{title}`, `{user}`, `{bot}`). TeamSpeak nicknames are max 30 characters, so long titles are cut. The bot gets its own name back when playback stops.
+Panel → Plugins → *Bot appearance* → *Song → bot name/description*. Set the nickname and description formats separately (`{title}`, `{user}`, `{bot}`). TeamSpeak nicknames are max 30 characters, so long titles are cut. The bot gets its own name back when playback stops.
 
 **How do I turn the avatar or the song cover off?**
-Panel → Plugins → *Avatar*: the idle command card and the song cover while playing can be switched separately. Turning the plugin off removes the bot's avatar.
+Panel → Plugins → *Bot appearance* → *Avatar*: the idle command card and the song cover while playing can be switched separately. Turning the avatar feature off removes the bot's avatar.
 
 **Can the bot's replies be coloured / bold?**
 Yes: Panel → Plugins → *Bot texts*. The *Message look* card sets the default colour, error colour and bold for all replies. The toolbar above each reply makes the selected text bold, italic, underlined or coloured (TeamSpeak BBCode: `[b]`, `[i]`, `[u]`, `[s]`, `[color=#FF0000]`, `[url]`); the preview below shows how it will look in TeamSpeak. Replies with their own `[color]` tag don't get the default colour.

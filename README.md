@@ -34,14 +34,18 @@ The bot connects to your TeamSpeak server by itself and streams audio directly w
 **Web panel** (single-page app, mobile friendly, TR/EN)
 - First-run setup wizard (you choose the admin username & password)
 - **Dashboard**: live server CPU / RAM chart, Frix memory usage, plays today / this week, top songs and requesters, and the status of **multiple bots**
-- Left sidebar layout with a dark (charcoal + violet) and a light theme
+- Left sidebar layout with a dark (smoke grey + blue) and a light theme
 - Player with search results, "adding song" progress, queue move/remove, seek, volume
-- **26 plugins**, each enabled and configured per bot:
-  - *Core:* music, radio (turn either off to disable its commands), song title as the bot's nickname/description, avatar (idle command card, song cover), auto reconnect (rejoins the same channel), volume levelling
-  - *Welcome & announcements:* welcome message, announcements (rotating ads + scheduled messages in one plugin)
-  - *Music:* autoplay (similar songs when the queue ends), favourites (`!fav`, `!favs`), scheduled playback, pause when alone, idle radio, vote skip, DJ mode & queue limit
+- **10 plugins**, each enabled per bot; related features live inside one plugin and are switched on one by one:
+  - *Music:* commands, volume levelling, autoplay (similar songs when the queue ends), favourites (`!fav`, `!favs`), vote skip, DJ mode & queue limit, pause when alone
+  - *Radio:* `!radio` stations from the panel, idle radio
+  - *Bot appearance:* avatar (idle command card, song cover), song title as the bot's nickname/description
+  - *Auto reconnect:* rejoins the same channel after a drop
+  - *Welcome & announcements:* welcome message, rotating ads and scheduled messages
+  - *Scheduled playback:* start a radio/playlist, stop or set the volume at set times
   - *Moderation:* AFK mover, nickname filter, channel guard, anti-flood
-  - *Server management:* server activity (online users chart and busiest hours on the dashboard), registration (`!kayit`), temporary channel creator, activity ranks, support notifier, channel name info
+  - *Server tools:* registration (`!kayit`), temporary channel creator, channel name info, support notifier
+  - *Activity:* online users chart and busiest hours on the dashboard, activity ranks
   - *Fun & tools:* polls, dice, coin flip, pick, weather, currency, lyrics
 - **Playlists** (`!liste`) and **statistics** (most played songs, top requesters, most active users)
 - Rename any built-in command, add custom commands; command names follow the language chosen at setup

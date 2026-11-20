@@ -1623,3 +1623,16 @@ html[data-theme="krem"] .side-scrim { background: rgba(0, 0, 0, .25); }
 .ch-pick { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; cursor: pointer; font-size: .88rem; }
 .ch-pick:hover { background: var(--raised); }
 .ch-pick input { accent-color: var(--accent); }
+
+/* group dialog: one section per feature */
+.pf-section { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 10px; padding: 12px 14px; border-radius: 12px; background: var(--raised); }
+.form-grid > .pf-section:first-child { margin-top: 0; }
+.pf-section .switch-label { font-weight: 600; font-size: .95rem; }
+.pf-sec-help { flex-basis: 100%; margin: 0 0 0 38px; }
+.sec-off { opacity: .45; }
+.form-grid > .plugin-cmds { margin-top: 4px; }
+.form-grid > .span2 .avatar-box { margin: 4px 0; }
+
+/* bot card: long group names shrink with an ellipsis, the "+N" tag always stays visible */
+.bot-plugins > * { flex-shrink: 0; }
+.bot-plugins .tag:not(.tag-more) { display: block; flex-shrink: 1; min-width: 4.6em; overflow: hidden; text-overflow: ellipsis; }

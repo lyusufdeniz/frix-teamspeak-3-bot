@@ -34,14 +34,18 @@ sunucularda ekransız çalışır.
 **Web panel** (tek sayfa uygulama, mobil uyumlu, TR/EN)
 - İlk kurulum sihirbazı (yönetici kullanıcı adını ve şifreyi sen belirlersin)
 - **Genel bakış (dashboard)**: canlı sunucu CPU / RAM grafiği, Frix'in bellek kullanımı, bugün / bu hafta çalınanlar, en çok çalınanlar ve **birden fazla botun** durumu
-- Sol menülü düzen; koyu (antrasit + mor) ve açık tema
+- Sol menülü düzen; koyu (füme + mavi) ve açık tema
 - Arama sonuçları, "şarkı ekleniyor" ilerleme çubuğu, kuyruk taşıma/silme, sarma, ses ayarlı oynatıcı
-- Her bot için ayrı açılıp ayarlanan **26 eklenti**:
-  - *Temel:* müzik, radyo (kapatınca komutları da kapanır), çalan şarkıyı bot adı/açıklaması yapma, avatar (boşta komut kartı, şarkı kapağı), otomatik yeniden bağlanma (aynı kanala geri girer), ses seviyesi eşitleme
-  - *Karşılama ve duyuru:* karşılama mesajı, duyuru/reklam, zamanlı duyuru
-  - *Müzik:* yalnızken duraklat, boştayken radyo, oylamayla geç, DJ yetkisi ve kuyruk limiti
+- Her bot için ayrı açılan **10 eklenti**; benzer özellikler tek eklentinin içinde, her biri ayrı açılıp kapanır:
+  - *Müzik:* komutlar, ses seviyesi eşitleme, otomatik devam (kuyruk bitince benzer şarkılar), favoriler (`!fav`, `!favs`), oylamayla geç, DJ yetkisi ve kuyruk limiti, yalnızken duraklat
+  - *Radyo:* panelden eklenen radyolar (`!radyo`), boştayken radyo
+  - *Bot görünümü:* avatar (boşta komut kartı, şarkı kapağı), çalan şarkıyı bot adı/açıklaması yapma
+  - *Otomatik yeniden bağlan:* düşünce aynı kanala geri girer
+  - *Karşılama ve duyurular:* karşılama mesajı, dönen duyurular ve zamanlı duyurular
+  - *Zamanlanmış çalma:* belirli saatlerde radyo/liste başlatma, durdurma, ses ayarı
   - *Moderasyon:* AFK taşıyıcı, isim filtresi, kanal koruma, flood koruması
-  - *Sunucu yönetimi:* kayıt botu (`!kayit`), geçici kanal oluşturucu, aktiflik rütbeleri, destek bildirimi, kanal adında bilgi
+  - *Sunucu araçları:* kayıt botu (`!kayit`), geçici kanal oluşturucu, kanal adında bilgi, destek bildirimi
+  - *Aktivite:* dashboard'da çevrimiçi grafiği ve en yoğun saatler, aktiflik rütbeleri
   - *Eğlence ve araçlar:* anket, zar, yazı-tura, seçim, hava durumu, döviz, şarkı sözleri
 - **Çalma listeleri** (`!liste`) ve **istatistikler** (en çok çalınanlar, en çok şarkı açanlar, en aktifler)
 - Yerleşik komutlar yeniden adlandırılabilir, özel komut eklenebilir; komut adları kurulumda seçilen dile göre ayarlanır

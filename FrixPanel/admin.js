@@ -42,7 +42,8 @@
 
   /** rename rows for the built-in commands that belong to one plugin (or to none: id = null) */
   function commandsBlock(builtins, id) {
-    const mine = builtins.filter((b) => (id ? (b.plugins || [])[0] === id : !(b.plugins || []).length));
+    const ids = id == null ? null : [].concat(id);
+    const mine = builtins.filter((b) => (ids ? ids.includes((b.plugins || [])[0]) : !(b.plugins || []).length));
     if (!mine.length) return null;
     return h('div', { class: 'plugin-cmds' },
       h('div', { class: 'plugin-cmds-head' }, icon('terminal'), h('strong', { text: t('plugins.commands') }), h('span', { class: 'muted small', text: t('plugins.commandsHelp') })),
@@ -68,6 +69,8 @@
 
   // icon per plugin (falls back to "box")
   const PLUGIN_ICONS = {
+    g_music: 'music', g_radio: 'radio', g_look: 'image', g_reconnect: 'refresh', g_welcome: 'hand', g_schedule: 'clock',
+    g_moderation: 'shield', g_server: 'server', g_activity: 'chart', g_fun: 'dice',
     music: 'music', radio: 'radio', npstatus: 'idcard', avatar: 'image', welcome: 'hand', advertisement: 'megaphone', scheduled: 'calendar',
     alonepause: 'pause', idleradio: 'radio', voteskip: 'vote', djmode: 'headphones', afkmover: 'moon', namefilter: 'filter', channelguard: 'shield',
     antiflood: 'zap', autoreconnect: 'refresh', normalize: 'volume', autoplay: 'repeat', favorites: 'star', scheduleplay: 'clock', activity: 'chart', registration: 'userPlus', tempchannel: 'folderPlus', ranks: 'trophy', supportnotify: 'bell', channelinfo: 'info', fun: 'dice',
@@ -116,12 +119,9 @@
     }
     // sections keep the (now 17) plugins scannable; unknown ids land in "other"
     const GROUPS = [
-      ['core', ['music', 'radio', 'npstatus', 'avatar', 'autoreconnect', 'normalize']],
-      ['welcome', ['welcome', 'advertisement']],
-      ['music', ['autoplay', 'favorites', 'scheduleplay', 'alonepause', 'idleradio', 'voteskip', 'djmode']],
-      ['moderation', ['afkmover', 'namefilter', 'channelguard', 'antiflood']],
-      ['server', ['activity', 'registration', 'tempchannel', 'ranks', 'supportnotify', 'channelinfo']],
-      ['fun', ['fun']],
+      ['core', ['g_music', 'g_radio', 'g_look', 'g_reconnect']],
+      ['community', ['g_welcome', 'g_moderation', 'g_server', 'g_activity']],
+      ['extras', ['g_schedule', 'g_fun']],
     ];
     function grouped(pl) {
       const known = new Set(GROUPS.flatMap((g) => g[1]));
@@ -145,9 +145,24 @@
     function card(p) {
       const cfg = p.config || {};
       const getters = [];
+      const parts = p.parts || [];
+      const sections = [];
+      let curSec = null;
       const fields = (p.schema || []).map((f) => {
         const val = cfg[f.key] !== undefined ? cfg[f.key] : f.default;
         let ctl, get;
+        if (f.type === 'section') {
+          // a feature inside the group: its own on/off switch, its settings follow
+          const sw = F.switchEl(val === true || val === 'true', F.loc(f.label));
+          const secEl = h('div', { class: 'pf-section span2' }, h('span', { class: 'plugin-ic sm' }, icon(PLUGIN_ICONS[f.key] || 'box')), sw,
+            f.help ? h('p', { class: 'muted small pf-sec-help', text: F.loc(f.help) }) : null);
+          curSec = { id: f.key, sw, els: [] };
+          sections.push(curSec);
+          const sec = curSec;
+          sw.input.addEventListener('change', () => sec.els.forEach((e) => e.classList.toggle('sec-off', !sw.input.checked)));
+          getters.push([f.key, () => sw.input.checked]);
+          return secEl;
+        }
         if (f.type === 'textarea') { ctl = F.textarea({ value: val == null ? '' : String(val), rows: 4 }); get = () => ctl.value; }
         else if (f.type === 'number') { ctl = F.input({ type: 'number', value: val == null ? '' : String(val), inputmode: 'numeric' }); get = () => (ctl.value === '' ? f.default : Number(ctl.value)); }
         else if (f.type === 'bool') { ctl = F.switchEl(val === true || val === 'true', F.loc(f.label)); get = () => ctl.input.checked; }
@@ -182,8 +197,32 @@
         } else { ctl = F.input({ value: val == null ? '' : String(val) }); get = () => ctl.value; }
         getters.push([f.key, get]);
         const help = f.help ? F.loc(f.help) : null;
-        return f.type === 'bool' ? h('div', { class: 'field' }, ctl, help ? h('div', { class: 'help', text: help }) : null) : F.field(F.loc(f.label), ctl, help, { cls: f.type === 'textarea' || f.type === 'channels' ? 'span2' : '' });
+        const fe = f.type === 'bool' ? h('div', { class: 'field' }, ctl, help ? h('div', { class: 'help', text: help }) : null) : F.field(F.loc(f.label), ctl, help, { cls: f.type === 'textarea' || f.type === 'channels' ? 'span2' : '' });
+        if (curSec) curSec.els.push(fe);
+        return fe;
       });
+      // commands (and the avatar preview) go under their own section
+      const items = [];
+      let cmdTotal = 0;
+      const addExtras = (partId) => {
+        if (partId === 'avatar') items.push(h('div', { class: 'span2' }, avatarPreview()));
+        const cb = commandsBlock(builtins, partId);
+        if (cb) { cb.classList.add('span2'); cmdTotal += cb.querySelectorAll('.builtin-row').length; items.push(cb); return cb; }
+        return null;
+      };
+      if (sections.length) {
+        let sec = null;
+        fields.forEach((fe) => {
+          const s2 = sections.find((x) => x.sw.closest('.pf-section') === fe);
+          if (s2) { if (sec) { const x = addExtras(sec.id); if (x) sec.els.push(x); } sec = s2; }
+          items.push(fe);
+        });
+        if (sec) { const x = addExtras(sec.id); if (x) sec.els.push(x); }
+        sections.forEach((x) => x.els.forEach((e) => e.classList.toggle('sec-off', !x.sw.input.checked)));
+      } else {
+        items.push(...fields);
+        parts.forEach((pt) => addExtras(pt.id));
+      }
       const collect = () => { const c = {}; getters.forEach(([k, g]) => { c[k] = g(); }); return c; };
       const enabled = F.switchEl(p.enabled, null, { 'aria-label': t('plugins.enabled') + ': ' + F.loc(p.name) });
       const el = h('article', { class: 'card plugin-tile' + (p.enabled ? ' on' : '') });
@@ -197,17 +236,19 @@
           return true;
         } catch (e) { F.fail(e); if (quiet) enabled.input.checked = !enabled.input.checked; return false; }
       });
-      enabled.input.addEventListener('change', () => save(null, true));
-      const cmds = commandsBlock(builtins, p.id);
-      const preview = p.id === 'avatar' ? avatarPreview() : null;
-      const hasSettings = fields.length || cmds || preview;
+      enabled.input.addEventListener('change', async () => {
+        const ok = await save(null, true);
+        // a group switched on with none of its features on: open the dialog to pick them
+        if (ok && enabled.input.checked && sections.length && !sections.some((x) => x.sw.input.checked)) { openSettings(); F.toast(t('plugins.pickFeatures'), 'info'); }
+      });
+      const hasSettings = items.length > 0;
       // settings + commands open in a dialog; the tile stays compact
       const body = h('div', { class: 'plugin-body' },
-        h('p', { class: 'muted small', text: F.loc(p.description) }), preview,
-        fields.length ? h('div', { class: 'form-grid' }, fields) : null, cmds);
+        h('p', { class: 'muted small', text: F.loc(p.description) }),
+        items.length ? h('div', { class: 'form-grid' }, items) : null);
       const openSettings = () => F.modal({
         title: [h('span', { class: 'plugin-ic sm' }, icon(PLUGIN_ICONS[p.id] || 'box')), ' ', F.loc(p.name)], size: 'wide', body,
-        actions: fields.length ? [{ label: t('common.cancel') }, { label: t('common.save'), kind: 'primary', primary: true, icon: 'check', onClick: () => save(null, false) }] : [{ label: t('common.close') }],
+        actions: fields.length > sections.length || sections.length ? [{ label: t('common.cancel') }, { label: t('common.save'), kind: 'primary', primary: true, icon: 'check', onClick: () => save(null, false) }] : [{ label: t('common.close') }],
       });
       const cfgBtn = hasSettings ? F.btn(t('plugins.configure'), { kind: 'ghost', icon: 'sliders', cls: 'btn-sm', onClick: openSettings }) : null;
       el.append(
@@ -215,7 +256,7 @@
           h('div', { class: 'tile-titles' }, h('h3', { class: 'plugin-name', text: F.loc(p.name) }),
             h('span', { class: 'plugin-state', text: p.enabled ? t('plugins.stateOn') : t('plugins.stateOff') })), enabled),
         h('p', { class: 'plugin-desc', text: F.loc(p.description), title: F.loc(p.description) }),
-        h('div', { class: 'tile-foot' }, cfgBtn, cmds ? h('span', { class: 'muted small', text: t('plugins.cmdCount', { n: cmds.querySelectorAll('.builtin-row').length }) }) : null));
+        h('div', { class: 'tile-foot' }, cfgBtn, cmdTotal ? h('span', { class: 'muted small', text: t('plugins.cmdCount', { n: cmdTotal }) }) : null));
       if (hasSettings) el.addEventListener('click', (e) => { if (!e.target.closest('.switch, button')) openSettings(); });
       enabled.input.addEventListener('change', () => { el.querySelector('.plugin-state').textContent = enabled.input.checked ? t('plugins.stateOn') : t('plugins.stateOff'); });
       return el;
