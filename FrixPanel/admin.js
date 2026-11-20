@@ -151,12 +151,21 @@
         if (f.type === 'section') {
           // a feature inside the group: its own on/off switch, its settings follow
           const sw = F.switchEl(val === true || val === 'true', F.loc(f.label));
-          const secEl = h('div', { class: 'pf-section span2' }, h('span', { class: 'plugin-ic sm' }, icon(PLUGIN_ICONS[f.key] || 'box')), sw,
+          // collapsible card: the header toggles the settings below it (closed by default)
+          const chev = h('button', { type: 'button', class: 'pf-sec-toggle', 'aria-expanded': 'false', 'aria-label': F.loc(f.label) }, icon('chevron'));
+          const secEl = h('div', { class: 'pf-section span2 collapsed' }, h('span', { class: 'plugin-ic sm' }, icon(PLUGIN_ICONS[f.key] || 'box')), sw, chev,
             f.help ? h('p', { class: 'muted small pf-sec-help', text: F.loc(f.help) }) : null);
-          curSec = { id: f.key, sw, els: [] };
+          curSec = { id: f.key, sw, els: [], head: secEl };
           sections.push(curSec);
           const sec = curSec;
-          sw.input.addEventListener('change', () => sec.els.forEach((e) => e.classList.toggle('sec-off', !sw.input.checked)));
+          sec.setOpen = (open) => {
+            secEl.classList.toggle('collapsed', !open);
+            chev.setAttribute('aria-expanded', String(open));
+            sec.els.forEach((e) => e.classList.toggle('sec-hidden', !open));
+          };
+          chev.addEventListener('click', () => sec.setOpen(secEl.classList.contains('collapsed')));
+          secEl.addEventListener('click', (e) => { if (!e.target.closest('.switch, button, input, label')) chev.click(); });
+          sw.input.addEventListener('change', () => { sec.els.forEach((e) => e.classList.toggle('sec-off', !sw.input.checked)); if (sw.input.checked) sec.setOpen(true); });
           getters.push([f.key, () => sw.input.checked]);
           return secEl;
         }
@@ -217,7 +226,9 @@
           items.push(fe);
         });
         if (sec) { const x = addExtras(sec.id); if (x) sec.els.push(x); }
-        sections.forEach((x) => x.els.forEach((e) => e.classList.toggle('sec-off', !x.sw.input.checked)));
+        sections.forEach((x) => { x.els.forEach((e) => e.classList.toggle('sec-off', !x.sw.input.checked)); x.setOpen(false); });
+        // a feature without settings or commands needs no toggle arrow
+        sections.forEach((x) => { if (!x.els.length) x.head.classList.add('no-body'); });
       } else {
         items.push(...fields);
         parts.forEach((pt) => addExtras(pt.id));
@@ -408,6 +419,12 @@
     if (last < text.length) top().append(document.createTextNode(text.slice(last)));
     return root;
   }
+  /** the BBCode the bot really sends: default colour / bold added like FrixChat.Color on the server */
+  function withLook(text, lk) {
+    if (!lk || !text.trim() || /\[color/i.test(text)) return text;
+    const body = String(lk.color).toLowerCase() === 'none' ? text : '[color=' + lk.color + ']' + text + '[/color]';
+    return lk.bold && !/\[b\]/i.test(text) ? '[b]' + body + '[/b]' : body;
+  }
   // current chat look (default colour / bold); text previews repaint when it changes
   let look = { color: '#00FF00', errorColor: '#FF5555', bold: true };
   let previews = [];
@@ -502,7 +519,10 @@
     }
 
     function edit(it, lookFor, paintRow) {
-      const ta = F.textarea({ value: it.value, rows: 5, 'aria-label': it.key, class: 'input text-editor' });
+      // chat texts open with the colour / bold the bot adds, so the codes are visible and editable
+      const chat = !it.key.startsWith('avatar.');
+      const shown = chat ? withLook(it.value, lookFor()) : it.value;
+      const ta = F.textarea({ value: shown, rows: 5, 'aria-label': it.key, class: 'input text-editor' });
       const prev = h('div', { class: 'bb-preview' });
       const paint = () => prev.replaceChildren(bbRender(ta.value, lookFor()));
       ta.addEventListener('input', paint);
@@ -532,7 +552,12 @@
         actions: [
           { label: t('texts.reset'), icon: 'refresh', onClick: async () => { const ok = await put(''); return ok; } },
           { label: t('common.cancel') },
-          { label: t('common.save'), kind: 'primary', primary: true, icon: 'check', onClick: () => put(ta.value) },
+          { label: t('common.save'), kind: 'primary', primary: true, icon: 'check', onClick: () => {
+            const v = ta.value;
+            if (v === shown) return true; // nothing changed
+            if (v === it.defaultValue || (chat && v === withLook(it.defaultValue, lookFor()))) return put(''); // back to the default
+            return put(v);
+          } },
         ],
       });
       setTimeout(() => ta.focus(), 50);
