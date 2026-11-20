@@ -150,7 +150,13 @@ public static class PanelApi
 			case ["commands", var id] when m == "PUT": await Ok(ctx, SaveCommand(long.Parse(id), body)); break;
 			case ["commands", var id] when m == "DELETE": FrixDb.Exec("DELETE FROM commands WHERE id=$i", ("$i", long.Parse(id))); FrixCommands.Load(); FrixAvatar.Invalidate(); await Ok(ctx, new { ok = true }); break;
 			// metinler
-			case ["texts"] when m == "GET": await Ok(ctx, FrixText.All(ctx.Request.Query["lang"].ToString() is { Length: > 0 } l ? l : FrixText.Language)); break;
+			case ["texts"] when m == "GET":
+			{
+				var bots = AllConfigs().Select(c => c.Name).OfType<string>().ToArray();
+				await Ok(ctx, FrixText.All(ctx.Request.Query["lang"].ToString() is { Length: > 0 } l ? l : FrixText.Language,
+					req => bots.Length == 0 || bots.Any(b => FrixPluginHost.Active(b, req))));
+				break;
+			}
 			case ["texts"] when m == "PUT": FrixText.SetOverride(body.Str("lang") ?? FrixText.Language, body.Str("key") ?? throw Bad("key"), body.Str("value")); FrixAvatar.Invalidate(); await Ok(ctx, new { ok = true }); break;
 			case ["avatar"] when m == "GET":
 				ctx.Response.ContentType = "image/png";

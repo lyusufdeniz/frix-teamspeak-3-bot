@@ -710,7 +710,8 @@
     async function load() {
       list.replaceChildren(...F.skeleton(4, 'sk-row'));
       try {
-        const items = (await F.api('GET', 'texts?lang=' + enc(lang))) || [];
+        const items = ((await F.api('GET', 'texts?lang=' + enc(lang))) || []).slice()
+          .sort((a, b) => (a.active === false) - (b.active === false)); // texts of disabled plugins last
         list.replaceChildren(h('div', { class: 'tbl-row text-trow tbl-head fit-skip' },
           h('span', { text: t('texts.key') }), h('span', { text: t('texts.bb.preview') }), h('span', { text: t('texts.state') }), h('span')), ...items.map(row));
         applyFilter();
@@ -728,11 +729,12 @@
       });
       const paint = () => {
         prev.replaceChildren(bbRender(it.value, lookFor()));
-        state.replaceChildren(it.custom ? F.badge(t('texts.custom'), 'accent') : F.badge(t('texts.defaultState')));
+        state.replaceChildren(it.active === false ? h('span', { class: 'badge', title: it.plugin ? F.loc(it.plugin) : '', text: t('texts.pluginOff') })
+          : it.custom ? F.badge(t('texts.custom'), 'accent') : F.badge(t('texts.defaultState')));
         resetB.disabled = !it.custom;
         el.dataset.search = (it.key + ' ' + it.value + ' ' + it.defaultValue).toLowerCase();
       };
-      const el = h('div', { class: 'tbl-row text-row text-trow' },
+      const el = h('div', { class: 'tbl-row text-row text-trow' + (it.active === false ? ' text-off' : ''), title: it.active === false && it.plugin ? t('texts.pluginOffHint', { name: F.loc(it.plugin) }) : null },
         h('code', { class: 'text-key', text: it.key, title: it.key }), prev, state,
         h('span', { class: 'tbl-actions' }, F.btn(t('common.edit'), { kind: 'ghost', icon: 'edit', cls: 'btn-sm', onClick: () => edit(it, lookFor, paint) }), resetB));
       previews.push(paint);

@@ -1784,3 +1784,7 @@ html[data-theme="krem"] .msg-prev { background: #f6f6f8; }
 .tile-go svg { width: 15px; height: 15px; }
 .tile-head { min-width: 0; }
 .tile-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* bot texts of plugins that are off */
+.text-trow.text-off { opacity: .45; }
+.text-trow.text-off:hover { opacity: .8; }

@@ -374,13 +374,47 @@ public static partial class FrixText
 		["weather.notfound"] = ["city"],
 	};
 
-	public static IEnumerable<object> All(string lang)
-		=> Defaults["tr"].Keys.Select(k => new
+	/// <summary>Metnin ait olduğu eklenti (FrixPluginHost.Active biçiminde); null = her zaman kullanılır.</summary>
+	public static string? RequirementOf(string key)
+	{
+		if (key == "nowplaying.radio") return "radio";
+		var prefix = key.Split('.')[0];
+		return prefix switch
 		{
-			key = k,
-			value = Raw(k, lang),
-			defaultValue = Defaults.GetValueOrDefault(lang)?.GetValueOrDefault(k) ?? Defaults["tr"][k],
-			custom = Overrides.ContainsKey($"{lang}:{k}"),
-			vars = Vars.GetValueOrDefault(k) ?? [],
+			"ara" or "pl" or "stats" or "stream" or "nowplaying" => "music",
+			"radio" => "radio",
+			"fav" => "favorites",
+			"autoplay" => "autoplay",
+			"vote" => "voteskip",
+			"dj" => "djmode",
+			"reg" => "registration",
+			"online" => "ranks",
+			"avatar" => "avatar",
+			"poll" => "fun:poll",
+			"lyrics" => "fun:lyrics",
+			"weather" => "fun:weather",
+			"fx" => "fun:currency",
+			"coin" or "pick" => "fun:dice",
+			_ => null,
+		};
+	}
+
+	/// <param name="active">bir gereksinim herhangi bir botta açık mı</param>
+	public static IEnumerable<object> All(string lang, Func<string, bool>? active = null)
+		=> Defaults["tr"].Keys.Select(k =>
+		{
+			var req = RequirementOf(k);
+			var part = req?.Split(':')[0];
+			TS3AudioBot.Frix.FrixPlugin? proto = part is null ? null : TS3AudioBot.Frix.FrixGroups.Proto(part);
+			return new
+			{
+				key = k,
+				value = Raw(k, lang),
+				defaultValue = Defaults.GetValueOrDefault(lang)?.GetValueOrDefault(k) ?? Defaults["tr"][k],
+				custom = Overrides.ContainsKey($"{lang}:{k}"),
+				vars = Vars.GetValueOrDefault(k) ?? [],
+				plugin = proto is null ? null : new { tr = proto.NameTr, en = proto.NameEn },
+				active = req is null || active is null || active(req),
+			};
 		});
 }
