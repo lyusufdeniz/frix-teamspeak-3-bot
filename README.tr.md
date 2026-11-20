@@ -2,14 +2,19 @@
 
 <img src="docs/images/banner.png" alt="Frix TeamSpeak 3 Bot" width="100%">
 
-# 🎵 Frix TeamSpeak 3 Bot
+# 🦊 Frix TeamSpeak 3 Bot
 
-**Modern web panelli, kendi sunucunda çalışan TeamSpeak 3 müzik ve yardımcı botu.**
-YouTube (canlı yayınlar dahil), SoundCloud, Twitch, internet radyoları ve daha fazlasını çalar — TeamSpeak istemcisi, VLC ya da sanal ses kablosu gerekmez.
+**TeamSpeak 3 için müzik, moderasyon ve sunucu yönetimi — modern web panelli, kendi sunucunda çalışan tek bot.**
+YouTube (canlı yayınlar dahil), radyolar ve kendi dosyalarını çalar; sunucunu düzenli tutar, kullanıcılarını karşılar
+ve rütbe verir, kendi JavaScript otomasyonlarını çalıştırır. TeamSpeak istemcisi, VLC ya da sanal ses kablosu gerekmez.
 
-[English](README.md) · [SSS](docs/FAQ.md) · [API](docs/API.md)
+[English](README.md) · [SSS](docs/FAQ.md) · [API](docs/API.md) · [Sürümler](https://github.com/lyusufdeniz/frix-teamspeak-3-bot/releases)
 
+<a href="https://github.com/lyusufdeniz/frix-teamspeak-3-bot/releases/latest"><img src="https://img.shields.io/github/v/release/lyusufdeniz/frix-teamspeak-3-bot?label=s%C3%BCr%C3%BCm&color=5b8def" alt="Son sürüm"></a>
+<a href="https://github.com/lyusufdeniz/frix-teamspeak-3-bot/pkgs/container/frix"><img src="https://img.shields.io/badge/docker-ghcr.io%2Flyusufdeniz%2Ffrix-2496ED?logo=docker&logoColor=white" alt="Docker imajı"></a>
 <a href="https://buymeacoffee.com/lyusufdeniz"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-Frix'e%20destek%20ol-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy me a coffee"></a>
+
+<img src="docs/images/screens/dashboard-tr.png" alt="Frix genel bakış" width="100%">
 
 </div>
 
@@ -17,44 +22,41 @@ YouTube (canlı yayınlar dahil), SoundCloud, Twitch, internet radyoları ve dah
 
 Frix, açık kaynaklı [TS3AudioBot](https://github.com/Splamy/TS3AudioBot) (OSL-3.0) üzerine kurulmuştur.
 Bot TeamSpeak sunucusuna kendisi bağlanır ve sesi doğrudan Opus ile gönderir; bu sayede **Windows ve Linux**
-sunucularda ekransız çalışır.
+sunucularda ekransız, **Docker**'da ve **Pterodactyl**'de çalışır.
 
-## ✨ Özellikler
+## ✨ Frix neler yapar
 
-**Müzik**
-- `!ara <şarkı ya da link>` – YouTube'da arar, çalar ya da kuyruğa ekler (çok kelimeli arama)
-- **yt-dlp → ffmpeg** ile doğrudan akış (indirme yok, birkaç saniyede başlar)
-- **Canlı yayınlar** (YouTube canlı, Twitch…) ve **internet radyoları** (doğrudan yayın, `.m3u`, `.pls`, `.xspf`, HLS `.m3u8`)
-- Panelden eklenen radyolar `!radyo <isim>` ile çalınır
-- Kuyruk, geç, duraklat, sar, tekrar, karışık, ses
-- Renkli kanal mesajları, "Şimdi çalıyor" bildirimleri, düzenlenebilir cevap metinleri (Türkçe 🇹🇷 / İngilizce 🇬🇧)
-- Boştayken komut listesini gösteren avatar, çalarken kapak resmi
-- Channel commander (kanal komutanı) modu
+### 🎵 Müzik
+- `!ara <şarkı ya da link>` – YouTube araması, linkler, oynatma listeleri ve **canlı yayınlar** (YouTube canlı, Twitch…); **yt-dlp → ffmpeg** ile indirmeden çalar
+- Panelden yönetilen **internet radyoları** (`.m3u`, `.pls`, `.xspf`, HLS `.m3u8` içe aktarma), `!radyo <isim>`
+- **Kendi müzik kütüphanen**: panelden mp3 / ogg / flac / wav… yükle, sohbette `!dosya <ad>`
+- Çalma listeleri, favoriler (`!fav`), benzer şarkılarla otomatik devam, ses eşitleme, oylamayla geç, DJ modu ve kuyruk limiti
+- Görsel planlayıcıyla **zamanlanmış çalma** (gün, saat, radyo / liste / durdur / ses)
+- Çalan şarkı botun adı / açıklaması olur (`{title}`, `{artist}`, `{song}`); durum başına avatar (komut kartı, şarkı kapağı ya da kendi resmin)
 
-**Web panel** (tek sayfa uygulama, mobil uyumlu, TR/EN)
-- İlk kurulum sihirbazı (yönetici kullanıcı adını ve şifreyi sen belirlersin)
-- **Genel bakış (dashboard)**: canlı sunucu CPU / RAM grafiği, Frix'in bellek kullanımı, bugün / bu hafta çalınanlar, en çok çalınanlar ve **birden fazla botun** durumu
-- Sol menülü düzen; koyu (füme + mavi) ve açık tema
-- Arama sonuçları, "şarkı ekleniyor" ilerleme çubuğu, kuyruk taşıma/silme, sarma, ses ayarlı oynatıcı
-- Her bot için ayrı açılan **10 eklenti**; benzer özellikler tek eklentinin içinde, her biri ayrı açılıp kapanır:
-  - *Müzik:* komutlar, ses seviyesi eşitleme, otomatik devam (kuyruk bitince benzer şarkılar), favoriler (`!fav`, `!favs`), oylamayla geç, DJ yetkisi ve kuyruk limiti, yalnızken duraklat, çalan şarkıyı bot adı/açıklaması yapma
-  - *Radyo:* panelden eklenen radyolar (`!radyo`), boştayken radyo
-  - *Avatar:* boşta, müzik ve radyo için ayrı avatar: komut kartı, şarkı kapağı ya da yüklediğin resim
-  - *Otomatik yeniden bağlan:* düşünce aynı kanala geri girer
-  - *Karşılama ve duyurular:* karşılama mesajı, dönen duyurular ve zamanlı duyurular
-  - *Zamanlanmış çalma:* belirli saatlerde radyo/liste başlatma, durdurma, ses ayarı
-  - *Moderasyon:* AFK taşıyıcı, isim filtresi, kanal koruma, flood koruması
-  - *Sunucu araçları:* kayıt botu (`!kayit`), geçici kanal oluşturucu, kanal adında bilgi, destek bildirimi
-  - *Aktivite:* dashboard'da çevrimiçi grafiği ve en yoğun saatler, aktiflik rütbeleri
-  - *Eğlence ve araçlar:* anket, zar, yazı-tura, seçim, hava durumu, döviz, şarkı sözleri
-- **Kendi müzik kütüphanen**: panelden mp3 / ogg / flac / wav… yükle, çal, çalma listesine ekle; sohbette `!dosya <ad>`
-- **Scriptler**: kendi komutlarını ve otomasyonlarını JavaScript ile yaz (korumalı alanda, süre ve bellek sınırlı)
-- **Yedek alma / geri yükleme**: eklenti ayarları, metinler, komutlar, radyolar, çalma listeleri, avatar resimleri
-- **Çalma listeleri** (`!liste`) ve **istatistikler** (en çok çalınanlar, en çok şarkı açanlar, en aktifler)
-- Yerleşik komutlar yeniden adlandırılabilir, özel komut eklenebilir; komut adları kurulumda seçilen dile göre ayarlanır
-- **Özel komutlar** (metin cevabı ya da yönlendirme) ve düzenlenebilir bot cevapları
-- **Kullanıcılar ve roller**: yönetici / DJ / izleyici
-- Canlı loglar, işlem kaydı, yt-dlp güncelleme, YouTube çerez yükleme, **GitHub'dan tek tıkla güncelleme**
+### 🛡️ Moderasyon ve sunucu yönetimi
+- AFK taşıyıcı, isim filtresi, kanal koruma, flood koruması
+- Kayıt botu (`!kayit`), geçici kanal oluşturucu, destek bildirimi
+- Canlı sayaçlı kanal adı (`{online}`, `{record}`, `{time}`…)
+- Botu kanalına çağırma `!gel`, son görülme `!gorulme <isim>`
+
+### 👥 Topluluk
+- Karşılama mesajları, dönen ve zamanlı duyurular
+- **Aktiflik rütbeleri**: sunucuda geçen süreye göre grup verme, görsel rütbe düzenleyici
+- Dashboard'da sunucu aktivitesi grafikleri ve en yoğun saatler, çevrimiçi listesi, ping ve paket kaybı
+- Canlı yüzdeli anketler, zar, yazı-tura, hava durumu, döviz, şarkı sözleri
+
+### ⚙️ Otomasyon
+- **Scriptler**: kendi komutlarını ve olay dinleyicilerini JavaScript ile yaz, korumalı alanda çalışır (`frix.command`, `frix.on('connect' | 'song' | …)`, `frix.store`)
+- Özel komutlar (metin cevabı ya da yönlendirme), her yerleşik komutu yeniden adlandırma
+- Botun tüm cevapları canlı önizlemeli **BBCode editörüyle** düzenlenir, 9 dil
+
+### 🖥️ Web panel
+- Genel bakış: sunucu CPU / RAM, çalınanlar, en çok çalınanlar, çevrimiçi kişiler, her botun bağlantı kalitesi
+- Her bot için ayrı açılan, özellik kartlı 10 eklenti; kapalı eklentilerin metinleri soluk görünür
+- **Kullanıcılar ve roller** (yönetici / DJ / izleyici), canlı loglar, işlem kaydı
+- **Yedek alma / geri yükleme**, GitHub'dan tek tıkla güncelleme, yt-dlp güncelleme, YouTube çerez yükleme
+- Koyu (füme + mavi) ve açık tema, mobil uyumlu
 
 **Güvenlik**
 - PBKDF2-SHA256 şifre hash'leme, HttpOnly + SameSite=Strict oturum çerezi, CSRF başlık kontrolü
@@ -66,14 +68,14 @@ sunucularda ekransız çalışır.
 
 | | |
 |---|---|
-| ![Oynatıcı, kuyruk ve çalan şarkı](docs/images/screens/player-tr.png) | ![Botlar](docs/images/screens/bots-tr.png) |
-| Oynatıcı, kuyruk ve çalan şarkı | Botlar |
-| ![Eklentiler (gruplu, açılır kapanır)](docs/images/screens/plugins-tr.png) | ![Komutlar: yeniden adlandırma, özel komutlar, avatar önizleme](docs/images/screens/commands-tr.png) |
-| Eklentiler (gruplu, açılır kapanır) | Komutlar: yeniden adlandırma, özel komutlar, avatar önizleme |
-| ![İstatistikler](docs/images/screens/stats-tr.png) | ![Ayarlar](docs/images/screens/settings-general-tr.png) |
-| İstatistikler | Ayarlar |
-
-<p align="center"><img src="docs/images/screens/player-mobile-tr.png" alt="Mobil görünüm" width="300"><br><sub>Mobil görünüm</sub></p>
+| ![Eklentiler](docs/images/screens/plugins-tr.png) | ![Özellik kartlı eklenti](docs/images/screens/plugin-dialog-tr.png) |
+| Her bot için ayrı açılan eklentiler | Her özellik kendi ayarlarıyla bir kart |
+| ![Zamanlanmış çalma](docs/images/screens/schedule-tr.png) | ![Müzik kütüphanesi](docs/images/screens/library-tr.png) |
+| Görsel zamanlanmış çalma | Kendi müzik kütüphanen |
+| ![Scriptler](docs/images/screens/scripts-tr.png) | ![İstatistikler](docs/images/screens/stats-tr.png) |
+| JavaScript scriptleri | İstatistikler |
+| ![Ayarlar ve yedekleme](docs/images/screens/settings-tr.png) | <img src="docs/images/screens/mobile-tr.png" alt="Mobil" width="260"> |
+| Ayarlar, yedek alma ve geri yükleme | Mobil görünüm |
 
 ## 🚀 Kurulum
 

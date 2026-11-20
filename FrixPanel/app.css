@@ -1827,3 +1827,5 @@ html[data-theme="krem"] .msg-prev { background: #f6f6f8; }
 .side-gh { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 24px; border-radius: 999px; border: 1px solid var(--line2); color: var(--muted); }
 .side-gh .ic, .side-gh svg { width: 14px; height: 14px; }
 .side-gh:hover { color: var(--text); border-color: var(--text); text-decoration: none; }
+.modal .script-editor, textarea.script-editor { height: 46vh; min-height: 260px; }
+textarea.input.script-editor { font-family: var(--mono) !important; font-size: .82rem; letter-spacing: 0; }

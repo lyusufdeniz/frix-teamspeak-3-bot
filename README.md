@@ -2,14 +2,19 @@
 
 <img src="docs/images/banner.png" alt="Frix TeamSpeak 3 Bot" width="100%">
 
-# 🎵 Frix TeamSpeak 3 Bot
+# 🦊 Frix TeamSpeak 3 Bot
 
-**A self-hosted TeamSpeak 3 music & utility bot with a modern web panel.**
-Plays YouTube (incl. live streams), SoundCloud, Twitch, internet radio and more — no TeamSpeak client, VLC or virtual audio cable needed.
+**Music, moderation and server management for TeamSpeak 3 — one self-hosted bot with a modern web panel.**
+Plays YouTube (incl. live streams), radios and your own files, keeps your server tidy, greets and ranks your users,
+and runs your own JavaScript automations. No TeamSpeak client, VLC or virtual audio cable needed.
 
-[Türkçe](README.tr.md) · [FAQ](docs/FAQ.md) · [API](docs/API.md)
+[Türkçe](README.tr.md) · [FAQ](docs/FAQ.md) · [API](docs/API.md) · [Releases](https://github.com/lyusufdeniz/frix-teamspeak-3-bot/releases)
 
+<a href="https://github.com/lyusufdeniz/frix-teamspeak-3-bot/releases/latest"><img src="https://img.shields.io/github/v/release/lyusufdeniz/frix-teamspeak-3-bot?label=release&color=5b8def" alt="Latest release"></a>
+<a href="https://github.com/lyusufdeniz/frix-teamspeak-3-bot/pkgs/container/frix"><img src="https://img.shields.io/badge/docker-ghcr.io%2Flyusufdeniz%2Ffrix-2496ED?logo=docker&logoColor=white" alt="Docker image"></a>
 <a href="https://buymeacoffee.com/lyusufdeniz"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-support%20Frix-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy me a coffee"></a>
+
+<img src="docs/images/screens/dashboard-en.png" alt="Frix dashboard" width="100%">
 
 </div>
 
@@ -17,45 +22,41 @@ Plays YouTube (incl. live streams), SoundCloud, Twitch, internet radio and more 
 
 Frix is built on top of the excellent open-source [TS3AudioBot](https://github.com/Splamy/TS3AudioBot) (OSL-3.0).
 The bot connects to your TeamSpeak server by itself and streams audio directly with Opus, so it runs headless on
-**Windows and Linux** servers.
+**Windows and Linux** servers, in **Docker** and on **Pterodactyl**.
 
-## ✨ Features
+## ✨ What Frix does
 
-**Music**
-- `!ara <song or link>` – search YouTube and play / queue (multi-word search)
-- Direct streaming through **yt-dlp → ffmpeg** (no downloads, starts in a few seconds)
-- **Live streams** (YouTube live, Twitch, …) and **internet radio** (direct streams, `.m3u`, `.pls`, `.xspf`, HLS `.m3u8`)
-- Radio stations managed in the panel, played with `!radyo <name>`
-- Queue, skip, pause, seek, repeat, shuffle, volume
-- Colored channel messages, "Now playing" announcements, editable reply texts (Turkish 🇹🇷 / English 🇬🇧)
-- Idle avatar that shows the command list
-- Channel commander mode
+### 🎵 Music
+- `!play <song or link>` – YouTube search, links, playlists and **live streams** (YouTube live, Twitch, …) via **yt-dlp → ffmpeg**, no downloads
+- **Internet radio** managed in the panel (`.m3u`, `.pls`, `.xspf`, HLS `.m3u8` import), `!radio <name>`
+- **Your own music library**: upload mp3 / ogg / flac / wav… in the panel, `!file <name>` in chat
+- Playlists, favourites (`!fav`), autoplay of similar songs, volume levelling, vote skip, DJ mode and queue limits
+- **Scheduled playback** with a visual planner (days, time, radio / playlist / stop / volume)
+- The playing song as the bot's nickname / description (`{title}`, `{artist}`, `{song}`), per-state avatars (command card, song cover or your own image)
 
-**Web panel** (single-page app, mobile friendly, TR/EN)
-- First-run setup wizard (you choose the admin username & password)
-- **Dashboard**: live server CPU / RAM chart, Frix memory usage, plays today / this week, top songs and requesters, and the status of **multiple bots**
-- Left sidebar layout with a dark (smoke grey + blue) and a light theme
-- Player with search results, "adding song" progress, queue move/remove, seek, volume
-- **10 plugins**, each enabled per bot; related features live inside one plugin and are switched on one by one:
-  - *Music:* commands, volume levelling, autoplay (similar songs when the queue ends), favourites (`!fav`, `!favs`), vote skip, DJ mode & queue limit, pause when alone, song title as the bot's nickname/description
-  - *Radio:* `!radio` stations from the panel, idle radio
-  - *Avatar:* separate avatar for idle, music and radio: command card, song cover or your own uploaded image
-  - *Auto reconnect:* rejoins the same channel after a drop
-  - *Welcome & announcements:* welcome message, rotating ads and scheduled messages
-  - *Scheduled playback:* start a radio/playlist, stop or set the volume at set times
-  - *Moderation:* AFK mover, nickname filter, channel guard, anti-flood
-  - *Server tools:* registration (`!kayit`), temporary channel creator, channel name info, support notifier
-  - *Activity:* online users chart and busiest hours on the dashboard, activity ranks
-  - *Fun & tools:* polls, dice, coin flip, pick, weather, currency, lyrics
-- **Playlists** (`!liste`) and **statistics** (most played songs, top requesters, most active users)
-- **Own music library**: upload mp3 / ogg / flac / wav… in the panel, play them, add them to playlists, `!file <name>` in chat
-- **Scripts**: write your own commands and automations in JavaScript (sandboxed, with time and memory limits)
-- **Backup & restore** of plugin settings, texts, commands, radios, playlists and avatar images
-- Rename any built-in command, add custom commands; command names follow the language chosen at setup
-- **Custom commands** (text replies or aliases) and editable bot replies with a **BBCode editor** (bold, italic, colours, live preview) and a default message colour
-- The commands page only lists commands whose plugin is on
-- **Users & roles**: admin / DJ / viewer
-- Live logs, audit log, yt-dlp updater, YouTube cookie upload, **one-click updates from GitHub Releases**
+### 🛡️ Moderation & server management
+- AFK mover, nickname filter, channel guard, anti-flood
+- Registration bot (`!register`), temporary channel creator, support notifier
+- Channel name info with live counters (`{online}`, `{record}`, `{time}`, …)
+- `!come` to bring the bot to your channel, `!lastseen <name>`
+
+### 👥 Community
+- Welcome messages, rotating and scheduled announcements
+- **Activity ranks**: time on the server → server groups, with a visual rank editor
+- Server activity charts and busiest hours on the dashboard, who-is-online list, ping and packet loss
+- Polls with live percentages, dice, coin flip, weather, currency, lyrics
+
+### ⚙️ Automation
+- **Scripts**: write your own commands and event handlers in JavaScript, sandboxed (`frix.command`, `frix.on('connect' | 'song' | …)`, `frix.store`)
+- Custom commands (text replies or aliases), rename any built-in command
+- Every bot reply editable with a **BBCode editor** and live preview, in 9 languages
+
+### 🖥️ Web panel
+- Dashboard: server CPU / RAM, plays, top songs, online users, connection quality of every bot
+- 10 plugins with feature cards, enabled per bot; texts of disabled plugins are dimmed
+- **Users & roles** (admin / DJ / viewer), live logs, audit log
+- **Backup & restore**, one-click updates from GitHub, yt-dlp updater, YouTube cookie upload
+- Dark (smoke grey + blue) and light theme, mobile friendly
 
 **Security**
 - PBKDF2-SHA256 password hashing, HttpOnly + SameSite=Strict session cookies, CSRF header check
@@ -67,14 +68,14 @@ The bot connects to your TeamSpeak server by itself and streams audio directly w
 
 | | |
 |---|---|
-| ![Player with queue and now playing](docs/images/screens/player-en.png) | ![Bots dashboard](docs/images/screens/bots-en.png) |
-| Player with queue and now playing | Bots dashboard |
-| ![Plugins, grouped and collapsible](docs/images/screens/plugins-en.png) | ![Commands: rename, custom commands, avatar preview](docs/images/screens/commands-en.png) |
-| Plugins, grouped and collapsible | Commands: rename, custom commands, avatar preview |
-| ![Statistics](docs/images/screens/stats-en.png) | ![Settings](docs/images/screens/settings-general-en.png) |
-| Statistics | Settings |
-
-<p align="center"><img src="docs/images/screens/player-mobile-en.png" alt="Mobile view" width="300"><br><sub>Mobile view</sub></p>
+| ![Plugins](docs/images/screens/plugins-en.png) | ![Plugin with feature cards](docs/images/screens/plugin-dialog-en.png) |
+| Plugins, enabled per bot | Every feature is a card with its own settings |
+| ![Scheduled playback](docs/images/screens/schedule-en.png) | ![Music library](docs/images/screens/library-en.png) |
+| Visual scheduled playback | Your own music library |
+| ![Scripts](docs/images/screens/scripts-en.png) | ![Statistics](docs/images/screens/stats-en.png) |
+| JavaScript scripts | Statistics |
+| ![Settings and backup](docs/images/screens/settings-en.png) | <img src="docs/images/screens/mobile-en.png" alt="Mobile" width="260"> |
+| Settings, backup & restore | Mobile view |
 
 ## 🚀 Installation
 
