@@ -70,6 +70,17 @@ public abstract class FrixPlugin
 	/// <summary>Ayar anahtarının (bool) değeri; komut/eklenti bağımlılığı kontrolü için.</summary>
 	public bool Flag(string key) => Schema.Any(f => f.Key == key && f.Type == "bool") ? B(key) : true;
 
+	/// <summary>Bir ayarı (örn. adla bulunan kanalın ID'si) veritabanına geri yazar; eklentiyi yeniden yüklemez.</summary>
+	protected void Persist(string key, string value)
+	{
+		try
+		{
+			Config[key] = value;
+			FrixDb.Exec("UPDATE plugins SET config=$c WHERE bot=$b AND id=$i", ("$c", Config.ToJsonString()), ("$b", Ctx.BotName), ("$i", Id));
+		}
+		catch (Exception ex) { NLog.LogManager.GetCurrentClassLogger().Debug(ex, "Eklenti ayarı kaydedilemedi"); }
+	}
+
 	protected string S(string key) => Config.TryGetPropertyValue(key, out var v) && v != null ? v.ToString() : Schema.First(f => f.Key == key).Default?.ToString() ?? "";
 	protected int I(string key) => int.TryParse(S(key), out var i) ? i : Convert.ToInt32(Schema.First(f => f.Key == key).Default ?? 0);
 	protected bool B(string key) => Config.TryGetPropertyValue(key, out var v) && v is JsonValue jv && jv.TryGetValue<bool>(out var b) ? b : (bool)(Schema.First(f => f.Key == key).Default ?? false);
@@ -502,7 +513,7 @@ public sealed class AfkMoverPlugin : FrixPlugin
 	public override string DescEn => "Moves idle, away or speaker-muted users to an AFK channel and brings them back when they return.";
 	public override PluginField[] Schema =>
 	[
-		new("channel", "text", "AFK kanalı (ad ya da ID)", "AFK channel (name or ID)", "AFK"),
+		new("channel", "channel", "AFK kanalı", "AFK channel", "AFK"),
 		new("idleMinutes", "number", "Boşta kalma süresi (dakika, 0 = kapalı)", "Idle time (minutes, 0 = off)", 15),
 		new("away", "bool", "'Uzakta' durumundakileri taşı", "Move users set to away", true),
 		new("outputMuted", "bool", "Hoparlörü kapalı olanları taşı", "Move users with speakers muted", false),
@@ -624,7 +635,7 @@ public sealed class SupportNotifyPlugin : FrixPlugin
 	public override string DescEn => "Pokes online staff when someone joins the support channel.";
 	public override PluginField[] Schema =>
 	[
-		new("channel", "text", "Destek kanalı (ad ya da ID)", "Support channel (name or ID)", "Destek"),
+		new("channel", "channel", "Destek kanalı", "Support channel", "Destek"),
 		new("groups", "text", "Yetkili sunucu grubu ID'leri (virgülle)", "Staff server group IDs (comma separated)", ""),
 		new("staffMessage", "text", "Yetkililere giden mesaj", "Message to staff", "🆘 {user} destek kanalında bekliyor."),
 		new("userMessage", "text", "Kullanıcıya giden mesaj", "Message to the user", "👋 Yetkililere haber verildi ({count} kişi çevrimiçi)."),
@@ -664,7 +675,7 @@ public sealed class ChannelInfoPlugin : FrixPlugin
 	public override string DescEn => "Keeps a channel's name updated with the online count and time (bot needs channel edit permission).";
 	public override PluginField[] Schema =>
 	[
-		new("channel", "text", "Kanal (ad ya da ID)", "Channel (name or ID)", ""),
+		new("channel", "channel", "Kanal", "Channel", ""),
 		new("template", "text", "Kanal adı şablonu", "Name template", "🎧 Çevrimiçi: {online} | {time}",
 			null, "Değişkenler: {online} {max} {time} {date} — en fazla 40 karakter", "Variables: {online} {max} {time} {date} — max 40 characters"),
 		new("interval", "number", "Güncelleme aralığı (dakika)", "Update interval (minutes)", 1),
@@ -680,7 +691,12 @@ public sealed class ChannelInfoPlugin : FrixPlugin
 		if (now < next) return;
 		next = now.AddMinutes(Math.Max(1, I("interval")));
 		// İlk bulunan kanal ID'sini sakla (adı değişeceği için sonradan adla bulunamaz)
-		channelId ??= Ctx.FindChannel(S("channel"));
+		if (channelId is null)
+		{
+			channelId = Ctx.FindChannel(S("channel"));
+			if (channelId is { } found && !ulong.TryParse(S("channel").Trim().TrimStart('/'), out _))
+				Persist("channel", found.Value.ToString());
+		}
 		if (channelId is null || !Ctx.Full.Book.Channels.TryGetValue(channelId.Value, out var ch)) return;
 		var max = Ctx.Full.Book.Server?.MaxClients.ToString() ?? "?";
 		var name = Fill(S("template"), ("online", Ctx.RealClients().Count().ToString()), ("max", max),

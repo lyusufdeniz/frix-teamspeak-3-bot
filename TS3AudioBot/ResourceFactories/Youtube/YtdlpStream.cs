@@ -111,6 +111,18 @@ public static class YtdlpStream
 			return "YouTube bot doğrulaması istedi. Panelden YouTube çerez dosyası yükleyin (SSS'ye bakın).";
 		if (text.Contains("Video unavailable", StringComparison.OrdinalIgnoreCase))
 			return "Video kullanılamıyor.";
+		if (text.Contains("live stream recording is not available", StringComparison.OrdinalIgnoreCase))
+			return "Bu canlı yayının kaydı YouTube'da yok.";
+		if (text.Contains("live event will begin", StringComparison.OrdinalIgnoreCase) || text.Contains("Premieres in", StringComparison.OrdinalIgnoreCase))
+			return "Bu yayın henüz başlamadı.";
+		if (text.Contains("Requested format is not available", StringComparison.OrdinalIgnoreCase))
+			return "Bu video için çalınabilir bir ses formatı bulunamadı. yt-dlp'yi güncelleyin.";
+		if (text.Contains("not available in your country", StringComparison.OrdinalIgnoreCase) || text.Contains("blocked it in your country", StringComparison.OrdinalIgnoreCase))
+			return "Bu video sunucunun ülkesinde engelli.";
+		if (text.Contains("members-only", StringComparison.OrdinalIgnoreCase) || text.Contains("Join this channel", StringComparison.OrdinalIgnoreCase))
+			return "Bu video sadece kanal üyelerine açık.";
+		if (text.Contains("copyright", StringComparison.OrdinalIgnoreCase))
+			return "Video telif nedeniyle kaldırılmış.";
 		if (text.Contains("Private video", StringComparison.OrdinalIgnoreCase))
 			return "Bu video gizli.";
 		if (text.Contains("confirm your age", StringComparison.OrdinalIgnoreCase))

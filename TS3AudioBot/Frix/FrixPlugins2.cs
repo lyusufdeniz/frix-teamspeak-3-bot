@@ -22,11 +22,11 @@ public sealed class RegistrationPlugin : FrixPlugin
 	public override string DescEn => "Notifies staff about unregistered users in the registration channel; staff type !kayit <name> to grant the member group.";
 	public override PluginField[] Schema =>
 	[
-		new("channel", "text", "Kayıt kanalı (ad ya da ID)", "Registration channel (name or ID)", "Kayıt"),
+		new("channel", "channel", "Kayıt kanalı", "Registration channel", "Kayıt"),
 		new("memberGroup", "text", "Verilecek üye grubu ID'si", "Member group ID to grant", ""),
 		new("unregisteredGroup", "text", "Kaldırılacak kayıtsız grubu ID'si (boş = yok)", "Unregistered group ID to remove (empty = none)", ""),
 		new("staffGroups", "text", "Kayıt yapabilen yetkili grup ID'leri (virgülle)", "Staff group IDs allowed to register (comma separated)", ""),
-		new("lobby", "text", "Kayıttan sonra taşınacak kanal (boş = taşıma)", "Channel to move to after registration (empty = don't move)", ""),
+		new("lobby", "channel", "Kayıttan sonra taşınacak kanal (boş = taşıma)", "Channel to move to after registration (empty = don't move)", ""),
 		new("staffMessage", "text", "Yetkililere dürtme", "Poke to staff", "📝 {user} kayıt bekliyor → !kayit {user}"),
 		new("userMessage", "text", "Bekleyen kişiye mesaj", "Message to the waiting user", "👋 Hoş geldin {user}! Yetkililer bilgilendirildi, birazdan kaydın yapılacak."),
 		new("doneMessage", "text", "Kayıt sonrası mesaj", "Message after registration", "✅ Kaydın tamamlandı, aramıza hoş geldin {user}!"),
@@ -97,8 +97,8 @@ public sealed class TempChannelPlugin : FrixPlugin
 	public override string DescEn => "Creates a temporary channel named after users who join the creator channel and moves them in; TeamSpeak deletes it when empty.";
 	public override PluginField[] Schema =>
 	[
-		new("channel", "text", "Oluşturucu kanal (ad ya da ID)", "Creator channel (name or ID)", "➕ Kanal oluştur"),
-		new("parent", "text", "Kanalların açılacağı üst kanal (boş = oluşturucunun üstü)", "Parent channel (empty = creator's parent)", ""),
+		new("channel", "channel", "Oluşturucu kanal", "Creator channel", "➕ Kanal oluştur"),
+		new("parent", "channel", "Kanalların açılacağı üst kanal (boş = oluşturucunun üstü)", "Parent channel (empty = creator's parent)", ""),
 		new("name", "text", "Kanal adı şablonu", "Channel name template", "🔊 {user} kanalı", null, "Değişkenler: {user} {n}", "Variables: {user} {n}"),
 		new("maxClients", "number", "En fazla kişi (0 = sınırsız)", "Max clients (0 = unlimited)", 0),
 		new("cooldown", "number", "Aynı kişi için bekleme (saniye)", "Cooldown per user (seconds)", 30),
@@ -217,10 +217,10 @@ public sealed class ChannelGuardPlugin : FrixPlugin
 	public override string DescEn => "Moves or kicks users without an allowed group out of protected channels.";
 	public override PluginField[] Schema =>
 	[
-		new("channels", "textarea", "Korunan kanallar (her satıra ad ya da ID)", "Protected channels (one name or ID per line)", ""),
+		new("channels", "channels", "Korunan kanallar", "Protected channels", ""),
 		new("allowedGroups", "text", "İzinli grup ID'leri (virgülle)", "Allowed group IDs (comma separated)", ""),
 		new("action", "select", "Ne yapılsın", "Action", "kick", ["kick", "move"]),
-		new("moveTo", "text", "Taşınacak kanal (taşı seçiliyse)", "Move to channel (for move)", ""),
+		new("moveTo", "channel", "Taşınacak kanal (taşı seçiliyse)", "Move to channel (for move)", ""),
 		new("message", "text", "Kişiye mesaj", "Message to the user", "⛔ Bu kanala girme yetkin yok."),
 	];
 

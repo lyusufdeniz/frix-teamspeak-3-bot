@@ -86,6 +86,7 @@
     const list = h('div', { class: 'plugin-list' }, F.skeleton(3, 'sk-row'));
     root.append(F.pageHead(t('plugins.title'), t('plugins.sub'), h('label', { class: 'inline-field' }, h('span', { class: 'label-inline', text: t('plugins.bot') }), sel)), list);
     let radios = [];
+    let channels = [];
     let sig = '';
 
     function fillSel() {
@@ -100,7 +101,9 @@
       if (!botName) { list.replaceChildren(F.empty('server', t('bots.none'))); return; }
       list.replaceChildren(...F.skeleton(4, 'sk-row'));
       try {
-        const [pl, rd, cm] = await Promise.all([F.api('GET', 'plugins/' + enc(botName)), F.api('GET', 'radios'), F.api('GET', 'commands')]);
+        const [pl, rd, cm, ch] = await Promise.all([F.api('GET', 'plugins/' + enc(botName)), F.api('GET', 'radios'), F.api('GET', 'commands'),
+          F.api('GET', 'bots/' + enc(botName) + '/channels').catch(() => null)]);
+        channels = (ch && ch.channels) || [];
         radios = rd || [];
         builtins = (cm && cm.builtin) || [];
         list.replaceChildren(...grouped(pl || []));
@@ -155,10 +158,31 @@
           const opts = [['', t('plugins.noRadio')]].concat(radios.map((r) => [r.name, r.name]));
           if (val && !radios.some((r) => r.name === val)) opts.push([val, val + ' (?)']);
           ctl = F.select(opts, val || ''); get = () => ctl.value;
+        } else if (f.type === 'channel') {
+          // themed dropdown with the bot's channels (indented tree); free text when the bot is offline
+          if (channels.length) {
+            const v = val == null ? '' : String(val);
+            const opts = [['', t('plugins.noChannel')]].concat(channels.map((c) => [String(c.id), '\u2003'.repeat(c.depth) + c.name]));
+            const byName = !opts.some((o) => o[0] === v) && v ? channels.find((c) => c.name.toLowerCase() === v.toLowerCase()) : null;
+            if (v && !byName && !opts.some((o) => o[0] === v)) opts.push([v, v + ' (?)']);
+            ctl = F.select(opts, byName ? String(byName.id) : v); get = () => ctl.value;
+          } else { ctl = F.input({ value: val == null ? '' : String(val), placeholder: t('plugins.channelPh') }); get = () => ctl.value; }
+        } else if (f.type === 'channels') {
+          const cur = String(val || '').split('\n').map((x) => x.trim()).filter(Boolean);
+          if (channels.length) {
+            const chosen = new Set(cur.map((x) => { const c = channels.find((ch) => String(ch.id) === x.replace(/^\//, '') || ch.name.toLowerCase() === x.toLowerCase()); return c ? String(c.id) : x; }));
+            const boxes = channels.map((c) => {
+              const cb = h('input', { type: 'checkbox', value: String(c.id), checked: chosen.has(String(c.id)) });
+              return h('label', { class: 'ch-pick', style: 'padding-left:' + (8 + c.depth * 16) + 'px' }, cb, h('span', { text: c.name }));
+            });
+            ctl = h('div', { class: 'ch-list' }, boxes);
+            const unknown = [...chosen].filter((x) => !channels.some((c) => String(c.id) === x));
+            get = () => boxes.filter((b) => b.querySelector('input').checked).map((b) => b.querySelector('input').value).concat(unknown).join('\n');
+          } else { ctl = F.textarea({ value: cur.join('\n'), rows: 4, placeholder: t('plugins.channelsPh') }); get = () => ctl.value; }
         } else { ctl = F.input({ value: val == null ? '' : String(val) }); get = () => ctl.value; }
         getters.push([f.key, get]);
         const help = f.help ? F.loc(f.help) : null;
-        return f.type === 'bool' ? h('div', { class: 'field' }, ctl, help ? h('div', { class: 'help', text: help }) : null) : F.field(F.loc(f.label), ctl, help, { cls: f.type === 'textarea' ? 'span2' : '' });
+        return f.type === 'bool' ? h('div', { class: 'field' }, ctl, help ? h('div', { class: 'help', text: help }) : null) : F.field(F.loc(f.label), ctl, help, { cls: f.type === 'textarea' || f.type === 'channels' ? 'span2' : '' });
       });
       const collect = () => { const c = {}; getters.forEach(([k, g]) => { c[k] = g(); }); return c; };
       const enabled = F.switchEl(p.enabled, null, { 'aria-label': t('plugins.enabled') + ': ' + F.loc(p.name) });

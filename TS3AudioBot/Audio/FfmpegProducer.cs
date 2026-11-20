@@ -119,16 +119,31 @@ public sealed partial class FfmpegProducer : IPlayerSource, IDisposable
 				Log.Trace("Ffmpeg has exited");
 				try
 				{
+					if (instance.Feeder is { } fd && !instance.FeederGotData)
+					{
+						// yt-dlp gave ffmpeg nothing: its own error is the real reason ("Invalid data" means nothing)
+						try { fd.WaitForExit(3000); } catch { }
+						if (instance.FeederFailed)
+							goto skipFfmpegError;
+					}
 					if (instance.FfmpegProcess.ExitCode != 0 && !instance.FeederFailed)
 					{
 						string lines;
 						lock (instance.LastErrorLines)
 							lines = string.Join(" | ", instance.LastErrorLines);
+						if (instance.Feeder != null && !instance.FeederGotData && instance.FeederStderr is { } fe)
+						{
+							string err;
+							lock (fe) err = fe.ToString();
+							if (err.Trim().Length > 0) lines = ResourceFactories.Youtube.YtdlpStream.ExplainError(err);
+							instance.FeederFailed = true;
+						}
 						Log.Warn("ffmpeg şarkıyı çalamadı (çıkış kodu {0}): {1}", instance.FfmpegProcess.ExitCode, lines);
 						OnFfmpegFailed?.Invoke(lines);
 					}
 				}
 				catch (Exception ex) { Log.Debug(ex, "ffmpeg exit code"); }
+				skipFfmpegError:
 				AudioStop();
 				triggerEndSafe = true;
 			}
@@ -285,6 +300,7 @@ public sealed partial class FfmpegProducer : IPlayerSource, IDisposable
 		instance.Feeder = feeder;
 
 		var stderr = new StringBuilder();
+		instance.FeederStderr = stderr;
 		feeder.ErrorDataReceived += (_, e) => { if (e.Data != null) lock (stderr) stderr.AppendLine(e.Data); };
 		feeder.BeginErrorReadLine();
 
@@ -300,6 +316,7 @@ public sealed partial class FfmpegProducer : IPlayerSource, IDisposable
 				while (!instance.Closed && (n = input.Read(buffer, 0, buffer.Length)) > 0)
 				{
 					output.Write(buffer, 0, n);
+					instance.FeederGotData = true;
 					if (!metaSent)
 					{
 						metaSent = true;
@@ -475,6 +492,9 @@ public sealed partial class FfmpegProducer : IPlayerSource, IDisposable
 		public Process? Feeder { get; set; }
 		public string? MetaFile { get; set; }
 		public bool FeederFailed { get; set; }
+		/// <summary>Frix: yt-dlp hata çıktısı ve ffmpeg'e hiç veri gidip gitmediği.</summary>
+		public System.Text.StringBuilder? FeederStderr { get; set; }
+		public bool FeederGotData { get; set; }
 
 		public FfmpegInstance(string url, PreciseAudioTimer timer) : this(url, timer, null!, 0) { }
 		public FfmpegInstance(string url, PreciseAudioTimer timer, Stream icyStream, int icyMetaInt)

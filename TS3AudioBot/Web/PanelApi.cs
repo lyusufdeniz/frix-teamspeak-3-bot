@@ -116,6 +116,7 @@ public static class PanelApi
 			case ["radios", var id] when m == "DELETE": FrixRadio.Delete(long.Parse(id)); FrixAvatar.Invalidate(); await Ok(ctx, new { ok = true }); break;
 			// eklentiler
 			case ["plugins", var b] when m == "GET": await Ok(ctx, ListPlugins(b)); break;
+			case ["bots", var b, "channels"] when m == "GET": await Ok(ctx, await Channels(b)); break;
 			case ["plugins", var b, var id] when m == "PUT": await Ok(ctx, SavePlugin(b, id, body)); break;
 			// özel komutlar
 			case ["commands"] when m == "GET": await Ok(ctx, ListCommands()); break;
@@ -291,6 +292,35 @@ public static class PanelApi
 			repeat = pl.Loop.ToString().ToLowerInvariant(),
 			random = pl.Random,
 		};
+	}
+
+	/// <summary>Botun gördüğü kanallar, TeamSpeak'teki sırayla (alt kanallar girintili).</summary>
+	private static async Task<object> Channels(string name)
+	{
+		var bot = Running(name);
+		if (bot is null) return new { online = false, channels = Array.Empty<object>() };
+		return await bot.Scheduler.Invoke(() =>
+		{
+			var full = bot.Injector.GetModuleOrThrow<TSLib.Full.TsFullClient>();
+			var all = full.Book.Channels.Values.ToList();
+			var list = new List<object>();
+			void Walk(ChannelId parent, int depth)
+			{
+				var kids = all.Where(c => c.Parent == parent).ToList();
+				// TeamSpeak order: the first child has Order 0, every next one points to the channel above it
+				var prev = ChannelId.Null;
+				for (var guard = 0; kids.Count > 0 && guard < 10000; guard++)
+				{
+					var next = kids.FirstOrDefault(c => c.Order == prev) ?? kids[0];
+					kids.Remove(next);
+					list.Add(new { id = next.Id.Value, name = next.Name, depth });
+					Walk(next.Id, depth + 1);
+					prev = next.Id;
+				}
+			}
+			Walk(ChannelId.Null, 0);
+			return (object)new { online = full.Connected, channels = list };
+		});
 	}
 
 	private static async Task<object> Queue(string name)
