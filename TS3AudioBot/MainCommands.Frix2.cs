@@ -248,22 +248,44 @@ public static partial class MainCommands
 
 	[Command("anket")]
 	[Usage("Soru? | Seçenek 1 | Seçenek 2", "Anket başlatır; \"!anket bitir\" bitirir")]
-	public static string CommandAnket(ConfBot conf, InvokerData invoker, string? metin = null)
+	public static string? CommandAnket(ConfBot conf, InvokerData invoker, string? metin = null)
 	{
 		var fun = RequireFun(conf, "poll");
 		var text = (metin ?? "").Trim();
 		if (text.Equals("bitir", StringComparison.OrdinalIgnoreCase) || text.Equals("end", StringComparison.OrdinalIgnoreCase))
-			return fun.EndPoll() ?? FrixText.Get("poll.none");
+			return Broadcast(fun, invoker, fun.EndPoll(), FrixText.Get("poll.none"));
 		if (text.Length == 0)
 			return fun.Current is { } p ? fun.PollText(p, false) : FrixText.Get("poll.usage");
 		var parts = text.Split('|').Select(x => x.Trim()).Where(x => x.Length > 0).ToArray();
 		if (parts.Length < 3 || parts.Length > 11) return FrixText.Get("poll.usage");
-		return fun.StartPoll(FrixChat.Escape(parts[0]), parts.Skip(1).Select(FrixChat.Escape).ToArray(), CallerName(invoker));
+		if (fun.Current != null) return FrixText.Get("poll.running");
+		return Broadcast(fun, invoker, fun.StartPoll(FrixChat.Escape(parts[0]), parts.Skip(1).Select(FrixChat.Escape).ToArray(), CallerName(invoker)), null);
+	}
+
+	/// <summary>
+	/// Anket metni kanala gider. Komut kanaldan yazıldıysa cevap zaten kanala düşer;
+	/// özel mesajdan yazıldıysa kanala ayrıca gönderilir ve yazana kısa bir onay döner.
+	/// </summary>
+	private static string? Broadcast(FunPlugin fun, InvokerData invoker, string? text, string? whenNull)
+	{
+		if (text is null) return whenNull;
+		if (invoker is ClientCall { Visibility: TSLib.TextMessageTargetMode.Channel }) return text;
+		fun.ToChannel(text);
+		return FrixText.Get("poll.posted");
 	}
 
 	[Command("oy")]
 	public static string CommandOy(ConfBot conf, InvokerData invoker, int secenek)
-		=> RequireFun(conf, "poll").Vote(invoker.ClientUid.Value ?? "?", secenek);
+	{
+		var fun = RequireFun(conf, "poll");
+		var reply = fun.Vote(invoker.ClientUid.Value ?? "?", secenek);
+		if (fun.Current is not { } p || !p.Votes.ContainsKey(invoker.ClientUid.Value ?? "?")) return reply;
+		// her oydan sonra güncel yüzdeler kanalda paylaşılır
+		var summary = fun.PollSummary(p);
+		if (invoker is ClientCall { Visibility: TSLib.TextMessageTargetMode.Channel }) return reply + "\n" + summary;
+		fun.ToChannel(summary);
+		return reply;
+	}
 
 	// ================================================================== hava ve döviz
 

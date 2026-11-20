@@ -499,6 +499,23 @@ public sealed class FunPlugin : FrixPlugin
 		return FrixText.Get(changed ? "poll.changed" : "poll.voted", ("option", p.Options[option - 1]));
 	}
 
+	/// <summary>Tek satırlık ara sonuç: "📊 Soru — 1. A %60 · 2. B %40 (5 oy)".</summary>
+	public string PollSummary(Poll p)
+	{
+		var total = p.Votes.Count;
+		var parts = p.Options.Select((o, i) =>
+		{
+			var n = p.Votes.Values.Count(v => v == i);
+			var pct = total == 0 ? 0 : (int)Math.Round(n * 100.0 / total);
+			return $"{i + 1}. {o} %{pct}";
+		});
+		return FrixText.Get("poll.summary", ("question", p.Question), ("results", string.Join(" · ", parts)), ("votes", total.ToString()));
+	}
+
+	/// <summary>Anket mesajları her zaman kanala gider (komut özel mesajdan yazılsa bile).</summary>
+	public void ToChannel(string text)
+		=> _ = Ctx.RunOnBot(() => Ctx.Client.SendChannelMessage(FrixChat.Colorize(text)));
+
 	public string? EndPoll()
 	{
 		var p = Current;
