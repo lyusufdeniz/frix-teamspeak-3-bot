@@ -39,7 +39,7 @@ sunucularda ekransız çalışır.
 - Her bot için ayrı açılan **10 eklenti**; benzer özellikler tek eklentinin içinde, her biri ayrı açılıp kapanır:
   - *Müzik:* komutlar, ses seviyesi eşitleme, otomatik devam (kuyruk bitince benzer şarkılar), favoriler (`!fav`, `!favs`), oylamayla geç, DJ yetkisi ve kuyruk limiti, yalnızken duraklat, çalan şarkıyı bot adı/açıklaması yapma
   - *Radyo:* panelden eklenen radyolar (`!radyo`), boştayken radyo
-  - *Avatar oluşturucu:* boştayken açık eklentilerin komutlarını gösteren kart, çalarken şarkı kapağı
+  - *Avatar:* boşta, müzik ve radyo için ayrı avatar: komut kartı, şarkı kapağı ya da yüklediğin resim
   - *Otomatik yeniden bağlan:* düşünce aynı kanala geri girer
   - *Karşılama ve duyurular:* karşılama mesajı, dönen duyurular ve zamanlı duyurular
   - *Zamanlanmış çalma:* belirli saatlerde radyo/liste başlatma, durdurma, ses ayarı

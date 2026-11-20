@@ -139,7 +139,7 @@ Panel → Eklentiler → *Müzik* → *Otomatik devam*. Kuyruk bitince son çala
 *Favoriler* eklentisi açıkken `!fav` çalan şarkıyı senin favorilerine ekler, `!favs` hepsini kuyruğa ekler. `!favs liste` listeyi gösterir, `!fav sil 3` 3. favoriyi siler. Favoriler TeamSpeak kimliğine göre kişiye özeldir.
 
 **Her sabah radyo otomatik başlasın**
-Panel → Eklentiler → *Zamanlanmış çalma*. Her satır bir plan: `09:00 | radyo Power Türk`, `pzt,sal,çar,per,cum 18:30 | liste akşam`, `00:30 | dur`, `20:00 | ses 40`.
+Panel → Eklentiler → *Zamanlanmış çalma* → *Plan ekle*. Her plan için günleri işaretle (hiçbiri = her gün), saati seç ve işlemi belirle: radyo çal, liste çal, durdur ya da ses ayarla. Radyo ve liste açılır listeden seçilir.
 
 **Duyuru/reklam ve zamanlı duyuru nerede?**
 İkisi tek eklentide: Panel → Eklentiler → *Karşılama ve duyurular* → *Duyurular*. Dönen mesajlar belirli aralıklarla gider; *Zamanlı duyurular* alanına `21:00 | mesaj` biçiminde gün/saat bazlı mesajlar yazılır. Sadece zamanlı duyuru istiyorsan dönen mesajları boş bırak.
@@ -151,7 +151,7 @@ Panel → Eklentiler → *Zamanlanmış çalma*. Her satır bir plan: `09:00 | r
 Panel → Eklentiler → *Müzik* → *Şarkı adı → bot adı/açıklaması*. Ad ve açıklama biçimini ayrı ayrı ayarlarsın (`{title}`, `{user}`, `{bot}`). TeamSpeak adları en fazla 30 karakter olduğu için uzun adlar kısaltılır. Çalma bitince bot eski adına döner.
 
 **Avatarı nasıl kapatırım ya da şarkı kapağını istemiyorum**
-Panel → Eklentiler → *Avatar oluşturucu*: boşta komut kartı ve çalarken şarkı kapağı ayrı ayrı açılıp kapanır. Avatar özelliğini kapatırsan bot avatarı kaldırılır.
+Panel → Eklentiler → *Avatar*: boşta, müzik çalarken ve radyo çalarken ayrı ayrı seçilir. Boşta: komut kartı, kendi resmin ya da avatar yok. Müzik: şarkı kapağı, kendi resmin ya da boştaki avatar. Radyo: boştaki avatar ya da kendi resmin. *Kendi resmim* seçilince *Resim seç* ile yüklersin. Eklentiyi kapatırsan bot avatarı kaldırılır.
 
 **Bot cevaplarını renkli / kalın yapabilir miyim?**
 Evet: Panel → Eklentiler → *Bot metinleri*. Üstteki *Mesaj görünümü* kartında tüm cevapların varsayılan rengini, hata rengini ve kalınlığı seçersin. Her cevabın üstündeki araç çubuğuyla seçili yazıyı kalın, italik, altı çizili ya da renkli yaparsın (TeamSpeak BBCode: `[b]`, `[i]`, `[u]`, `[s]`, `[color=#FF0000]`, `[url]`); altındaki önizleme TeamSpeak'te nasıl görüneceğini gösterir. Kendi `[color]` etiketi olan cevaplara varsayılan renk eklenmez.
@@ -301,7 +301,7 @@ Panel → Plugins → *Music* → *Autoplay*. When the queue ends, a song simila
 With the *Favourites* plugin on, `!fav` adds the playing song to your favourites and `!favs` queues all of them. `!favs list` shows the list, `!fav del 3` removes the 3rd one. Favourites belong to your TeamSpeak identity.
 
 **Start a radio every morning**
-Panel → Plugins → *Scheduled playback*. One plan per line: `09:00 | radio Power Türk`, `mon,tue,wed,thu,fri 18:30 | playlist evening`, `00:30 | stop`, `20:00 | volume 40`.
+Panel → Plugins → *Scheduled playback* → *Add plan*. For each plan tick the days (none = every day), pick the time and the action: play a radio, play a playlist, stop or set the volume. Radios and playlists are picked from a list.
 
 **Where are announcements and scheduled messages?**
 Both are one plugin now: Panel → Plugins → *Welcome & announcements* → *Announcements*. Rotating messages go out at an interval; put day/time based messages like `21:00 | message` in *Scheduled messages*. Leave the rotating messages empty if you only want scheduled ones.
@@ -313,7 +313,7 @@ The *Server activity* plugin (on by default) records how many people are online 
 Panel → Plugins → *Music* → *Song → bot name/description*. Set the nickname and description formats separately (`{title}`, `{user}`, `{bot}`). TeamSpeak nicknames are max 30 characters, so long titles are cut. The bot gets its own name back when playback stops.
 
 **How do I turn the avatar or the song cover off?**
-Panel → Plugins → *Avatar creator*: the idle command card and the song cover while playing can be switched separately. Turning the avatar feature off removes the bot's avatar.
+Panel → Plugins → *Avatar*: chosen separately for idle, music and radio. Idle: command card, your own image or no avatar. Music: song cover, your own image or the idle avatar. Radio: the idle avatar or your own image. With *My image* selected, upload it with *Choose image*. Turning the plugin off removes the bot's avatar.
 
 **Can the bot's replies be coloured / bold?**
 Yes: Panel → Plugins → *Bot texts*. The *Message look* card sets the default colour, error colour and bold for all replies. The toolbar above each reply makes the selected text bold, italic, underlined or coloured (TeamSpeak BBCode: `[b]`, `[i]`, `[u]`, `[s]`, `[color=#FF0000]`, `[url]`); the preview below shows how it will look in TeamSpeak. Replies with their own `[color]` tag don't get the default colour.

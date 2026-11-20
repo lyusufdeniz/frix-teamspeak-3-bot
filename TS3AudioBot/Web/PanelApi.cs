@@ -118,6 +118,18 @@ public static class PanelApi
 			// eklentiler
 			case ["plugins", var b] when m == "GET": await Ok(ctx, ListPlugins(b)); break;
 			case ["bots", var b, "channels"] when m == "GET": await Ok(ctx, await Channels(b)); break;
+			case ["bots", var b, "avatar", var slot] when m == "GET" && FrixAvatar.Slots.Contains(slot):
+			{
+				var file = FrixAvatar.CustomPath(b, slot);
+				if (!File.Exists(file)) throw NotFound("no_image");
+				ctx.Response.ContentType = "image/png";
+				ctx.Response.Headers["Cache-Control"] = "no-store";
+				await ctx.Response.Body.WriteAsync(await File.ReadAllBytesAsync(file));
+				return;
+			}
+			case ["bots", var b, "avatar", var slot] when m == "PUT" && FrixAvatar.Slots.Contains(slot): await Ok(ctx, await SaveAvatarImage(b, slot, body.Str("data"))); break;
+			case ["bots", var b, "avatar", var slot] when m == "DELETE" && FrixAvatar.Slots.Contains(slot):
+				File.Delete(FrixAvatar.CustomPath(b, slot)); FrixAvatar.Invalidate(); await Ok(ctx, new { ok = true }); break;
 			case ["plugins", var b, var id] when m == "PUT": await Ok(ctx, SavePlugin(b, id, body)); break;
 			// özel komutlar
 			case ["commands"] when m == "GET": await Ok(ctx, ListCommands()); break;
@@ -737,6 +749,29 @@ public static class PanelApi
 	{
 		var rows = FrixDb.Query("SELECT id, enabled FROM plugins WHERE bot=$b", ("$b", bot)).ToDictionary(r => (string)r["id"]!, r => (long)r["enabled"]! != 0);
 		return FrixGroups.All.Where(g => rows.TryGetValue(g.Id, out var on) ? on : FrixGroups.DefaultOn(g)).Select(g => g.Id).ToArray();
+	}
+
+	/// <summary>Panelden gelen resmi (base64) doğrular, küçültür ve bot için saklar.</summary>
+	private static async Task<object> SaveAvatarImage(string bot, string slot, string? data)
+	{
+		if (string.IsNullOrEmpty(data)) throw Bad("no_image");
+		var comma = data.IndexOf(',');
+		byte[] bytes;
+		try { bytes = Convert.FromBase64String(comma >= 0 ? data[(comma + 1)..] : data); }
+		catch { throw Bad("bad_image"); }
+		Helper.ImageHolder img;
+		try { img = await Helper.ImageUtil.ResizeImageSave(new MemoryStream(bytes), CancellationToken.None, 512); }
+		catch { throw Bad("bad_image"); }
+		using (img)
+		{
+			var path = FrixAvatar.CustomPath(bot, slot);
+			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+			await using var f = File.Create(path);
+			img.Stream.Position = 0;
+			await img.Stream.CopyToAsync(f);
+		}
+		FrixAvatar.Invalidate();
+		return new { ok = true };
 	}
 
 	private static object ListPlugins(string bot)

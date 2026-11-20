@@ -139,42 +139,92 @@
           h('div', { class: 'plugin-group-head' }, h('h2', { id: hid, text: t('plugins.group.' + key) }), count), h('div', { class: 'plugin-grid' }, cards));
       });
     }
+    // ---- plugin dialog building blocks
+    // rarely changed settings: shown under "More settings" inside their feature card
+    const ADV = new Set(['welcome.cooldown', 'advertisement.order', 'autoplay.noRepeat', 'favorites.max', 'voteskip.exemptGroups', 'alonepause.stopAfter',
+      'npstatus.idleDesc', 'autoreconnect.delay', 'autoreconnect.maxTries', 'autoreconnect.onShutdown',
+      'afkmover.excludeGroups', 'namefilter.excludeGroups', 'antiflood.warnings', 'antiflood.kickMessage', 'antiflood.excludeGroups',
+      'registration.unregisteredGroup', 'registration.cooldown', 'tempchannel.parent', 'tempchannel.maxClients', 'tempchannel.cooldown',
+      'supportnotify.cooldown', 'activity.keepDays', 'ranks.excludeGroups', 'fun.pollMinutes', 'fun.currencyBase']);
+    /** "Idle time (minutes, 0 = off)" → ["Idle time", "minutes, 0 = off"] */
+    const splitLabel = (s) => { const m = String(s).match(/^(.*?)\s*\((.+)\)\s*$/); return m ? [m[1], m[2]] : [s, null]; };
+    const isGroupIds = (key) => /(groups?|Group)$/.test(key.split('.').pop());
+    function fieldEl(label, ctl, help, wide) {
+      const [main, hint] = splitLabel(label);
+      const target = ctl.matches && ctl.matches('input,select,textarea') ? ctl : ctl.querySelector && ctl.querySelector('input,select,textarea');
+      if (target && !target.id) target.id = F.uid('in');
+      return h('div', { class: 'field' + (wide ? ' span2' : '') },
+        h('label', { for: target ? target.id : null }, main, hint ? h('span', { class: 'lbl-hint', text: hint }) : null),
+        ctl, help ? h('div', { class: 'help', text: help }) : null);
+    }
+    /** message sent to TeamSpeak: compact preview + edit button; the BBCode editor opens in its own dialog */
+    function messageField(f, val) {
+      let value = val == null ? '' : String(val);
+      const label = splitLabel(F.loc(f.label))[0];
+      const prev = h('div', { class: 'msg-prev' });
+      const paint = () => {
+        prev.classList.toggle('empty', !value.trim());
+        prev.replaceChildren(value.trim() ? bbRender(value, null) : document.createTextNode(t('plugins.msgEmpty')));
+      };
+      paint();
+      const vars = [...new Set(((f.help ? F.loc(f.help) : '') + ' ' + String(f.default || '')).match(/\{\w+\}/g) || [])];
+      const open = () => {
+        const ta = F.textarea({ value, rows: f.type === 'textarea' ? 6 : 3, class: 'input text-editor' });
+        const p2 = h('div', { class: 'bb-preview' });
+        const rp = () => p2.replaceChildren(bbRender(ta.value, null));
+        ta.addEventListener('input', rp); rp();
+        const ins = (v) => { const i = ta.selectionStart; ta.value = ta.value.slice(0, i) + v + ta.value.slice(ta.selectionEnd); ta.focus(); ta.setSelectionRange(i + v.length, i + v.length); rp(); };
+        F.modal({
+          title: label, size: 'wide',
+          body: h('div', { class: 'text-edit' }, bbToolbar(ta), ta,
+            vars.length ? h('div', { class: 'text-vars' }, h('span', { class: 'muted small', text: t('texts.vars') }), vars.map((v) => h('button', { type: 'button', class: 'var-chip', text: v, onclick: () => ins(v) }))) : null,
+            f.help && !/^\s*(Variables|Değişkenler)/i.test(F.loc(f.help)) ? h('p', { class: 'muted small', text: F.loc(f.help) }) : null,
+            h('div', { class: 'label', text: t('texts.bb.preview') }), p2),
+          actions: [{ label: t('common.cancel') }, { label: t('plugins.msgApply'), kind: 'primary', primary: true, icon: 'check', onClick: () => { value = ta.value; paint(); return true; } }],
+        });
+        setTimeout(() => ta.focus(), 50);
+      };
+      const el = h('div', { class: 'field span2' }, h('label', null, label),
+        h('div', { class: 'msg-row' }, prev, F.btn(t('common.edit'), { kind: 'ghost', icon: 'edit', cls: 'btn-sm', onClick: open })));
+      return { el, get: () => value };
+    }
+    /** built-in commands of one feature, folded: "Commands · 9" */
+    function commandsFold(partId) {
+      const cb = commandsBlock(builtins, partId);
+      if (!cb) return { el: null, n: 0 };
+      const n = cb.querySelectorAll('.builtin-row').length;
+      const help = cb.querySelector('.plugin-cmds-head .muted');
+      return { n, el: h('details', { class: 'pf-fold' }, h('summary', null, icon('terminal'), h('span', { text: t('plugins.commands') }), h('span', { class: 'pf-count', text: String(n) })),
+        help ? h('p', { class: 'muted small', text: help.textContent }) : null, cb.querySelector('.builtin-list')) };
+    }
+
     function card(p) {
       const cfg = p.config || {};
       const getters = [];
       const parts = p.parts || [];
-      const sections = [];
-      let curSec = null;
-      const fields = (p.schema || []).map((f) => {
+      const multi = (p.schema || []).some((f) => f.type === 'section');
+      let cmdTotal = 0;
+      const ctls = {};
+
+      /** one setting → its control and getter */
+      function control(f) {
         const val = cfg[f.key] !== undefined ? cfg[f.key] : f.default;
-        let ctl, get;
-        if (f.type === 'section') {
-          // a feature inside the group: its own on/off switch, its settings follow
-          const sw = F.switchEl(val === true || val === 'true', F.loc(f.label));
-          // collapsible card: the header toggles the settings below it (closed by default)
-          const chev = h('button', { type: 'button', class: 'pf-sec-toggle', 'aria-expanded': 'false', 'aria-label': F.loc(f.label) }, icon('chevron'));
-          const secEl = h('div', { class: 'pf-section span2 collapsed' }, h('span', { class: 'plugin-ic sm' }, icon(PLUGIN_ICONS[f.key] || 'box')), sw, chev,
-            f.help ? h('p', { class: 'muted small pf-sec-help', text: F.loc(f.help) }) : null);
-          curSec = { id: f.key, sw, els: [], head: secEl };
-          sections.push(curSec);
-          const sec = curSec;
-          sec.setOpen = (open) => {
-            secEl.classList.toggle('collapsed', !open);
-            chev.setAttribute('aria-expanded', String(open));
-            sec.els.forEach((e) => e.classList.toggle('sec-hidden', !open));
-          };
-          chev.addEventListener('click', () => sec.setOpen(secEl.classList.contains('collapsed')));
-          secEl.addEventListener('click', (e) => { if (!e.target.closest('.switch, button, input, label')) chev.click(); });
-          sw.input.addEventListener('change', () => { sec.els.forEach((e) => e.classList.toggle('sec-off', !sw.input.checked)); if (sw.input.checked) sec.setOpen(true); });
-          getters.push([f.key, () => sw.input.checked]);
-          return secEl;
+        const label = F.loc(f.label);
+        const help = f.help ? F.loc(f.help) : null;
+        if (f.type === 'avatarimg') return avatarImage(f);
+        if (f.type === 'schedule') { const sc = scheduleEditor(val == null ? '' : String(val)); getters.push([f.key, sc.get]); return h('div', { class: 'field span2' }, sc.el); }
+        if (BB_FIELDS.has(f.key)) { const m = messageField(f, val); getters.push([f.key, m.get]); return m.el; }
+        let ctl, get, wide = false;
+        if (f.type === 'bool') {
+          ctl = F.switchEl(val === true || val === 'true', splitLabel(label)[0]);
+          getters.push([f.key, () => ctl.input.checked]);
+          return h('div', { class: 'field field-switch' }, ctl, help ? h('div', { class: 'help', text: help }) : null);
         }
-        if (f.type === 'textarea') { ctl = F.textarea({ value: val == null ? '' : String(val), rows: 4 }); get = () => ctl.value; }
+        if (f.type === 'textarea') { ctl = F.textarea({ value: val == null ? '' : String(val), rows: 4 }); get = () => ctl.value; wide = true; }
         else if (f.type === 'number') { ctl = F.input({ type: 'number', value: val == null ? '' : String(val), inputmode: 'numeric' }); get = () => (ctl.value === '' ? f.default : Number(ctl.value)); }
-        else if (f.type === 'bool') { ctl = F.switchEl(val === true || val === 'true', F.loc(f.label)); get = () => ctl.input.checked; }
         else if (f.type === 'select') {
           const opts = (f.options || []).map((o) => [o, F.has('opt.' + o) ? t('opt.' + o) : o]);
-          ctl = F.select(opts, val); get = () => ctl.value;
+          ctl = F.select(opts, val); get = () => ctl.value; ctls[f.key] = ctl;
         } else if (f.type === 'radio') {
           const opts = [['', t('plugins.noRadio')]].concat(radios.map((r) => [r.name, r.name]));
           if (val && !radios.some((r) => r.name === val)) opts.push([val, val + ' (?)']);
@@ -183,12 +233,13 @@
           // themed dropdown with the bot's channels (indented tree); free text when the bot is offline
           if (channels.length) {
             const v = val == null ? '' : String(val);
-            const opts = [['', t('plugins.noChannel')]].concat(channels.map((c) => [String(c.id), '\u2003'.repeat(c.depth) + c.name]));
+            const opts = [['', t('plugins.noChannel')]].concat(channels.map((c) => [String(c.id), ' '.repeat(c.depth) + c.name]));
             const byName = !opts.some((o) => o[0] === v) && v ? channels.find((c) => c.name.toLowerCase() === v.toLowerCase()) : null;
             if (v && !byName && !opts.some((o) => o[0] === v)) opts.push([v, v + ' (?)']);
             ctl = F.select(opts, byName ? String(byName.id) : v); get = () => ctl.value;
           } else { ctl = F.input({ value: val == null ? '' : String(val), placeholder: t('plugins.channelPh') }); get = () => ctl.value; }
         } else if (f.type === 'channels') {
+          wide = true;
           const cur = String(val || '').split('\n').map((x) => x.trim()).filter(Boolean);
           if (channels.length) {
             const chosen = new Set(cur.map((x) => { const c = channels.find((ch) => String(ch.id) === x.replace(/^\//, '') || ch.name.toLowerCase() === x.toLowerCase()); return c ? String(c.id) : x; }));
@@ -199,40 +250,187 @@
             ctl = h('div', { class: 'ch-list' }, boxes);
             const unknown = [...chosen].filter((x) => !channels.some((c) => String(c.id) === x));
             get = () => boxes.filter((b) => b.querySelector('input').checked).map((b) => b.querySelector('input').value).concat(unknown).join('\n');
-          } else { ctl = F.textarea({ value: cur.join('\n'), rows: 4, placeholder: t('plugins.channelsPh') }); get = () => ctl.value; }
-        } else { ctl = F.input({ value: val == null ? '' : String(val) }); get = () => ctl.value; }
+          } else { ctl = F.textarea({ value: cur.join('\n'), rows: 3, placeholder: t('plugins.channelsPh') }); get = () => ctl.value; }
+        } else {
+          ctl = F.input({ value: val == null ? '' : String(val), placeholder: isGroupIds(f.key) ? (/Groups$|groups$/.test(f.key) ? '6, 9' : '6') : '' });
+          get = () => ctl.value;
+        }
         getters.push([f.key, get]);
-        const help = f.help ? F.loc(f.help) : null;
-        const bb = BB_FIELDS.has(f.key) && (f.type === 'text' || f.type === 'textarea');
-        if (bb) ctl = bbField(ctl).el;
-        const fe = f.type === 'bool' ? h('div', { class: 'field' }, ctl, help ? h('div', { class: 'help', text: help }) : null) : F.field(F.loc(f.label), ctl, help, { cls: bb || f.type === 'textarea' || f.type === 'channels' ? 'span2' : '' });
-        if (curSec) curSec.els.push(fe);
-        return fe;
-      });
-      // commands (and the avatar preview) go under their own section
-      const items = [];
-      let cmdTotal = 0;
-      const addExtras = (partId) => {
-        if (partId === 'avatar') items.push(h('div', { class: 'span2' }, avatarPreview()));
-        const cb = commandsBlock(builtins, partId);
-        if (cb) { cb.classList.add('span2'); cmdTotal += cb.querySelectorAll('.builtin-row').length; items.push(cb); return cb; }
-        return null;
-      };
-      if (sections.length) {
-        let sec = null;
-        fields.forEach((fe) => {
-          const s2 = sections.find((x) => x.sw.closest('.pf-section') === fe);
-          if (s2) { if (sec) { const x = addExtras(sec.id); if (x) sec.els.push(x); } sec = s2; }
-          items.push(fe);
-        });
-        if (sec) { const x = addExtras(sec.id); if (x) sec.els.push(x); }
-        sections.forEach((x) => { x.els.forEach((e) => e.classList.toggle('sec-off', !x.sw.input.checked)); x.setOpen(false); });
-        // a feature without settings or commands needs no toggle arrow
-        sections.forEach((x) => { if (!x.els.length) x.head.classList.add('no-body'); });
-      } else {
-        items.push(...fields);
-        parts.forEach((pt) => addExtras(pt.id));
+        return fieldEl(label, ctl, help, wide);
       }
+
+      /** own avatar image for one state (idle / music / radio); visible when that state is set to "custom" */
+      function avatarImage(f) {
+        const slot = f.key.split('.').pop().replace(/Image$/, '');
+        const url = () => '/panel/api/bots/' + enc(botName) + '/avatar/' + slot + '?t=' + Date.now();
+        const img = h('img', { class: 'av-img', alt: '' });
+        const box = h('div', { class: 'av-thumb' }, img, h('span', { class: 'muted small av-none', text: t('plugins.noImage') }));
+        const load = () => { box.classList.remove('has'); img.src = url(); };
+        img.addEventListener('load', () => box.classList.add('has'));
+        img.addEventListener('error', () => box.classList.remove('has'));
+        const file = h('input', { type: 'file', accept: 'image/png,image/jpeg,image/gif,image/webp', hidden: true });
+        const pick = F.btn(t('plugins.pickImage'), { kind: 'ghost', icon: 'upload', cls: 'btn-sm', onClick: () => file.click() });
+        const del = F.btn(t('plugins.removeImage'), { kind: 'ghost', icon: 'trash', cls: 'btn-sm', onClick: async () => {
+          try { await F.api('DELETE', 'bots/' + enc(botName) + '/avatar/' + slot); load(); } catch (e) { F.fail(e); }
+        } });
+        file.addEventListener('change', () => F.busy(pick, async () => {
+          const fl = file.files && file.files[0];
+          file.value = '';
+          if (!fl) return;
+          try {
+            // shrink in the browser first (TeamSpeak shows avatars small anyway)
+            const bmp = await createImageBitmap(fl);
+            const k = Math.min(1, 512 / Math.max(bmp.width, bmp.height));
+            const cv = document.createElement('canvas');
+            cv.width = Math.max(1, Math.round(bmp.width * k)); cv.height = Math.max(1, Math.round(bmp.height * k));
+            cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
+            await F.api('PUT', 'bots/' + enc(botName) + '/avatar/' + slot, { data: cv.toDataURL('image/png') });
+            load(); F.toast(t('common.saved'));
+          } catch (e) { F.fail(e); }
+        }));
+        load();
+        const el = h('div', { class: 'field av-field' }, h('label', null, splitLabel(F.loc(f.label))[0]),
+          h('div', { class: 'av-row' }, box, h('div', { class: 'av-btns' }, pick, del)), file);
+        // follow the matching select ("custom" = own image)
+        setTimeout(() => {
+          const sel = ctls[f.key.replace(/Image$/, '')];
+          if (!sel) return;
+          const sync = () => { el.hidden = sel.value !== 'custom'; };
+          sel.addEventListener('change', sync); sync();
+        });
+        return el;
+      }
+
+      /** scheduled playback: one row per plan (days, time, action, target) instead of free text */
+      function scheduleEditor(text) {
+        const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+        const TR = { pzt: 'mon', sal: 'tue', 'çar': 'wed', car: 'wed', per: 'thu', cum: 'fri', cmt: 'sat', paz: 'sun' };
+        const dayNames = t('dash.days').split(',');
+        const VERB = { radyo: 'radio', radio: 'radio', liste: 'playlist', playlist: 'playlist', dur: 'stop', stop: 'stop', ses: 'volume', volume: 'volume', vol: 'volume' };
+        const parse = (line) => {
+          const bar = line.indexOf('|');
+          if (bar < 0) return null;
+          const when = line.slice(0, bar).trim().split(/\s+/).filter(Boolean);
+          const act = line.slice(bar + 1).trim();
+          if (!when.length || !act) return null;
+          const time = when[when.length - 1];
+          const days = when.length > 1 ? when[0].split(',').map((d) => TR[d.trim().toLowerCase()] || d.trim().toLowerCase()).filter((d) => DAY_KEYS.includes(d)) : [];
+          const sp = act.indexOf(' ');
+          const verb = VERB[(sp < 0 ? act : act.slice(0, sp)).toLowerCase()] || 'radio';
+          return { days, time, verb, arg: sp < 0 ? '' : act.slice(sp + 1).trim() };
+        };
+        const rows = h('div', { class: 'sched-rows' });
+        const empty = h('p', { class: 'muted small sched-empty', text: t('sched.empty') });
+        let playlists = [];
+        const items = [];
+        function addRow(it) {
+          it = it || { days: [], time: '20:00', verb: 'radio', arg: '' };
+          const dayBtns = DAY_KEYS.map((d, i) => {
+            const b = h('button', { type: 'button', class: 'day-chip' + (it.days.includes(d) ? ' on' : ''), text: dayNames[i] || d, 'aria-pressed': String(it.days.includes(d)) });
+            b.addEventListener('click', () => { b.classList.toggle('on'); b.setAttribute('aria-pressed', String(b.classList.contains('on'))); });
+            b.dataset.day = d;
+            return b;
+          });
+          const time = h('input', { type: 'time', class: 'input sched-time', value: /^\d{1,2}:\d{2}$/.test(it.time) ? it.time.padStart(5, '0') : '20:00' });
+          const verb = F.select([['radio', t('sched.radio')], ['playlist', t('sched.playlist')], ['stop', t('sched.stop')], ['volume', t('sched.volume')]], it.verb);
+          const argBox = h('div', { class: 'sched-arg' });
+          let argGet = () => '';
+          const fillArg = () => {
+            const v = verb.value;
+            if (v === 'radio' || v === 'playlist') {
+              const names = v === 'radio' ? radios.map((r) => r.name) : playlists.map((p) => p.name);
+              const opts = names.map((n) => [n, n]);
+              if (it.arg && it.verb === v && !names.includes(it.arg)) opts.unshift([it.arg, it.arg + ' (?)']);
+              if (!opts.length) { argBox.replaceChildren(h('span', { class: 'muted small', text: t(v === 'radio' ? 'sched.noRadios' : 'sched.noPlaylists') })); argGet = () => ''; return; }
+              const sel = F.select(opts, it.verb === v && it.arg ? it.arg : opts[0][0]);
+              argBox.replaceChildren(sel); argGet = () => sel.value;
+            } else if (v === 'volume') {
+              const n = F.input({ type: 'number', min: 0, max: 100, value: it.verb === 'volume' && it.arg ? it.arg : '40', class: 'input sched-vol' });
+              argBox.replaceChildren(h('div', { class: 'input-suffix' }, n, h('span', { text: '%' }))); argGet = () => n.value || '0';
+            } else { argBox.replaceChildren(); argGet = () => ''; }
+          };
+          verb.addEventListener('change', fillArg); fillArg();
+          const row = h('div', { class: 'sched-row' },
+            h('div', { class: 'sched-days' }, dayBtns),
+            time, verb, argBox,
+            F.iconBtn('trash', t('common.delete'), () => { row.remove(); items.splice(items.indexOf(entry), 1); empty.hidden = items.length > 0; }, 'danger'));
+          const entry = {
+            refill: fillArg,
+            get: () => {
+              const ds = dayBtns.filter((b) => b.classList.contains('on')).map((b) => b.dataset.day);
+              const a = argGet();
+              const act = verb.value + (a ? ' ' + a : '');
+              return (ds.length && ds.length < 7 ? ds.join(',') + ' ' : '') + (time.value || '00:00') + ' | ' + act;
+            },
+          };
+          items.push(entry);
+          rows.append(row);
+          empty.hidden = true;
+        }
+        text.split('\n').map((l) => l.trim()).filter(Boolean).map(parse).filter(Boolean).forEach(addRow);
+        empty.hidden = items.length > 0;
+        F.api('GET', 'playlists').then((pl) => { playlists = Array.isArray(pl) ? pl : (pl && pl.playlists) || []; items.forEach((x) => x.refill()); }).catch(() => {});
+        const el = h('div', { class: 'sched' },
+          h('div', { class: 'sched-head muted small' }, h('span', { text: t('sched.days') }), h('span', { text: t('sched.time') }), h('span', { text: t('sched.action') })),
+          rows, empty,
+          F.btn(t('sched.add'), { kind: 'ghost', icon: 'plus', cls: 'btn-sm sched-add', onClick: () => addRow() }),
+          h('p', { class: 'muted small', text: t('sched.help') }));
+        return { el, get: () => items.map((x) => x.get()).join('\n') };
+      }
+
+      /** body of one feature: main settings, "More settings", avatar preview, commands */
+      function featureBody(partId, fs) {
+        const main = [], adv = [];
+        // a single rarely-used setting is not worth a fold: it stays with the others
+        const advCount = fs.filter((f) => ADV.has(f.key)).length;
+        fs.forEach((f) => (advCount > 1 && ADV.has(f.key) ? adv : main).push(control(f)));
+        const out = [];
+        if (partId === 'avatar') out.push(avatarPreview());
+        if (main.length) out.push(h('div', { class: 'form-grid' }, main));
+        if (adv.length) out.push(h('details', { class: 'pf-fold' }, h('summary', null, icon('sliders'), h('span', { text: t('plugins.more') }), h('span', { class: 'pf-count', text: String(adv.length) })), h('div', { class: 'form-grid' }, adv)));
+        const cmds = commandsFold(partId);
+        cmdTotal += cmds.n;
+        if (cmds.el) out.push(cmds.el);
+        return out;
+      }
+
+      // split the schema into features (sections); single-feature plugins have no section rows
+      const feats = [];
+      (p.schema || []).forEach((f) => {
+        if (f.type === 'section') feats.push({ f, fields: [] });
+        else if (multi) feats[feats.length - 1].fields.push(f);
+      });
+      const sections = [];
+      let content;
+      if (multi) {
+        content = feats.map(({ f, fields: fs }) => {
+          const val = cfg[f.key] !== undefined ? cfg[f.key] : f.default;
+          const sw = F.switchEl(val === true || val === 'true', null, { 'aria-label': F.loc(f.label) });
+          getters.push([f.key, () => sw.input.checked]);
+          const bodyEls = featureBody(f.key, fs);
+          const chev = h('span', { class: 'pf-chev', 'aria-hidden': 'true' }, icon('chevron'));
+          const head = h('div', { class: 'pf-card-head', role: bodyEls.length ? 'button' : null, tabindex: bodyEls.length ? '0' : null, 'aria-expanded': 'false' },
+            h('span', { class: 'plugin-ic sm' }, icon(PLUGIN_ICONS[f.key] || 'box')),
+            h('div', { class: 'pf-card-titles' }, h('strong', { text: F.loc(f.label) }), f.help ? h('span', { class: 'muted small', text: F.loc(f.help) }) : null),
+            sw, bodyEls.length ? chev : h('span', { class: 'pf-chev' }));
+          const body = h('div', { class: 'pf-card-body' }, bodyEls);
+          const box = h('section', { class: 'pf-card collapsed' + (sw.input.checked ? ' on' : '') + (bodyEls.length ? '' : ' no-body') }, head, bodyEls.length ? body : null);
+          const setOpen = (open) => { box.classList.toggle('collapsed', !open); head.setAttribute('aria-expanded', String(open)); };
+          if (bodyEls.length) {
+            head.addEventListener('click', (e) => { if (!e.target.closest('.switch')) setOpen(box.classList.contains('collapsed')); });
+            head.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === head) { e.preventDefault(); setOpen(box.classList.contains('collapsed')); } });
+          }
+          sw.input.addEventListener('change', () => { box.classList.toggle('on', sw.input.checked); if (sw.input.checked && bodyEls.length) setOpen(true); });
+          sections.push({ sw });
+          return box;
+        });
+      } else {
+        const fs = (p.schema || []);
+        content = [h('p', { class: 'muted small pf-desc', text: F.loc(p.description) })];
+        parts.forEach((pt, i) => content.push(...featureBody(pt.id, i === 0 ? fs : [])));
+      }
+      const hasSettings = (p.schema || []).length > 0 || cmdTotal > 0 || parts.some((x) => x.id === 'avatar');
+
       const collect = () => { const c = {}; getters.forEach(([k, g]) => { c[k] = g(); }); return c; };
       const enabled = F.switchEl(p.enabled, null, { 'aria-label': t('plugins.enabled') + ': ' + F.loc(p.name) });
       const el = h('article', { class: 'card plugin-tile' + (p.enabled ? ' on' : '') });
@@ -248,17 +446,13 @@
       });
       enabled.input.addEventListener('change', async () => {
         const ok = await save(null, true);
-        // a group switched on with none of its features on: open the dialog to pick them
+        // a plugin switched on with none of its features on: open the dialog to pick them
         if (ok && enabled.input.checked && sections.length && !sections.some((x) => x.sw.input.checked)) { openSettings(); F.toast(t('plugins.pickFeatures'), 'info'); }
       });
-      const hasSettings = items.length > 0;
-      // settings + commands open in a dialog; the tile stays compact
-      const body = h('div', { class: 'plugin-body' },
-        h('p', { class: 'muted small', text: F.loc(p.description) }),
-        items.length ? h('div', { class: 'form-grid' }, items) : null);
+      const body = h('div', { class: 'plugin-body pf-dialog' }, content);
       const openSettings = () => F.modal({
         title: [h('span', { class: 'plugin-ic sm' }, icon(PLUGIN_ICONS[p.id] || 'box')), ' ', F.loc(p.name)], size: 'wide', body,
-        actions: fields.length > sections.length || sections.length ? [{ label: t('common.cancel') }, { label: t('common.save'), kind: 'primary', primary: true, icon: 'check', onClick: () => save(null, false) }] : [{ label: t('common.close') }],
+        actions: getters.length ? [{ label: t('common.cancel') }, { label: t('common.save'), kind: 'primary', primary: true, icon: 'check', onClick: () => save(null, false) }] : [{ label: t('common.close') }],
       });
       const cfgBtn = hasSettings ? F.btn(t('plugins.configure'), { kind: 'ghost', icon: 'sliders', cls: 'btn-sm', onClick: openSettings }) : null;
       el.append(

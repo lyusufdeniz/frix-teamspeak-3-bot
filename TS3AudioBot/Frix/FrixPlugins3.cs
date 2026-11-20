@@ -147,22 +147,31 @@ public sealed class AvatarPlugin : FrixPlugin
 {
 	public override string Id => "avatar";
 	public override bool DefaultEnabled => true;
-	public override string NameTr => "Avatar oluşturucu";
-	public override string NameEn => "Avatar creator";
-	public override string DescTr => "Botun TeamSpeak avatarını yönetir. Kapatırsan bot avatarı kaldırılır ve bir daha değiştirilmez.";
-	public override string DescEn => "Manages the bot's TeamSpeak avatar. Turning it off removes the avatar and stops changing it.";
+	public override string NameTr => "Avatar";
+	public override string NameEn => "Avatar";
+	public override string DescTr => "Botun TeamSpeak avatarı: boşta, müzik çalarken ve radyo çalarken ayrı ayrı. Kapatırsan bot avatarı kaldırılır.";
+	public override string DescEn => "The bot's TeamSpeak avatar, set separately for idle, music and radio. Turning it off removes the avatar.";
 	public override PluginField[] Schema =>
 	[
-		new("idleAuto", "bool", "Boştayken komut kartını otomatik oluştur", "Generate the command card when idle", true, null,
-			"Açık eklentilerin komutlarına (müzik, radyo, favoriler, eğlence, kayıt…), özel komutlara ve radyolara göre otomatik çizilir. Kapalıysa boşta avatar kaldırılır.",
-			"Drawn automatically from the commands of the enabled plugins (music, radio, favourites, fun, registration…), custom commands and radios. If off, the avatar is removed when idle."),
-		new("songCover", "bool", "Çalan şarkının görselini koy", "Show the playing song's cover", true, null,
-			"YouTube küçük resmi avatar olur. Kapalıysa çalarken de boştaki avatar kalır.",
-			"The YouTube thumbnail becomes the avatar. If off, the idle avatar stays while playing."),
+		new("idle", "select", "Boştayken", "When idle", "card", ["card", "custom", "none"], null, null),
+		new("idleImage", "avatarimg", "Boştaki resim", "Idle image", ""),
+		new("music", "select", "Müzik çalarken", "While music plays", "cover", ["cover", "custom", "idle"], null, null),
+		new("musicImage", "avatarimg", "Müzik resmi", "Music image", ""),
+		new("radio", "select", "Radyo çalarken", "While a radio plays", "idle", ["idle", "custom"], null, null),
+		new("radioImage", "avatarimg", "Radyo resmi", "Radio image", ""),
 	];
 
-	public bool IdleAuto => B("idleAuto");
-	public bool SongCover => B("songCover");
+	// eski ayarlar (idleAuto / songCover) yeni seçimlere çevrilir
+	private string Mode(string key, string legacy, string on, string off)
+		=> Config.ContainsKey(key) ? S(key)
+		: Config.TryGetPropertyValue(legacy, out var v) && v is System.Text.Json.Nodes.JsonValue jv && jv.TryGetValue<bool>(out var b) ? (b ? on : off)
+		: S(key);
+	/// <summary>card | custom | none</summary>
+	public string IdleMode => Mode("idle", "idleAuto", "card", "none");
+	/// <summary>cover | custom | idle</summary>
+	public string MusicMode => Mode("music", "songCover", "cover", "idle");
+	/// <summary>idle | custom</summary>
+	public string RadioMode => S("radio");
 
 	protected override void OnEnable() => Refresh();
 	protected override void OnDisable() => Refresh();

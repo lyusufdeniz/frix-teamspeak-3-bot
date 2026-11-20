@@ -682,7 +682,7 @@ public sealed class ChannelInfoPlugin : FrixPlugin
 	[
 		new("channel", "channel", "Kanal", "Channel", ""),
 		new("template", "text", "Kanal adı şablonu", "Name template", "🎧 Çevrimiçi: {online} | {time}",
-			null, "Değişkenler: {online} {max} {time} {date} — en fazla 40 karakter", "Variables: {online} {max} {time} {date} — max 40 characters"),
+			null, "Değişkenler: {online} {record} {max} {time} {date} — en fazla 40 karakter. {record}: sunucuda aynı anda görülen en yüksek çevrimiçi sayısı.", "Variables: {online} {record} {max} {time} {date} — max 40 characters. {record}: the most users ever online at once."),
 		new("intervalSec", "number", "Güncelleme aralığı (saniye)", "Update interval (seconds)", 60, null, "En az 10 saniye.", "At least 10 seconds."),
 	];
 
@@ -704,7 +704,12 @@ public sealed class ChannelInfoPlugin : FrixPlugin
 		}
 		if (channelId is null || !Ctx.Full.Book.Channels.TryGetValue(channelId.Value, out var ch)) return;
 		var max = Ctx.Full.Book.Server?.MaxClients.ToString() ?? "?";
-		var name = Fill(S("template"), ("online", Ctx.RealClients().Count().ToString()), ("max", max),
+		var online = Ctx.RealClients().Count();
+		// rekor: aynı anda görülen en yüksek çevrimiçi sayısı (sunucu başına saklanır)
+		var recKey = "record:" + Ctx.ServerName;
+		var record = long.TryParse(FrixDb.GetMeta(recKey), out var r) ? r : 0;
+		if (online > record) { record = online; FrixDb.SetMeta(recKey, record.ToString()); }
+		var name = Fill(S("template"), ("online", online.ToString()), ("record", record.ToString()), ("max", max),
 			("time", DateTime.Now.ToString("HH:mm")), ("date", DateTime.Now.ToString("dd.MM")));
 		if (name.Length > 40) name = name[..40];
 		if (name == ch.Name) return;

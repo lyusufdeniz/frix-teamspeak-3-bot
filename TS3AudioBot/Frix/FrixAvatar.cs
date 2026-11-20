@@ -29,6 +29,26 @@ public static class FrixAvatar
 	private const int Width = 300;
 	private const int MaxRows = 20;
 
+	public static readonly string[] Slots = ["idle", "music", "radio"];
+
+	/// <summary>Panelden yüklenen sabit avatar resmi: avatars/&lt;bot&gt;-&lt;durum&gt;.png</summary>
+	public static string CustomPath(string bot, string slot)
+	{
+		var safe = string.Concat(bot.Select(c => char.IsLetterOrDigit(c) || c is '-' or '_' ? c : '_'));
+		return Path.Combine(AppContext.BaseDirectory, "avatars", safe + "-" + slot + ".png");
+	}
+
+	public static Stream? CustomStream(string? bot, string slot)
+	{
+		if (bot is null) return null;
+		try
+		{
+			var p = CustomPath(bot, slot);
+			return File.Exists(p) ? new MemoryStream(File.ReadAllBytes(p), false) : null;
+		}
+		catch (Exception ex) { Log.Debug(ex, "Avatar resmi okunamadı"); return null; }
+	}
+
 	public static void Invalidate()
 	{
 		lock (Sync) cached = null;

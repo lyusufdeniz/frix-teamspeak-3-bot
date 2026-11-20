@@ -592,8 +592,8 @@ public sealed class Bot
 	public Task RefreshIdleAvatar()
 		=> Scheduler.InvokeAsync(async () =>
 		{
-			if (!isClosed && Injector.TryGet<PlayManager>(out var pm) && !pm.IsPlaying && ts3FullClient.Connected)
-				await GenerateStatusImageInternal(false, null);
+			if (!isClosed && Injector.TryGet<PlayManager>(out var pm) && ts3FullClient.Connected)
+				await GenerateStatusImageInternal(pm.IsPlaying, pm.CurrentPlayData);
 		});
 
 	public Task GenerateStatusImage(bool playing, PlayInfoEventArgs? startEvent)
@@ -642,10 +642,26 @@ public sealed class Bot
 			if (avatarRequest == cts) avatarRequest = null;
 			return;
 		}
-		if (playing && avatarPlugin is { SongCover: false })
-			playing = false;
-
+		// Frix: her durum için ayrı seçim: boşta (kart / resim / yok), müzik (kapak / resim / boştaki), radyo (boştaki / resim)
+		var isRadio = startEvent?.ResourceData.Get("radio") != null;
 		Stream? setStream = null;
+		if (playing && avatarPlugin != null)
+		{
+			var mode = isRadio ? avatarPlugin.RadioMode : avatarPlugin.MusicMode;
+			if (mode == "custom") setStream = Frix.FrixAvatar.CustomStream(config.Name, isRadio ? "radio" : "music");
+			if (setStream != null) goto upload;
+			if (mode != "cover") playing = false; // "boştaki" seçili ya da resim yüklenmemiş: boştaki avatar
+		}
+		if (!playing && avatarPlugin != null)
+		{
+			switch (avatarPlugin.IdleMode)
+			{
+			case "none": setStream = null; goto upload;
+			case "custom": setStream = Frix.FrixAvatar.CustomStream(config.Name, "idle"); break;
+			}
+			if (setStream != null) goto upload;
+		}
+
 		if (playing)
 		{
 			if (startEvent != null && !QuizMode)
@@ -661,20 +677,27 @@ public sealed class Bot
 			}
 
 			setStream ??= GetRandomFile(config.LocalConfigDir, "play*");
-			// Frix: nothing with a cover (e.g. radio) → keep the idle command card instead of removing the avatar
-			if (setStream == null && avatarPlugin is null or { IdleAuto: true })
+			// Frix: nothing with a cover → the idle avatar instead of removing it
+			if (setStream == null && avatarPlugin != null)
+				setStream = avatarPlugin.IdleMode switch
+				{
+					"custom" => Frix.FrixAvatar.CustomStream(config.Name, "idle") ?? Frix.FrixAvatar.IdleStream(),
+					"none" => null,
+					_ => Frix.FrixAvatar.IdleStream(),
+				};
+			else if (setStream == null && avatarPlugin is null)
 				setStream = Frix.FrixAvatar.IdleStream();
 		}
 		else
 		{
 			setStream ??= GetRandomFile(config.LocalConfigDir, "sleep*");
-			if (avatarPlugin is null or { IdleAuto: true })
 			{
 				setStream ??= Frix.FrixAvatar.IdleStream();
 				setStream ??= Util.GetEmbeddedFile("TS3AudioBot.Assets.SleepingKitty.png");
 			}
 		}
 
+	upload:
 		if (setStream != null)
 		{
 			try

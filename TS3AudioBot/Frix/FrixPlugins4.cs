@@ -153,7 +153,7 @@ public sealed class ScheduledPlayPlugin : FrixPlugin
 	public override string DescEn => "Starts a radio or playlist, stops playback or sets the volume at specific days and times.";
 	public override PluginField[] Schema =>
 	[
-		new("entries", "textarea", "Plan (her satır: [günler] SS:DD | işlem)", "Plan (one per line: [days] HH:MM | action)",
+		new("entries", "schedule", "Plan", "Plan",
 			"09:00 | radyo Power Türk\npzt,sal,çar,per,cum 18:30 | liste akşam\n00:30 | dur",
 			null,
 			"İşlemler: radyo <ad>, liste <ad>, dur, ses <0-100>. Günler: pzt sal çar per cum cmt paz; boş = her gün.",

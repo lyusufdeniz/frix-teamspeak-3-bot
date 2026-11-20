@@ -39,7 +39,7 @@ The bot connects to your TeamSpeak server by itself and streams audio directly w
 - **10 plugins**, each enabled per bot; related features live inside one plugin and are switched on one by one:
   - *Music:* commands, volume levelling, autoplay (similar songs when the queue ends), favourites (`!fav`, `!favs`), vote skip, DJ mode & queue limit, pause when alone, song title as the bot's nickname/description
   - *Radio:* `!radio` stations from the panel, idle radio
-  - *Avatar creator:* idle card with the commands of every enabled plugin, song cover while playing
+  - *Avatar:* separate avatar for idle, music and radio: command card, song cover or your own uploaded image
   - *Auto reconnect:* rejoins the same channel after a drop
   - *Welcome & announcements:* welcome message, rotating ads and scheduled messages
   - *Scheduled playback:* start a radio/playlist, stop or set the volume at set times
