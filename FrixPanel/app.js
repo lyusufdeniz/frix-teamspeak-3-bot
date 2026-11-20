@@ -81,6 +81,7 @@
     volume: 'p:M4 9.5h3l4.5-4v13l-4.5-4H4z|p:M15 9.5a3.5 3.5 0 0 1 0 5|p:M17.5 7a7 7 0 0 1 0 10',
     plus: 'p:M12 5v14M5 12h14',
     code: 'p:M8.5 7 3.5 12l5 5|p:M15.5 7l5 5-5 5|p:M13.5 5l-3 14',
+    github: 'p:M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21',
     folder: 'p:M3.5 7a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z',
     menu: 'p:M4 7h16M4 12h16M4 17h16',
     clock: 'c:12 12 8.5|p:M12 7.5V12l3 2',
@@ -388,6 +389,7 @@
   }).observe(document.documentElement, { childList: true, subtree: true });
 
   F.SUPPORT_URL = 'https://buymeacoffee.com/lyusufdeniz';
+  F.REPO_URL = 'https://github.com/lyusufdeniz/frix-teamspeak-3-bot';
   /** text containing `code` segments → nodes */
   F.rich = function (str) {
     const out = [];
@@ -951,7 +953,9 @@
       h('nav', { class: 'sidenav' }, groups.map(([, keys]) => h('div', { class: 'side-group' }, h('ul', null, keys.map(link))))),
       h('div', { class: 'side-player', id: 'side-player' }),
       h('div', { class: 'side-foot muted small' }, h('span', { text: 'frix ' + (S.version ? 'v' + S.version : '') }),
-        h('a', { href: F.SUPPORT_URL, target: '_blank', rel: 'noopener noreferrer', class: 'side-support', title: t('support.title') }, icon('coffee'), h('span', { text: t('support.short') }))));
+        h('span', { class: 'side-links' },
+          h('a', { href: F.REPO_URL, target: '_blank', rel: 'noopener noreferrer', class: 'side-gh', title: 'GitHub', 'aria-label': 'GitHub' }, icon('github')),
+          h('a', { href: F.SUPPORT_URL, target: '_blank', rel: 'noopener noreferrer', class: 'side-support', title: t('support.title') }, icon('coffee'), h('span', { text: t('support.short') })))));
     const scrim = h('div', { class: 'side-scrim', onclick: () => closeDrawer() });
     const burger = h('button', { type: 'button', class: 'btn-icon burger', 'aria-label': t('nav.menu'), title: t('nav.menu'), 'aria-controls': 'sidebar', 'aria-expanded': 'false',
       onclick: () => (document.body.classList.contains('drawer-open') ? closeDrawer() : openDrawer()) }, icon('menu'));

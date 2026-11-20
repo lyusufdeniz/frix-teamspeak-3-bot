@@ -31,7 +31,8 @@ public static class FrixUpdater
 		return "dev";
 	}
 
-	public static string Repo => FrixDb.GetMeta("update_repo") ?? DefaultRepo;
+	/// <summary>Güncellemeler her zaman resmi depodan gelir (adres değiştirilemez).</summary>
+	public static string Repo => DefaultRepo;
 
 	public static string AssetName
 	{

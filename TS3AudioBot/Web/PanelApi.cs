@@ -1117,7 +1117,7 @@ public static class PanelApi
 			commandLang = FrixDb.GetMeta("cmd_names_lang") ?? "en",
 			chat = new { color = FrixChat.DefaultColor, errorColor = FrixChat.ErrorColor, bold = FrixChat.Bold },
 			version = FrixUpdater.CurrentVersion,
-			updateRepo = FrixUpdater.Repo,
+			repoUrl = "https://github.com/" + FrixUpdater.Repo,
 			os = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
 			ytdlp = FrixTools.FindYtdlp() != null,
 			cookies = new { exists = File.Exists(cookie), updated = File.Exists(cookie) ? File.GetLastWriteTimeUtc(cookie).ToString("O") : null },
@@ -1144,13 +1144,6 @@ public static class PanelApi
 					FrixDb.SetMeta(meta, c.Length == 0 ? null : c);
 				}
 			if (chat.Bool("bold") is { } bold) FrixDb.SetMeta("chat_bold", bold ? "1" : "0");
-		}
-		if (body.Str("updateRepo") is { } repo)
-		{
-			repo = repo.Trim().Replace("https://github.com/", "").Trim('/');
-			if (repo.Length > 0 && (repo.Count(c => c == '/') != 1 || repo.Any(c => !(char.IsAsciiLetterOrDigit(c) || c is '/' or '-' or '_' or '.'))))
-				throw Bad("bad_repo");
-			FrixDb.SetMeta("update_repo", repo.Length == 0 ? null : repo);
 		}
 		return new { ok = true };
 	}

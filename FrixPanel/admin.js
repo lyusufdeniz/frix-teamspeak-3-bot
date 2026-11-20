@@ -1135,7 +1135,8 @@
         h('dl', { class: 'kv' },
           h('dt', { text: t('settings.versionLabel') }), h('dd', { text: s.version }),
           h('dt', { text: t('settings.os') }), h('dd', { text: s.os }),
-          h('dt', { text: 'yt-dlp' }), h('dd', { text: s.ytdlp ? t('settings.found') : t('settings.notFound') })));
+          h('dt', { text: 'yt-dlp' }), h('dd', { text: s.ytdlp ? t('settings.found') : t('settings.notFound') }),
+          h('dt', { text: 'GitHub' }), h('dd', null, h('a', { href: F.REPO_URL, target: '_blank', rel: 'noopener noreferrer', text: F.REPO_URL.replace('https://', '') }))));
     }
     function supportCard() {
       return card('coffee', t('support.title'), t('support.text'),
@@ -1192,11 +1193,6 @@
         h('a', { href: '/faq#faq-cookies', 'data-link': '', class: 'small link-arrow' }, t('settings.cookiesFaq'), ' →'));
     }
     function updateCard() {
-      const repo = F.input({ value: s.updateRepo || '', placeholder: t('settings.repoPh') });
-      const saveRepo = F.btn(t('common.save'), { kind: 'ghost', icon: 'check' });
-      saveRepo.addEventListener('click', () => F.busy(saveRepo, async () => {
-        try { await F.api('PUT', 'settings', { updateRepo: repo.value.trim() }); s.updateRepo = repo.value.trim(); F.toast(t('common.saved')); } catch (e) { F.fail(e); }
-      }));
       const out = h('div', { class: 'update-out' });
       const check = F.btn(t('settings.check'), { kind: 'primary', icon: 'refresh' });
       check.addEventListener('click', () => F.busy(check, async () => {
@@ -1220,8 +1216,8 @@
         } catch (e) { out.replaceChildren(); F.fail(e); }
       }));
       return [
-        card('download', t('settings.updates'), t('settings.version', { v: s.version }), h('div', { class: 'set-row' }, check), out),
-        card('link', t('settings.repo'), t('settings.repoHelp'), h('div', { class: 'set-row' }, h('div', { class: 'grow' }, repo), saveRepo)),
+        card('download', t('settings.updates'), t('settings.version', { v: s.version }), h('div', { class: 'set-row' }, check,
+          h('a', { href: F.REPO_URL, target: '_blank', rel: 'noopener noreferrer', class: 'btn btn-ghost' }, icon('github'), h('span', { text: t('settings.github') }))), out),
       ];
     }
     /** modal with stages + progress bar while the update downloads/extracts; hands over to waitForRestart */

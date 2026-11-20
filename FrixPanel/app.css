@@ -1822,3 +1822,8 @@ html[data-theme="krem"] .msg-prev { background: #f6f6f8; }
 
 .script-list > .tbl-row, .script-list > .tbl-head { grid-template-columns: minmax(140px, 1fr) minmax(160px, 1.6fr) 170px 70px 200px; }
 .bk-check span { min-width: 0; overflow-wrap: anywhere; }
+
+.side-links { display: inline-flex; align-items: center; gap: 6px; }
+.side-gh { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 24px; border-radius: 999px; border: 1px solid var(--line2); color: var(--muted); }
+.side-gh .ic, .side-gh svg { width: 14px; height: 14px; }
+.side-gh:hover { color: var(--text); border-color: var(--text); text-decoration: none; }
