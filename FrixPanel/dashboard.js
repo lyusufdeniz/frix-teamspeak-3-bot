@@ -251,9 +251,11 @@
           const pk = a.peakAt ? new Date(a.peakAt) : null;
           actInfo.textContent = pk ? t('dash.peak', { n: a.peak, when: pk.toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' }) }) : '';
         }
-        // no sample in the last 10 minutes (no bot with Activity online): unknown, not the last old value
-        tUsers.set(a.any && a.now != null ? F.fmtNum(a.now) : '–', null, a.any ? t('dash.peakShort', { n: a.peak }) : t('dash.activityShort'));
       }
+      // live count from the connected bots; '–' only when no bot is online and there is no recent sample
+      const act = d.activity || {};
+      tUsers.set(act.now != null ? F.fmtNum(act.now) : '–', null,
+        act.now == null ? t('dash.onlineNone') : act.peak ? t('dash.peakShort', { n: act.peak }) : t('dash.onlineLive'));
       first = false;
     }
 
