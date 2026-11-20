@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS playlist_items (
 	}
 
 	/// <summary>Son 24 saat (saatlik en yüksek) ve son 28 günün gün×saat ortalaması (yerel saat). Sunucular toplanır.</summary>
-	public static (List<(DateTime Hour, long Users)> Last24, double[][] Heat, long Peak, DateTime? PeakAt, long Now, bool Any) Activity()
+	public static (List<(DateTime Hour, long Users)> Last24, double[][] Heat, long Peak, DateTime? PeakAt, long? Now, bool Any) Activity()
 	{
 		var rows = FrixDb.Query("SELECT time, SUM(users) AS u FROM server_activity WHERE time >= $s GROUP BY time",
 				("$s", DateTime.UtcNow.AddDays(-28).ToString("O")))
@@ -135,9 +135,12 @@ CREATE TABLE IF NOT EXISTS playlist_items (
 		var heat = Enumerable.Range(0, 7).Select(_ => new double[24]).ToArray();
 		foreach (var g in rows.GroupBy(r => ((int)r.t.DayOfWeek + 6) % 7 * 24 + r.t.Hour))
 			heat[g.Key / 24][g.Key % 24] = Math.Round(g.Average(r => r.u), 1);
-		if (rows.Count == 0) return (last24, heat, 0, null, 0, false);
+		if (rows.Count == 0) return (last24, heat, 0, null, null, false);
 		var peak = rows.MaxBy(r => r.u);
-		return (last24, heat, peak.u, peak.t, rows.MaxBy(r => r.t).u, true);
+		// "şu an": sadece son 10 dakikada kayıt varsa (kayıtlar 5 dakikalık); yoksa bilinmiyor
+		var latest = rows.MaxBy(r => r.t);
+		long? now = latest.t >= DateTime.Now.AddMinutes(-10) ? latest.u : null;
+		return (last24, heat, peak.u, peak.t, now, true);
 	}
 
 	// ---------------------------------------------------------------- çevrimiçi süre

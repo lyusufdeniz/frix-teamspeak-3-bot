@@ -138,6 +138,32 @@ public static class FrixGroups
 			}
 		}
 		catch (Exception ex) { Log.Warn(ex, "Eklenti ayarları gruplara taşınamadı"); }
+		MigrateSeconds();
+	}
+
+	/// <summary>Dakika cinsinden eski aralıkları saniyeye çevirir (interval → intervalSec).</summary>
+	private static void MigrateSeconds()
+	{
+		try
+		{
+			foreach (var r in FrixDb.Query("SELECT bot, id, config FROM plugins WHERE id LIKE 'g_%'"))
+			{
+				var cfg = JsonNode.Parse((r["config"] as string) ?? "{}") as JsonObject;
+				if (cfg is null) continue;
+				var changed = false;
+				foreach (var part in new[] { "advertisement", "channelinfo" })
+				{
+					if (!cfg.TryGetPropertyValue(part + ".interval", out var v)) continue;
+					var min = v is JsonValue jv && (jv.TryGetValue<double>(out var d) || (jv.TryGetValue<string>(out var str) && double.TryParse(str, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out d))) ? d : 0;
+					cfg.Remove(part + ".interval");
+					if (min > 0 && !cfg.ContainsKey(part + ".intervalSec")) cfg[part + ".intervalSec"] = (long)Math.Round(min * 60);
+					changed = true;
+				}
+				if (changed)
+					FrixDb.Exec("UPDATE plugins SET config=$c WHERE bot=$b AND id=$i", ("$c", cfg.ToJsonString()), ("$b", (string)r["bot"]!), ("$i", (string)r["id"]!));
+			}
+		}
+		catch (Exception ex) { Log.Warn(ex, "Aralık ayarları saniyeye çevrilemedi"); }
 	}
 
 	/// <summary>Bir parçanın tek ayarını grup satırına yazar (örn. adla bulunan kanalın ID'si).</summary>

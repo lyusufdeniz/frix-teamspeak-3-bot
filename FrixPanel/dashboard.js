@@ -165,12 +165,14 @@
 
     // system (CPU line + memory figures in one card)
     const chart = lineChart([{ key: 'cpu', cls: 'main' }, { key: 'appCpu', cls: 'second' }]);
-    const cpuNow = h('span', { class: 'big-num' });
-    const legend = h('div', { class: 'legend' }, h('span', { class: 'lg main' }, t('dash.cpuSystem')), h('span', { class: 'lg second' }, t('dash.cpuApp')));
+    // each legend item carries its own current value, so it is clear which number is which
+    const cpuSys = h('b', { class: 'lg-val', text: '–' });
+    const cpuApp = h('b', { class: 'lg-val', text: '–' });
+    const legend = h('div', { class: 'legend' }, h('span', { class: 'lg sys' }, t('dash.cpuSystem'), cpuSys), h('span', { class: 'lg second' }, t('dash.cpuApp'), cpuApp));
     const ramRing = ring(112);
     const memList = h('dl', { class: 'mem-list' });
     const sysOs = h('div', { class: 'muted small sys-os' });
-    const sysCard = card('cpu', t('dash.system'), h('div', { class: 'row gap' }, legend, cpuNow),
+    const sysCard = card('cpu', t('dash.system'), legend,
       h('div', { class: 'sys-body' }, h('div', { class: 'chart-box' }, chart.el), h('div', { class: 'mem-wrap' }, ramRing.el, memList)), sysOs);
 
     // server activity
@@ -219,7 +221,8 @@
       else if (s.now && (!history.length || history[history.length - 1].t !== s.now.t)) { history.push(s.now); if (history.length > 90) history.shift(); }
       chart.set(history);
       const n = s.now;
-      cpuNow.textContent = n ? Math.round(n.cpu) + '%' : '–';
+      cpuSys.textContent = n ? Math.round(n.cpu) + '%' : '–';
+      cpuApp.textContent = n ? n.appCpu.toFixed(1) + '%' : '–';
       sysOs.textContent = s.os + ' · ' + t('dash.cores', { n: s.cores }) + ' · ' + t('dash.last3');
       if (n) {
         ramRing.set(n.ramTotal ? n.ramUsed / n.ramTotal : 0, Math.round((100 * n.ramUsed) / Math.max(1, n.ramTotal)) + '%', t('dash.ram'));
@@ -248,7 +251,8 @@
           const pk = a.peakAt ? new Date(a.peakAt) : null;
           actInfo.textContent = pk ? t('dash.peak', { n: a.peak, when: pk.toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' }) }) : '';
         }
-        tUsers.set(a.any ? F.fmtNum(a.now) : '–', null, a.any ? t('dash.peakShort', { n: a.peak }) : t('dash.activityShort'));
+        // no sample in the last 10 minutes (no bot with Activity online): unknown, not the last old value
+        tUsers.set(a.any && a.now != null ? F.fmtNum(a.now) : '–', null, a.any ? t('dash.peakShort', { n: a.peak }) : t('dash.activityShort'));
       }
       first = false;
     }

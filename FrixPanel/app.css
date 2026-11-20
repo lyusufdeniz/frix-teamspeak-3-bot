@@ -1636,3 +1636,8 @@ html[data-theme="krem"] .side-scrim { background: rgba(0, 0, 0, .25); }
 /* bot card: long group names shrink with an ellipsis, the "+N" tag always stays visible */
 .bot-plugins > * { flex-shrink: 0; }
 .bot-plugins .tag:not(.tag-more) { display: block; flex-shrink: 1; min-width: 4.6em; overflow: hidden; text-overflow: ellipsis; }
+
+/* dashboard CPU legend: own class (".main" is the page container), value next to each label */
+.lg.sys::before { background: var(--accent); }
+.lg-val { color: var(--text); font: 600 1rem var(--ui); font-variant-numeric: tabular-nums; margin-left: 2px; }
+.dash-card-head .legend { align-items: center; gap: 18px; }

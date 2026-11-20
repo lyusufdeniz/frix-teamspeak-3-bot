@@ -377,7 +377,7 @@ public sealed class AdvertisementPlugin : FrixPlugin
 		new("messages", "textarea", "Dönen mesajlar (her satır bir mesaj)", "Rotating messages (one per line)",
 			"[b][color=#00FF00]🎵 Müzik botunu kullanmak için !yardim yazın.[/color][/b]\n[b][color=#00FF00]📻 Radyolar için: !radyo[/color][/b]",
 			null, "Boş bırakırsan sadece zamanlı duyurular gönderilir.", "Leave empty to send only scheduled messages."),
-		new("interval", "number", "Aralık (dakika)", "Interval (minutes)", 30),
+		new("intervalSec", "number", "Aralık (saniye)", "Interval (seconds)", 1800, null, "En az 30 saniye. Örn: 1800 = 30 dakika.", "At least 30 seconds. E.g. 1800 = 30 minutes."),
 		new("order", "select", "Sıra", "Order", "sequential", ["sequential", "random"]),
 		new("target", "select", "Nereye", "Target", "channel", ["channel", "server"]),
 		new("schedule", "textarea", "Zamanlı duyurular (her satır: [günler] SS:DD | mesaj)", "Scheduled messages (one per line: [days] HH:MM | message)",
@@ -391,13 +391,13 @@ public sealed class AdvertisementPlugin : FrixPlugin
 	private int index;
 
 	protected override void OnEnable() => next = DateTime.UtcNow.AddMinutes(1);
-	protected override void OnConfigChanged() => next = DateTime.UtcNow.AddMinutes(Math.Max(1, I("interval")));
+	protected override void OnConfigChanged() => next = DateTime.UtcNow.AddSeconds(Math.Max(30, I("intervalSec")));
 
 	public override async Task OnTick(DateTime now)
 	{
 		await RunSchedule();
 		if (now < next) return;
-		next = now.AddMinutes(Math.Max(1, I("interval")));
+		next = now.AddSeconds(Math.Max(30, I("intervalSec")));
 		var lines = S("messages").Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToArray();
 		if (lines.Length == 0) return;
 		var msg = S("order") == "random" ? lines[Random.Shared.Next(lines.Length)] : lines[index++ % lines.Length];
@@ -683,7 +683,7 @@ public sealed class ChannelInfoPlugin : FrixPlugin
 		new("channel", "channel", "Kanal", "Channel", ""),
 		new("template", "text", "Kanal adı şablonu", "Name template", "🎧 Çevrimiçi: {online} | {time}",
 			null, "Değişkenler: {online} {max} {time} {date} — en fazla 40 karakter", "Variables: {online} {max} {time} {date} — max 40 characters"),
-		new("interval", "number", "Güncelleme aralığı (dakika)", "Update interval (minutes)", 1),
+		new("intervalSec", "number", "Güncelleme aralığı (saniye)", "Update interval (seconds)", 60, null, "En az 10 saniye.", "At least 10 seconds."),
 	];
 
 	private DateTime next = DateTime.MinValue;
@@ -694,7 +694,7 @@ public sealed class ChannelInfoPlugin : FrixPlugin
 	public override async Task OnTick(DateTime now)
 	{
 		if (now < next) return;
-		next = now.AddMinutes(Math.Max(1, I("interval")));
+		next = now.AddSeconds(Math.Max(10, I("intervalSec")));
 		// İlk bulunan kanal ID'sini sakla (adı değişeceği için sonradan adla bulunamaz)
 		if (channelId is null)
 		{
