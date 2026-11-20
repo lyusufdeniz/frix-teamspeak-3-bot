@@ -705,7 +705,9 @@ public sealed class Bot
 				using (setStream)
 				{
 					var result = await ts3FullClient.UploadAvatar(setStream, cts.Token);
-					result.UnwrapToLog(Log);
+					if (!result.Ok)
+						Log.Warn("Avatar yüklenemedi: {0} — botun sunucu grubundaki avatar boyut sınırı (i_client_max_avatar_filesize) düşük olabilir; eski avatar yerinde kalır.",
+							result.Error.ErrorFormat());
 				}
 			}
 			catch (Exception ex)

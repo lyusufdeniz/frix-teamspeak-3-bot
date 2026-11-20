@@ -168,13 +168,31 @@
     const start = F.switchEl(true, t('bots.f.startNow'));
     const moveNow = F.switchEl(false, t('bots.f.moveNow'));
     const moveField = h('div', { hidden: true }, moveNow);
-    if (bot) channel.addEventListener('input', () => { moveField.hidden = channel.value.trim() === (bot.channel || '') || !bot.live; });
+    // after the bot has connected once its channel list is known: pick the default channel from it
+    const chanBox = h('div', { class: 'chan-box' }, channel);
+    let chanGet = () => channel.value.trim();
+    const onChan = () => { if (bot) moveField.hidden = chanGet() === (bot.channel || '') || !bot.live; };
+    channel.addEventListener('input', onChan);
+    if (bot) {
+      F.api('GET', 'bots/' + F.enc(bot.name) + '/channels').then((r) => {
+        const list = (r && r.channels) || [];
+        if (!list.length) return;
+        const v = (bot.channel || '').trim();
+        const found = list.find((c) => v === '/' + c.id || v === String(c.id) || c.name.toLowerCase() === v.toLowerCase());
+        const opts = [['', t('bots.f.channelDefault')]].concat(list.map((c) => ['/' + c.id, '\u2003'.repeat(c.depth) + c.name]));
+        if (v && !found) opts.push([v, v + ' (?)']);
+        const sel = F.select(opts, found ? '/' + found.id : v);
+        sel.addEventListener('change', onChan);
+        chanGet = () => sel.value;
+        chanBox.replaceChildren(sel);
+      }).catch(() => {});
+    }
 
     const body = h('div', { class: 'form-grid' },
       isNew ? F.field(t('bots.f.name'), name, t('bots.f.nameHelp')) : null,
       F.field(t('bots.f.nickname'), nickname, t('bots.f.nickHelp')),
       F.field(t('bots.f.address'), address, t('bots.f.addressHelp'), { cls: isNew ? '' : 'span2' }),
-      F.field(t('bots.f.channel'), channel, t('bots.f.channelHelp')),
+      F.field(t('bots.f.channel'), chanBox, t('bots.f.channelHelp')),
       F.field(t('bots.f.password'), pw, null),
       F.field(t('bots.f.bitrate'), bitrate, t('bots.f.bitrateHelp')),
       h('div', { class: 'span2 switch-list' },
@@ -193,7 +211,7 @@
             const nick = nickname.value.trim();
             if (nick && (nick.length < 3 || nick.length > 30)) { F.toast(t('err.bad_nickname'), 'err'); return false; }
             if (!address.value.trim()) { F.toast(t('bots.f.addressReq'), 'err'); return false; }
-            const payload = { address: address.value.trim(), channel: channel.value.trim(), commander: commander.input.checked, run: run.input.checked, bitrate: Number(bitrate.value) };
+            const payload = { address: address.value.trim(), channel: chanGet(), commander: commander.input.checked, run: run.input.checked, bitrate: Number(bitrate.value) };
             if (nick) payload.nickname = nick;
             if (pw.input.value) payload.serverPassword = pw.input.value;
             else if (bot && bot.hasPassword && clearPw.input.checked) payload.serverPassword = '';

@@ -308,13 +308,29 @@ public static class PanelApi
 	}
 
 	/// <summary>Botun gördüğü kanallar, TeamSpeak'teki sırayla (alt kanallar girintili).</summary>
+	/// <summary>
+	/// Botun gördüğü kanal ağacı. Bağlıyken alınan liste saklanır; bot kapalıyken son liste döner
+	/// (ilk bağlantıdan sonra panelde kanal seçmek için botun açık olması gerekmez).
+	/// </summary>
 	private static async Task<object> Channels(string name)
 	{
+		var key = "channels:" + name;
+		object Cached()
+		{
+			try
+			{
+				var json = FrixDb.GetMeta(key);
+				var arr = json is null ? null : JsonNode.Parse(json) as JsonArray;
+				return new { online = false, cached = arr is not null, channels = (object?)arr ?? Array.Empty<object>() };
+			}
+			catch { return new { online = false, cached = false, channels = Array.Empty<object>() }; }
+		}
 		var bot = Running(name);
-		if (bot is null) return new { online = false, channels = Array.Empty<object>() };
-		return await bot.Scheduler.Invoke(() =>
+		if (bot is null) return Cached();
+		var live = await bot.Scheduler.Invoke(() =>
 		{
 			var full = bot.Injector.GetModuleOrThrow<TSLib.Full.TsFullClient>();
+			if (!full.Connected || full.Book.Channels.Count == 0) return null;
 			var all = full.Book.Channels.Values.ToList();
 			var list = new List<object>();
 			void Walk(ChannelId parent, int depth)
@@ -332,8 +348,11 @@ public static class PanelApi
 				}
 			}
 			Walk(ChannelId.Null, 0);
-			return (object)new { online = full.Connected, channels = list };
+			return list;
 		});
+		if (live is null) return Cached();
+		FrixDb.SetMeta(key, System.Text.Json.JsonSerializer.Serialize(live));
+		return new { online = true, cached = false, channels = live };
 	}
 
 	private static async Task<object> Queue(string name)
@@ -760,7 +779,7 @@ public static class PanelApi
 		try { bytes = Convert.FromBase64String(comma >= 0 ? data[(comma + 1)..] : data); }
 		catch { throw Bad("bad_image"); }
 		Helper.ImageHolder img;
-		try { img = await Helper.ImageUtil.ResizeImageSave(new MemoryStream(bytes), CancellationToken.None, 512); }
+		try { img = await Helper.ImageUtil.ResizeImageSave(new MemoryStream(bytes), CancellationToken.None, 300); }
 		catch { throw Bad("bad_image"); }
 		using (img)
 		{

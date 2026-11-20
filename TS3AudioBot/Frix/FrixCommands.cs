@@ -71,13 +71,21 @@ public static class FrixCommands
 			return tokens.Length == 0 || tokens.Any(available);
 		}));
 
-	/// <summary>Kurulumda seçilen dile göre ana komutların adları. Türkçe adlar da çalışmaya devam eder.</summary>
+	/// <summary>
+	/// Varsayılan komut adları: Türkçe seçilirse orijinal Türkçe adlar, diğer tüm dillerde İngilizce adlar.
+	/// Türkçe adlar her durumda çalışmaya devam eder; kullanıcı panelden istediği adı verebilir.
+	/// </summary>
 	public static readonly Dictionary<string, Dictionary<string, string>> LanguageDefaults = new()
 	{
 		["en"] = new() { ["ara"] = "play", ["radyo"] = "radio", ["gec"] = "next", ["dur"] = "pause", ["devam"] = "resume", ["bitir"] = "stop", ["ses"] = "vol", ["calan"] = "np", ["siradaki"] = "queue", ["temizle"] = "clear", ["yardim"] = "help",
 			["kayit"] = "register", ["liste"] = "playlist", ["soz"] = "lyrics", ["anket"] = "poll", ["oy"] = "vote", ["hava"] = "weather",
 			["doviz"] = "fx", ["zar"] = "dice", ["yazitura"] = "coin", ["sec"] = "pick", ["istatistik"] = "stats", ["sure"] = "time",
 			["duraklat"] = "hold", ["kapat"] = "end", ["dolar"] = "usd", ["euro"] = "eur" },
+	};
+
+	/// <summary>Eski sürümlerin yerelleştirilmiş varsayılan adları (sadece İngilizceye geçiş için).</summary>
+	private static readonly Dictionary<string, Dictionary<string, string>> LegacyLocalized = new()
+	{
 		["de"] = new() { ["ara"] = "spielen", ["radyo"] = "radio", ["gec"] = "weiter", ["dur"] = "pause", ["devam"] = "fortsetzen", ["bitir"] = "stopp", ["ses"] = "lautstärke", ["calan"] = "jetzt", ["siradaki"] = "liste", ["temizle"] = "leeren", ["yardim"] = "hilfe" },
 		["es"] = new() { ["ara"] = "poner", ["radyo"] = "radio", ["gec"] = "siguiente", ["dur"] = "pausa", ["devam"] = "seguir", ["bitir"] = "parar", ["ses"] = "volumen", ["calan"] = "sonando", ["siradaki"] = "cola", ["temizle"] = "vaciar", ["yardim"] = "ayuda" },
 		["fr"] = new() { ["ara"] = "jouer", ["radyo"] = "radio", ["gec"] = "suivant", ["dur"] = "pause", ["devam"] = "reprendre", ["bitir"] = "stop", ["ses"] = "volume", ["calan"] = "encours", ["siradaki"] = "file", ["temizle"] = "vider", ["yardim"] = "aide" },
@@ -87,7 +95,6 @@ public static class FrixCommands
 		["it"] = new() { ["ara"] = "suona", ["radyo"] = "radio", ["gec"] = "prossima", ["dur"] = "pausa", ["devam"] = "riprendi", ["bitir"] = "stop", ["ses"] = "volume", ["calan"] = "ora", ["siradaki"] = "coda", ["temizle"] = "svuota", ["yardim"] = "aiuto" },
 	};
 
-	/// <summary>Komut adlarını bir dilin varsayılanlarına ayarlar (tr = orijinal adlar). Çakışan adlar atlanır.</summary>
 	/// <summary>
 	/// Komut adlarını bir dilin varsayılanlarına ayarlar. Varsayılan dil İngilizcedir:
 	/// bir dilde karşılığı olmayan komutlar İngilizce adı alır. "tr" = orijinal Türkçe adlar.
@@ -100,10 +107,7 @@ public static class FrixCommands
 		var skipped = new List<string>();
 		if (lang != "tr")
 		{
-			var map = new Dictionary<string, string>(LanguageDefaults["en"]);
-			if (lang != "en" && LanguageDefaults.TryGetValue(lang, out var own))
-				foreach (var (k, v) in own) map[k] = v;
-			foreach (var (builtin, alias) in map)
+			foreach (var (builtin, alias) in LanguageDefaults["en"])
 			{
 				try { SetBuiltinName(builtin, alias, keepOld: true); }
 				catch (ArgumentException) { skipped.Add(alias); }
@@ -118,7 +122,25 @@ public static class FrixCommands
 	public static void EnsureDefaultNames()
 	{
 		if (FrixDb.GetMeta("cmd_names_lang") is null)
+		{
 			ApplyLanguageDefaults("en");
+			return;
+		}
+		// eski sürümler Almanca, İspanyolca… için yerel adlar veriyordu: hâlâ o varsayılanda duranları İngilizceye çevir
+		if (FrixDb.GetMeta("cmd_names_en") is null)
+		{
+			FrixDb.SetMeta("cmd_names_en", "1");
+			var lang = FrixDb.GetMeta("cmd_names_lang")!;
+			if (!LegacyLocalized.TryGetValue(lang, out var old)) return;
+			foreach (var (builtin, oldAlias) in old)
+			{
+				if (!BuiltinToAlias.TryGetValue(builtin, out var cur) || !cur.Equals(oldAlias, StringComparison.OrdinalIgnoreCase)) continue;
+				if (!LanguageDefaults["en"].TryGetValue(builtin, out var en)) continue;
+				try { SetBuiltinName(builtin, en, keepOld: true); }
+				catch (ArgumentException) { /* ad başka komutta kullanılıyor: dokunma */ }
+			}
+			Load();
+		}
 	}
 
 	private static bool IsBuiltin(string name) => Builtins.Any(b => b.name.Equals(name, StringComparison.OrdinalIgnoreCase));

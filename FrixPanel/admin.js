@@ -280,7 +280,7 @@
           try {
             // shrink in the browser first (TeamSpeak shows avatars small anyway)
             const bmp = await createImageBitmap(fl);
-            const k = Math.min(1, 512 / Math.max(bmp.width, bmp.height));
+            const k = Math.min(1, 300 / Math.max(bmp.width, bmp.height));
             const cv = document.createElement('canvas');
             cv.width = Math.max(1, Math.round(bmp.width * k)); cv.height = Math.max(1, Math.round(bmp.height * k));
             cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);

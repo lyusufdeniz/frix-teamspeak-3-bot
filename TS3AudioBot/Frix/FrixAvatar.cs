@@ -245,7 +245,14 @@ public static class FrixAvatar
 		});
 		img.Mutate(x => x.Resize(Width, height, KnownResamplers.Lanczos3));
 		using var ms = new MemoryStream();
-		img.SaveAsPng(ms);
+		// 256 renkli PNG: aynı görünüm, ~4 kat küçük dosya. TeamSpeak sunucuları avatar boyutunu sınırlar
+		// (i_client_max_avatar_filesize); büyük dosya yüklenemezse eski avatar yerinde kalır.
+		img.SaveAsPng(ms, new SixLabors.ImageSharp.Formats.Png.PngEncoder
+		{
+			ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.Palette,
+			CompressionLevel = SixLabors.ImageSharp.Formats.Png.PngCompressionLevel.BestCompression,
+			Quantizer = new SixLabors.ImageSharp.Processing.Processors.Quantization.WuQuantizer(new() { MaxColors = 256, Dither = null }),
+		});
 		return ms.ToArray();
 	}
 
