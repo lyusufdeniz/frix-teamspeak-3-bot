@@ -159,6 +159,29 @@ CREATE TABLE IF NOT EXISTS playlist_items (
 		FrixDb.Exec(c, "COMMIT");
 	}
 
+	/// <summary>Görülen kişilerin "son görülme" zamanını günceller (süreye dokunmaz).</summary>
+	public static void TouchSeen(IEnumerable<(string uid, string name)> clients)
+	{
+		using var c = FrixDb.Open();
+		FrixDb.Exec(c, "BEGIN");
+		var now = DateTime.UtcNow.ToString("O");
+		foreach (var (uid, name) in clients)
+			FrixDb.Exec(c, @"INSERT INTO online_time(uid,name,seconds,last_seen) VALUES($u,$n,0,$t)
+				ON CONFLICT(uid) DO UPDATE SET name = excluded.name, last_seen = excluded.last_seen",
+				("$u", uid), ("$n", name), ("$t", now));
+		FrixDb.Exec(c, "COMMIT");
+	}
+
+	/// <summary>Ada göre en son görülme (tam eşleşme önce, sonra içeren).</summary>
+	public static (string Name, DateTime LastSeen)? LastSeen(string name)
+	{
+		var row = FrixDb.Query("SELECT name, last_seen FROM online_time WHERE last_seen IS NOT NULL AND name = $n COLLATE NOCASE ORDER BY last_seen DESC LIMIT 1", ("$n", name)).FirstOrDefault()
+			?? FrixDb.Query("SELECT name, last_seen FROM online_time WHERE last_seen IS NOT NULL AND name LIKE $n ESCAPE '\\' ORDER BY last_seen DESC LIMIT 1",
+				("$n", "%" + name.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%")).FirstOrDefault();
+		if (row is null || row["last_seen"] is not string ls) return null;
+		return ((string)row["name"]!, DateTime.Parse(ls, null, System.Globalization.DateTimeStyles.RoundtripKind));
+	}
+
 	public static long OnlineSeconds(string uid) => (long)(FrixDb.Scalar("SELECT seconds FROM online_time WHERE uid=$u", ("$u", uid)) ?? 0L);
 
 	public static List<(string Uid, string Name, long Seconds, string? LastSeen)> OnlineTop(int limit)

@@ -34,7 +34,7 @@ public static class FrixCommands
 		("anket", "!anket soru | a | b"), ("oy", "!oy <no>"), ("hava", "!hava <şehir>"), ("doviz", "!doviz <kod> [miktar]"),
 		("dolar", "!dolar [miktar]"), ("euro", "!euro [miktar]"), ("zar", "!zar [2d6]"), ("yazitura", "!yazitura"),
 		("sec", "!sec a | b | c"), ("istatistik", "!istatistik"), ("top", "!top"), ("sure", "!sure"),
-		("fav", "!fav [sil <no>]"), ("favs", "!favs [liste]"),
+		("fav", "!fav [sil <no>]"), ("favs", "!favs [liste]"), ("gel", "!gel"), ("gorulme", "!gorulme <isim>"), ("dosya", "!dosya <ad>"),
 	];
 
 	/// <summary>
@@ -52,7 +52,7 @@ public static class FrixCommands
 		["soz"] = ["fun:lyrics"], ["anket"] = ["fun:poll"], ["oy"] = ["fun:poll"], ["hava"] = ["fun:weather"],
 		["doviz"] = ["fun:currency"], ["dolar"] = ["fun:currency"], ["euro"] = ["fun:currency"],
 		["zar"] = ["fun:dice"], ["yazitura"] = ["fun:dice"], ["sec"] = ["fun:dice"],
-		["fav"] = ["favorites"], ["favs"] = ["favorites"],
+		["fav"] = ["favorites"], ["favs"] = ["favorites"], ["dosya"] = ["music"],
 	};
 
 	/// <summary>Yerleşik komut bu botta kullanılabilir mi (bağlı eklenti açık mı)?</summary>
@@ -80,7 +80,7 @@ public static class FrixCommands
 		["en"] = new() { ["ara"] = "play", ["radyo"] = "radio", ["gec"] = "next", ["dur"] = "pause", ["devam"] = "resume", ["bitir"] = "stop", ["ses"] = "vol", ["calan"] = "np", ["siradaki"] = "queue", ["temizle"] = "clear", ["yardim"] = "help",
 			["kayit"] = "register", ["liste"] = "playlist", ["soz"] = "lyrics", ["anket"] = "poll", ["oy"] = "vote", ["hava"] = "weather",
 			["doviz"] = "fx", ["zar"] = "dice", ["yazitura"] = "coin", ["sec"] = "pick", ["istatistik"] = "stats", ["sure"] = "time",
-			["duraklat"] = "hold", ["kapat"] = "end", ["dolar"] = "usd", ["euro"] = "eur" },
+			["duraklat"] = "hold", ["kapat"] = "end", ["dolar"] = "usd", ["euro"] = "eur", ["gel"] = "come", ["gorulme"] = "lastseen", ["dosya"] = "file" },
 	};
 
 	/// <summary>Eski sürümlerin yerelleştirilmiş varsayılan adları (sadece İngilizceye geçiş için).</summary>
@@ -126,6 +126,20 @@ public static class FrixCommands
 			ApplyLanguageDefaults("en");
 			return;
 		}
+		// sonradan eklenen yerleşik komutlar (ör. !gel, !gorulme) bir kez dilin varsayılan adını alır
+		// (bu kayıt yokken: v2.16 öncesi kurulum, o sürümde gelenler dışında hepsi biliniyordu)
+		var known = (FrixDb.GetMeta("cmd_names_known") ?? string.Join(',', Builtins.Select(b => b.name).Except(["gel", "gorulme", "dosya"])))
+			.Split(',', StringSplitOptions.RemoveEmptyEntries).ToHashSet();
+		var langNow = FrixDb.GetMeta("cmd_names_lang");
+		if (langNow is not null and not "tr")
+			foreach (var (builtin, en) in LanguageDefaults["en"])
+				if (!known.Contains(builtin) && !BuiltinToAlias.ContainsKey(builtin))
+				{
+					try { SetBuiltinName(builtin, en, keepOld: true); }
+					catch (ArgumentException) { }
+				}
+		FrixDb.SetMeta("cmd_names_known", string.Join(',', Builtins.Select(b => b.name)));
+		Load();
 		// eski sürümler Almanca, İspanyolca… için yerel adlar veriyordu: hâlâ o varsayılanda duranları İngilizceye çevir
 		if (FrixDb.GetMeta("cmd_names_en") is null)
 		{

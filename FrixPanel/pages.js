@@ -549,6 +549,132 @@
     load();
     return { onBots };
   };
+  // ================================================================== LIBRARY (own music files)
+  Pages.library = function (root) {
+    const admin = F.isAdmin(), can = F.canControl();
+    let data = { items: [], types: [], max: 0, total: 0 };
+    let q = '';
+    const fileIn = h('input', { type: 'file', multiple: true, hidden: true });
+    const upBtn = admin ? F.btn(t('lib.upload'), { kind: 'primary', icon: 'upload', onClick: () => fileIn.click() }) : null;
+    const prog = h('div', { class: 'lib-prog', hidden: true }, h('div', { class: 'lib-prog-bar' }, h('span')), h('span', { class: 'muted small lib-prog-text' }));
+    const search = F.input({ type: 'search', placeholder: t('lib.search'), 'aria-label': t('lib.search') });
+    search.addEventListener('input', () => { q = search.value.trim().toLowerCase(); render(); });
+    const info = h('span', { class: 'muted small' });
+    root.append(F.pageHead(t('lib.title'), t('lib.sub'), admin ? [upBtn, fileIn] : null),
+      h('div', { class: 'lib-bar' }, h('div', { class: 'lib-search' }, icon('search'), search), info), prog);
+    const list = h('div', { class: 'lib-table' }, F.skeleton(4, 'sk-row'));
+    root.append(list);
+    F.fitPage(list);
+
+    // upload one file with progress (XHR gives upload progress, fetch does not)
+    const sendFile = (f, onProgress) => new Promise((resolve, reject) => {
+      const x = new XMLHttpRequest();
+      x.open('POST', '/panel/api/library/upload');
+      x.setRequestHeader('X-Panel', '1');
+      x.setRequestHeader('X-File-Name', encodeURIComponent(f.name));
+      x.setRequestHeader('Content-Type', 'application/octet-stream');
+      x.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
+      x.onload = () => {
+        let body = null;
+        try { body = JSON.parse(x.responseText); } catch (_) { /* */ }
+        if (x.status >= 200 && x.status < 300) resolve(body);
+        else reject(Object.assign(new Error((body && body.error) || 'upload_failed'), { code: body && body.error }));
+      };
+      x.onerror = () => reject(new Error('network'));
+      x.send(f);
+    });
+    fileIn.addEventListener('change', async () => {
+      const files = [...(fileIn.files || [])];
+      fileIn.value = '';
+      if (!files.length) return;
+      const ok = files.filter((f) => data.types.some((ext) => f.name.toLowerCase().endsWith(ext)) && f.size <= data.max);
+      const skipped = files.length - ok.length;
+      if (skipped) F.toast(t('lib.skipped', { n: skipped, max: F.fmtBytes(data.max) }), 'err');
+      if (!ok.length) return;
+      upBtn.disabled = true; prog.hidden = false;
+      const bar = prog.querySelector('.lib-prog-bar span'), txt = prog.querySelector('.lib-prog-text');
+      let done = 0;
+      for (const f of ok) {
+        try {
+          await sendFile(f, (p) => { bar.style.width = Math.round(((done + p) / ok.length) * 100) + '%'; txt.textContent = t('lib.uploading', { i: done + 1, n: ok.length, name: f.name }); });
+        } catch (e) { F.toast(f.name + ': ' + (F.has('err.' + e.code) ? t('err.' + e.code) : e.message), 'err'); }
+        done++;
+      }
+      upBtn.disabled = false; prog.hidden = true; bar.style.width = '0';
+      F.toast(t('lib.uploaded', { n: ok.length }));
+      load();
+    });
+
+    async function load() {
+      try { data = (await F.api('GET', 'library')) || data; render(); }
+      catch (e) { F.fail(e); list.replaceChildren(F.empty('alert', t('err.loadFailed'))); }
+    }
+    function render() {
+      info.textContent = t('lib.count', { n: data.items.length, size: F.fmtBytes(data.total || 0) });
+      const items = data.items.filter((x) => !q || x.title.toLowerCase().includes(q));
+      if (!data.items.length) { list.replaceChildren(F.empty('folder', t('lib.none'), admin ? t('lib.noneAdmin', { types: data.types.join(' ') }) : null)); return; }
+      if (!items.length) { list.replaceChildren(F.empty('search', t('lib.noMatch'))); return; }
+      const head = h('div', { class: 'tbl-row lib-trow tbl-head fit-skip' },
+        h('span', { text: t('lib.f.title') }), h('span', { text: t('lib.f.size') }), h('span', { text: t('lib.f.added') }), h('span'));
+      list.replaceChildren(head, ...items.map((x) => h('div', { class: 'tbl-row lib-trow' },
+        h('span', { class: 'radio-cell' }, h('span', { class: 'radio-ic' }, icon('music')), h('strong', { class: 'tbl-ellipsis', text: x.title, title: x.title })),
+        h('span', { class: 'muted small', text: F.fmtBytes(x.size) }),
+        h('span', { class: 'muted small tbl-ellipsis', text: new Date(x.added).toLocaleDateString() + (x.addedBy ? ' · ' + x.addedBy : '') }),
+        h('span', { class: 'tbl-actions' },
+          can ? F.btn(t('lib.play'), { kind: 'ghost', icon: 'play', cls: 'btn-sm', onClick: (e) => play(e.currentTarget, x, true) }) : null,
+          can ? F.iconBtn('plus', t('lib.queue'), (e) => play(e.currentTarget, x, false)) : null,
+          can ? F.iconBtn('playlist', t('lib.toPlaylist'), () => toPlaylist(x)) : null,
+          admin ? F.iconBtn('edit', t('common.edit'), () => rename(x)) : null,
+          admin ? F.iconBtn('trash', t('common.delete'), () => del(x), 'danger') : null))));
+    }
+    async function play(btn, x, now) {
+      const b = F.selectedBot();
+      if (!b) { F.toast(t('player.pickBot'), 'err'); return; }
+      await F.busy(btn, async () => {
+        try { await F.api('POST', 'bots/' + enc(b.name) + '/library/' + x.id, { now }); F.toast(t(now ? 'lib.playing' : 'lib.queued', { title: x.title, bot: F.botLabel(b) })); F.refreshBots(); }
+        catch (e) { F.fail(e); }
+      });
+    }
+    async function toPlaylist(x) {
+      let lists = [];
+      try { lists = (await F.api('GET', 'playlists')) || []; } catch (_) { /* */ }
+      const sel = F.select([['', t('lib.newList')]].concat(lists.map((l) => [l.name, l.name + ' (' + (l.count != null ? l.count : l.Count || 0) + ')'])), lists.length ? lists[0].name : '');
+      const nameIn = F.input({ maxlength: 40, placeholder: t('lib.newListPh') });
+      const nameField = F.field(t('lib.newListName'), nameIn);
+      const sync = () => { nameField.hidden = sel.value !== ''; };
+      sel.addEventListener('change', sync); sync();
+      F.modal({
+        title: t('lib.toPlaylist'),
+        body: h('div', null, h('p', { class: 'muted small', text: x.title }), F.field(t('lib.list'), sel), nameField),
+        actions: [{ label: t('common.cancel') }, { label: t('common.add'), kind: 'primary', primary: true, icon: 'plus', onClick: async () => {
+          const name = sel.value || nameIn.value.trim();
+          if (!name) { F.toast(t('lib.listReq'), 'err'); return false; }
+          try { await F.api('POST', 'library/' + x.id + '/playlist', { name }); F.toast(t('lib.addedToList', { name })); return true; }
+          catch (e) { F.fail(e); return false; }
+        } }],
+      });
+    }
+    function rename(x) {
+      const inp = F.input({ value: x.title, maxlength: 120 });
+      F.modal({
+        title: t('lib.rename'), body: F.field(t('lib.f.title'), inp),
+        actions: [{ label: t('common.cancel') }, { label: t('common.save'), kind: 'primary', primary: true, icon: 'check', onClick: async () => {
+          const v = inp.value.trim();
+          if (!v) return false;
+          try { await F.api('PUT', 'library/' + x.id, { title: v }); x.title = v; render(); F.toast(t('common.saved')); return true; }
+          catch (e) { F.fail(e); return false; }
+        } }],
+      });
+      setTimeout(() => inp.select(), 50);
+    }
+    async function del(x) {
+      if (!(await F.confirm(t('lib.deleteConfirm', { title: x.title }), { danger: true, ok: t('common.delete') }))) return;
+      try { await F.api('DELETE', 'library/' + x.id); F.toast(t('common.deleted')); load(); } catch (e) { F.fail(e); }
+    }
+    load();
+    return {};
+  };
+
   // ================================================================== shared: song thumbnail + bar rows
   const thumb = (src, ic) => h('span', { class: 'st-thumb' }, src ? h('img', { src, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' }) : icon(ic || 'music'));
   /** one ranked row with a flat count bar: [#] [lead] [title/sub + bar] [value] [actions] */

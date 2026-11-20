@@ -38,9 +38,10 @@ public static class PanelApi
 	private static BotManager Bots => injector!.GetModuleOrThrow<BotManager>();
 	private static ConfRoot Conf => injector!.GetModuleOrThrow<ConfRoot>();
 
-	private sealed class ApiError(int status, string code) : Exception(code)
+	private sealed class ApiError(int status, string code, string? detail = null) : Exception(code)
 	{
 		public int Status { get; } = status;
+		public string? Detail { get; } = detail;
 	}
 
 	private static ApiError Bad(string code) => new(400, code);
@@ -77,6 +78,13 @@ public static class PanelApi
 			case ["online"] when m == "GET": await Ok(ctx, await OnlineList()); return;
 			case ["dashboard"] when m == "GET": await Ok(ctx, await Dashboard(ctx.Request.Query["history"] == "1")); return;
 			case ["playlists"] when m == "GET": await Ok(ctx, FrixData.Playlists()); return;
+			case ["library"] when m == "GET":
+				await Ok(ctx, new
+				{
+					total = FrixLibrary.TotalSize(), max = FrixLibrary.MaxFileSize, types = FrixLibrary.Extensions,
+					items = FrixLibrary.List().Select(x => new { x.Id, x.Title, x.Size, x.Added, x.AddedBy }),
+				});
+				return;
 			case ["playlists", var pid] when m == "GET":
 				await Ok(ctx, FrixData.PlaylistItems(long.Parse(pid)).Select((i, n) => new
 				{
@@ -94,6 +102,30 @@ public static class PanelApi
 			case ["search"] when m == "GET": await Ok(ctx, await Search(ctx.Request.Query["q"].ToString(), ctx.Request.Query["bot"].ToString())); return;
 			case ["bots", var b, "play"] when m == "POST": await Ok(ctx, await PlayQuery(b, user, await PanelAuth.ReadJson(ctx))); return;
 			case ["bots", var b, "radio"] when m == "POST": await Ok(ctx, await PlayRadio(b, user, await PanelAuth.ReadJson(ctx))); return;
+			case ["bots", var b, "library", var lid] when m == "POST":
+			{
+				var item = FrixLibrary.Get(long.Parse(lid)) ?? throw NotFound("file_not_found");
+				var now = (await PanelAuth.ReadJson(ctx)).Bool("now") == true;
+				var bot = RequireRunning(b);
+				var invoker = PanelInvoker(user);
+				_ = bot.Scheduler.InvokeAsync(async () =>
+				{
+					var pm = bot.Injector.GetModuleOrThrow<PlayManager>();
+					try { if (now) await pm.PlayNow(invoker, item.Resource()); else await pm.Enqueue(invoker, item.Resource()); }
+					catch (Exception ex) { Log.Warn("Kütüphane dosyası çalınamadı: {0}", ex.Message); }
+				});
+				await Ok(ctx, new { ok = true, title = item.Title });
+				return;
+			}
+			case ["library", var lid, "playlist"] when m == "POST":
+			{
+				var item = FrixLibrary.Get(long.Parse(lid)) ?? throw NotFound("file_not_found");
+				var name = (await PanelAuth.ReadJson(ctx)).Str("name") ?? throw Bad("name");
+				try { FrixData.SavePlaylist(name, [new PlaylistEntry("media", item.FullPath, item.Title)], user.Name, append: true); }
+				catch (ArgumentException) { throw Bad("bad_playlist_name"); }
+				await Ok(ctx, new { ok = true });
+				return;
+			}
 			case ["bots", var b, "control"] when m == "POST": await Ok(ctx, await Control(b, await PanelAuth.ReadJson(ctx))); return;
 			case ["playlists"] when m == "POST": await Ok(ctx, await SaveQueueAsPlaylist(user, await PanelAuth.ReadJson(ctx))); return;
 			case ["playlists", var pid, "play"] when m == "POST": await Ok(ctx, await PlayPlaylist(long.Parse(pid), user, await PanelAuth.ReadJson(ctx))); return;
@@ -170,6 +202,94 @@ public static class PanelApi
 			case ["users", var id] when m == "DELETE": await Ok(ctx, DeleteUser(user, long.Parse(id))); break;
 			// ayarlar ve bakım
 			case ["settings"] when m == "GET": await Ok(ctx, Settings()); break;
+			// scriptler
+			case ["scripts"] when m == "GET": await Ok(ctx, new { items = FrixScripts.List(), template = FrixScripts.Template }); break;
+			case ["scripts", "log"] when m == "GET": await Ok(ctx, FrixScripts.RecentLogs()); break;
+			case ["scripts", "log"] when m == "DELETE": FrixScripts.ClearLogs(); await Ok(ctx, new { ok = true }); break;
+			case ["scripts", var sn] when m == "GET":
+				if (!FrixScripts.ValidName(sn)) throw Bad("bad_script_name");
+				try { await Ok(ctx, new { name = sn, code = FrixScripts.Read(sn) }); }
+				catch (FileNotFoundException) { throw NotFound("script_not_found"); }
+				break;
+			case ["scripts", var sn] when m == "PUT":
+			{
+				if (!FrixScripts.ValidName(sn)) throw Bad("bad_script_name");
+				var code = body.Str("code") ?? "";
+				// sözdizimi hatası kaydetmeden önce yakalanır
+				try { Jint.Engine.PrepareScript(code); }
+				catch (Exception ex) { throw new ApiError(400, "script_syntax", ex.Message); }
+				try { FrixScripts.Save(sn, code, body.Bool("enabled")); }
+				catch (ArgumentException ex) { throw Bad(ex.Message); }
+				FrixDb.Audit(user.Name, null, "script.save", sn);
+				await Ok(ctx, new { ok = true });
+				break;
+			}
+			case ["scripts", var sn, "enabled"] when m == "PUT":
+				try { FrixScripts.SetEnabled(sn, body.Bool("enabled") == true); }
+				catch (FileNotFoundException) { throw NotFound("script_not_found"); }
+				catch (ArgumentException) { throw Bad("bad_script_name"); }
+				await Ok(ctx, new { ok = true });
+				break;
+			case ["scripts", var sn] when m == "DELETE":
+				try { FrixScripts.Delete(sn); }
+				catch (ArgumentException) { throw Bad("bad_script_name"); }
+				FrixDb.Audit(user.Name, null, "script.delete", sn);
+				await Ok(ctx, new { ok = true });
+				break;
+			case ["library", "upload"] when m == "POST":
+			{
+				// büyük dosyalar için bu istekte gövde sınırını kaldır (genel sınır 3 MB)
+				if (ctx.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } lim)
+					lim.MaxRequestBodySize = FrixLibrary.MaxFileSize + 1024;
+				var fname = Uri.UnescapeDataString(ctx.Request.Headers["X-File-Name"].ToString());
+				if (string.IsNullOrWhiteSpace(fname)) throw Bad("no_file_name");
+				try
+				{
+					var item = await FrixLibrary.Add(ctx.Request.Body, fname, user.Name);
+					FrixDb.Audit(user.Name, null, "library.upload", item.Title);
+					await Ok(ctx, new { item.Id, item.Title, item.Size });
+				}
+				catch (InvalidDataException ex) { throw Bad(ex.Message); }
+				break;
+			}
+			case ["library", var lid] when m == "PUT":
+				try { FrixLibrary.Rename(long.Parse(lid), body.Str("title") ?? ""); }
+				catch (ArgumentException) { throw Bad("bad_title"); }
+				catch (FileNotFoundException) { throw NotFound("file_not_found"); }
+				await Ok(ctx, new { ok = true });
+				break;
+			case ["library", var lid] when m == "DELETE":
+				try { FrixLibrary.Delete(long.Parse(lid)); }
+				catch (FileNotFoundException) { throw NotFound("file_not_found"); }
+				FrixDb.Audit(user.Name, null, "library.delete", lid);
+				await Ok(ctx, new { ok = true });
+				break;
+			// yedek: GET backup?sections=a,b → dosya; POST backup/inspect, POST backup/restore {data, sections}
+			case ["backup"] when m == "GET":
+			{
+				var secs = (ctx.Request.Query["sections"].ToString() is { Length: > 0 } q ? q : string.Join(',', FrixBackup.Sections.Select(x => x.Key).Where(k => k != "stats"))).Split(',');
+				var json = FrixBackup.Export(secs).ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+				ctx.Response.ContentType = "application/json; charset=utf-8";
+				ctx.Response.Headers["Content-Disposition"] = $"attachment; filename=\"frix-backup-{DateTime.Now:yyyyMMdd-HHmm}.json\"";
+				ctx.Response.Headers["Cache-Control"] = "no-store";
+				await ctx.Response.WriteAsync(json);
+				FrixDb.Audit(user.Name, null, "backup.export", string.Join(",", secs));
+				return;
+			}
+			case ["backup", "inspect"] when m == "POST":
+				try { await Ok(ctx, FrixBackup.Inspect(ParseBackup(await PanelAuth.ReadText(ctx, 50_000_000)))); }
+				catch (InvalidDataException ex) { throw Bad(ex.Message); }
+				return;
+			case ["backup", "restore"] when m == "POST":
+			{
+				var raw = JsonNode.Parse(await PanelAuth.ReadText(ctx, 50_000_000)) as JsonObject ?? throw Bad("bad_backup");
+				var secs = (raw["sections"] as JsonArray ?? []).Select(x => x?.ToString() ?? "").ToArray();
+				try { FrixBackup.Import(ParseBackup(raw["data"]?.ToString() ?? ""), secs); }
+				catch (InvalidDataException ex) { throw Bad(ex.Message); }
+				FrixDb.Audit(user.Name, null, "backup.restore", string.Join(",", secs));
+				await Ok(ctx, new { ok = true });
+				return;
+			}
 			case ["settings"] when m == "PUT": await Ok(ctx, SaveSettings(body)); break;
 			case ["cookies"] when m == "POST": await Ok(ctx, await SaveCookies(await PanelAuth.ReadText(ctx))); break;
 			case ["cookies"] when m == "DELETE": await Ok(ctx, await SaveCookies("")); break;
@@ -195,7 +315,7 @@ public static class PanelApi
 		}
 		catch (ApiError e)
 		{
-			if (!ctx.Response.HasStarted) await PanelAuth.WriteJson(ctx, e.Status, new { error = e.Message });
+			if (!ctx.Response.HasStarted) await PanelAuth.WriteJson(ctx, e.Status, new { error = e.Message, detail = e.Detail });
 		}
 		catch (ArgumentException e)
 		{
@@ -850,6 +970,12 @@ public static class PanelApi
 		}
 		FrixAvatar.Invalidate();
 		return new { ok = true };
+	}
+
+	private static JsonObject ParseBackup(string text)
+	{
+		try { return JsonNode.Parse(text) as JsonObject ?? throw Bad("bad_backup"); }
+		catch (System.Text.Json.JsonException) { throw Bad("bad_backup"); }
 	}
 
 	private static object ListPlugins(string bot)

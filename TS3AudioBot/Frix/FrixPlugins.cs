@@ -164,6 +164,7 @@ public sealed class FrixPluginHost
 		() => new VoteSkipPlugin(),
 		() => new DjModePlugin(),
 		() => new FunPlugin(),
+		() => new ScriptsPlugin(),
 	];
 
 	public static IEnumerable<FrixPlugin> Catalog => Factories.Select(f => f());
@@ -209,6 +210,9 @@ public sealed class FrixPluginHost
 		Hosts[ctx.BotName] = this;
 		Reload();
 	}
+
+	/// <summary>Tüm çalışan botların eklenti ayarlarını veritabanından yeniden okur.</summary>
+	public static void ReloadAll() { foreach (var h in Hosts.Values) h.Reload(); }
 
 	public static FrixPluginHost? For(string bot) => Hosts.TryGetValue(bot, out var h) ? h : null;
 	public static void Remove(string bot, FrixPluginHost host) => Hosts.TryRemove(new KeyValuePair<string, FrixPluginHost>(bot, host));
@@ -285,10 +289,37 @@ public sealed class FrixPluginHost
 		return Task.WhenAll(tasks);
 	}
 
-	public Task Tick() => Ctx.Connected ? Each(p => p.OnTick(DateTime.UtcNow)) : Task.CompletedTask;
+	private DateTime lastSeenAt = DateTime.MinValue;
+
+	public Task Tick()
+	{
+		if (!Ctx.Connected) return Task.CompletedTask;
+		// !lastseen için: botun gördüğü herkesin son görülme zamanı (dakikada bir)
+		if (DateTime.UtcNow - lastSeenAt > TimeSpan.FromMinutes(1))
+		{
+			lastSeenAt = DateTime.UtcNow;
+			_ = Ctx.RunOnBot(() =>
+			{
+				var seen = Ctx.RealClients().Where(c => c.Uid is not null).Select(c => (c.Uid!.Value.Value, c.Name)).ToList();
+				return Task.Run(() => { try { FrixData.TouchSeen(seen); } catch (Exception ex) { Log.Debug(ex, "Son görülme kaydedilemedi"); } });
+			});
+		}
+		return Each(p => p.OnTick(DateTime.UtcNow));
+	}
 	public Task TextMessage(ClientId id, Uid uid, string name, string message)
 		=> id == Ctx.Full.ClientId ? Task.CompletedTask : Each(p => p.OnTextMessage(id, uid, name, message));
 	public Task SongStarted() => Each(p => p.OnSongStarted());
+
+	/// <summary>"!ad ..." bir script komutuysa cevabı (boş olabilir), değilse null.</summary>
+	public string? ScriptCommand(ClientId id, Uid uid, string user, string message, string target)
+	{
+		if (Plugins.OfType<ScriptsPlugin>().FirstOrDefault() is not { Enabled: true } sp) return null;
+		var body = message.TrimStart('!');
+		var sp2 = body.IndexOf(' ');
+		var name = sp2 < 0 ? body : body[..sp2];
+		var args = sp2 < 0 ? "" : body[(sp2 + 1)..].Trim();
+		return sp.TryCommand(name, args, id, uid, user, target);
+	}
 
 	/// <summary>Komutların eklentiye erişmesi için: bu botta açık olan T eklentisi.</summary>
 	public static T? Enabled<T>(string? bot) where T : FrixPlugin

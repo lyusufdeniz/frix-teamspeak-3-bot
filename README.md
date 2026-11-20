@@ -48,6 +48,9 @@ The bot connects to your TeamSpeak server by itself and streams audio directly w
   - *Activity:* online users chart and busiest hours on the dashboard, activity ranks
   - *Fun & tools:* polls, dice, coin flip, pick, weather, currency, lyrics
 - **Playlists** (`!liste`) and **statistics** (most played songs, top requesters, most active users)
+- **Own music library**: upload mp3 / ogg / flac / wav… in the panel, play them, add them to playlists, `!file <name>` in chat
+- **Scripts**: write your own commands and automations in JavaScript (sandboxed, with time and memory limits)
+- **Backup & restore** of plugin settings, texts, commands, radios, playlists and avatar images
 - Rename any built-in command, add custom commands; command names follow the language chosen at setup
 - **Custom commands** (text replies or aliases) and editable bot replies with a **BBCode editor** (bold, italic, colours, live preview) and a default message colour
 - The commands page only lists commands whose plugin is on
@@ -101,13 +104,22 @@ journalctl -u frix -f      # logs (also in the web panel)
 sudo ufw allow 58913/tcp          # open the panel port if you use a firewall
 ```
 
+### Docker
+```bash
+docker run -d --name frix --restart unless-stopped -p 58913:58913 -v frix-data:/data ghcr.io/lyusufdeniz/frix:latest
+```
+All data lives in the `frix-data` volume. A [`docker-compose.yml`](docker-compose.yml) is included. Images are published for `amd64` and `arm64`; use `FRIX_WEB_PORT` to change the panel port.
+
+### Pterodactyl
+Import [`packaging/pterodactyl/egg-frix.json`](packaging/pterodactyl/egg-frix.json) (Admin → Nests → Import Egg), create a server and open the panel on its primary port. Reinstalling the server updates Frix and keeps your data.
+
 ### Remote access
 The panel listens on TCP **58913**. Open it in your firewall to use it from outside.
 The connection is plain HTTP — for internet exposure put it behind a reverse proxy with HTTPS (Caddy, nginx, …).
 
 ## 💬 TeamSpeak commands
 
-Command names are **English by default**. If you choose another language in the setup wizard, command names follow that language (e.g. `!spielen`, `!играть`); the Turkish names always keep working. Every name can be changed in the panel (Commands → built-in commands).
+Command names are **English** in every language except Turkish; the Turkish names always keep working. Every name can be changed in the panel (Commands → built-in commands).
 
 | Command | Turkish name | Description |
 |---|---|---|
@@ -126,6 +138,9 @@ Command names are **English by default**. If you choose another language in the 
 | `!dice [2d6], !coin, !pick a \| b` | `!zar, !yazitura, !sec` | Dice, coin flip, pick |
 | `!stats, !top, !time` | `!istatistik, !top, !sure` | Stats, most active users, your online time |
 | `!register <name>` | `!kayit` | Register a user (staff, registration plugin) |
+| `!file <name>` | `!dosya` | Play a file from the panel's music library |
+| `!come` | `!gel` | Bring the bot to your channel |
+| `!lastseen <name>` | `!gorulme` | When was someone last online |
 | `!help` | `!yardim` | Help |
 
 Bot replies are available in 9 languages (TR, EN, DE, ES, FR, RU, PT, PL, IT). Custom commands, command names and all reply texts can be changed in the panel.

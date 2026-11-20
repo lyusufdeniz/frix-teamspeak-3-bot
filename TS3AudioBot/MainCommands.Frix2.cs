@@ -206,6 +206,36 @@ public static partial class MainCommands
 		return sb.ToString();
 	}
 
+	[Command("dosya")]
+	[Usage("<ad>", "Panelden yüklenen müzik dosyalarından birini kuyruğa ekler")]
+	public static async Task<string> CommandDosya(PlayManager playManager, InvokerData invoker, string ad)
+	{
+		var item = FrixLibrary.Find(ad) ?? throw new CommandException(FrixText.Get("lib.notfound", ("query", FrixChat.Escape(ad))), CommandExceptionReason.CommandError);
+		await playManager.Enqueue(invoker, item.Resource());
+		return FrixText.Get("lib.added", ("title", FrixChat.Escape(item.Title)));
+	}
+
+	[Command("gel")]
+	public static Task CommandGel(Ts3Client ts3Client, ClientCall invoker)
+	{
+		var channel = invoker.ChannelId ?? throw new CommandException(FrixText.Get("come.nochannel"), CommandExceptionReason.CommandError);
+		return ts3Client.MoveTo(channel);
+	}
+
+	[Command("gorulme")]
+	public static string CommandGorulme(TSLib.Full.TsFullClient full, string isim)
+	{
+		var name = isim.Trim();
+		if (name.Length == 0) return FrixText.Get("seen.usage");
+		// şu an sunucudaysa
+		var now = full.Book.Clients.Values.FirstOrDefault(c => c.ClientType == TSLib.ClientType.Full && c.Name.Contains(name, StringComparison.OrdinalIgnoreCase));
+		if (now is not null) return FrixText.Get("seen.now", ("user", FrixChat.Escape(now.Name)));
+		if (FrixData.LastSeen(name) is not { } s) return FrixText.Get("seen.never", ("user", FrixChat.Escape(name)));
+		var ago = (long)(DateTime.UtcNow - s.LastSeen.ToUniversalTime()).TotalSeconds;
+		return FrixText.Get("seen.ago", ("user", FrixChat.Escape(s.Name)), ("ago", FrixData.FormatDuration(Math.Max(60, ago))),
+			("date", s.LastSeen.ToLocalTime().ToString("dd.MM.yyyy HH:mm")));
+	}
+
 	[Command("sure")]
 	public static string CommandSure(InvokerData invoker)
 	{

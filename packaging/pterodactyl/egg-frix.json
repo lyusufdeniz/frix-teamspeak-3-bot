@@ -1,0 +1,42 @@
+{
+    "_comment": "Frix TeamSpeak 3 bot — Pterodactyl egg. Panel → Admin → Nests → Import Egg",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": "https://raw.githubusercontent.com/lyusufdeniz/frix-teamspeak-3-bot/main/packaging/pterodactyl/egg-frix.json"
+    },
+    "exported_at": "2026-11-20T00:00:00+00:00",
+    "name": "Frix TeamSpeak 3 Bot",
+    "author": "lyusufdeniz@users.noreply.github.com",
+    "description": "Frix: TeamSpeak 3 music and server bot with a web panel (YouTube, radios, own music library, plugins, scripts). The web panel runs on the server's primary port.",
+    "features": null,
+    "docker_images": {
+        "Frix": "ghcr.io/lyusufdeniz/frix:latest"
+    },
+    "file_denylist": [],
+    "startup": "export PATH=/home/container:$PATH; FRIX_WEB_PORT={{SERVER_PORT}} ./frix.sh",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": \"Starting Webserver on port\"\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\n# Frix kurulumu: GitHub'daki sürümü indirir, kullanıcı verilerine dokunmaz\nset -e\napt-get update -qq && apt-get install -y -qq curl unzip ca-certificates jq >/dev/null\ncd /mnt/server\nARCH=$(uname -m)\nif [ \"$ARCH\" = \"aarch64\" ]; then ASSET=Frix-linux-arm64.zip; else ASSET=Frix-linux-x64.zip; fi\nif [ -z \"${FRIX_RELEASE}\" ] || [ \"${FRIX_RELEASE}\" = \"latest\" ]; then\n  URL=\"https://github.com/lyusufdeniz/frix-teamspeak-3-bot/releases/latest/download/$ASSET\"\nelse\n  URL=\"https://github.com/lyusufdeniz/frix-teamspeak-3-bot/releases/download/${FRIX_RELEASE}/$ASSET\"\nfi\necho \"Indiriliyor: $URL\"\ncurl -fsSL -o /tmp/frix.zip \"$URL\"\nrm -rf /tmp/frix && mkdir -p /tmp/frix && unzip -qo /tmp/frix.zip -d /tmp/frix\nSRC=$(find /tmp/frix -maxdepth 2 -name TS3AudioBot -type f -printf '%h' -quit)\ncd \"$SRC\"\nfind . -type f | while IFS= read -r f; do\n  case \"$f\" in\n    ./ts3audiobot.toml|./rights.toml|./ytdlp/yt-dlp.conf) [ -e \"/mnt/server/$f\" ] && continue ;;\n  esac\n  mkdir -p \"/mnt/server/$(dirname \"$f\")\"\n  cp -f \"$f\" \"/mnt/server/$f\"\ndone\nchmod +x /mnt/server/TS3AudioBot /mnt/server/frix.sh /mnt/server/ytdlp/yt-dlp /mnt/server/ytdlp/deno 2>/dev/null || true\necho \"Frix kuruldu. Panel: sunucunun ana portunda (ilk acilista yonetici hesabini olustur).\"",
+            "container": "ghcr.io/parkervcp/installers:debian",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Frix release",
+            "description": "Version tag to install (for example v2.16.0) or latest. Reinstall the server to update; your data is kept. You can also update from the web panel.",
+            "env_variable": "FRIX_RELEASE",
+            "default_value": "latest",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:20",
+            "field_type": "text"
+        }
+    ]
+}

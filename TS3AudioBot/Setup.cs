@@ -48,6 +48,7 @@ internal static class Setup
 		Web.PanelLog.Install();
 		Frix.FrixDb.Initialize();
 		Frix.FrixData.EnsureTables();
+		Frix.FrixLibrary.EnsureTable();
 		FrixText.Load();
 		Frix.FrixCommands.Load();
 		Frix.FrixCommands.EnsureDefaultNames();

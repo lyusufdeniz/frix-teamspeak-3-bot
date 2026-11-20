@@ -80,6 +80,8 @@
     shuffle: 'p:M4 7h3.5c4.5 0 4.5 10 9 10H20|p:M4 17h3.5c1.6 0 2.6-1.2 3.4-2.8|p:M13.1 9.8C13.9 8.2 14.9 7 16.5 7H20|p:M17.5 4.5 20 7l-2.5 2.5|p:M17.5 14.5 20 17l-2.5 2.5',
     volume: 'p:M4 9.5h3l4.5-4v13l-4.5-4H4z|p:M15 9.5a3.5 3.5 0 0 1 0 5|p:M17.5 7a7 7 0 0 1 0 10',
     plus: 'p:M12 5v14M5 12h14',
+    code: 'p:M8.5 7 3.5 12l5 5|p:M15.5 7l5 5-5 5|p:M13.5 5l-3 14',
+    folder: 'p:M3.5 7a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z',
     menu: 'p:M4 7h16M4 12h16M4 17h16',
     clock: 'c:12 12 8.5|p:M12 7.5V12l3 2',
     coffee: 'p:M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z|p:M16 10.5h1.5a2.5 2.5 0 0 1 0 5H16|p:M8.5 3.5c-.6.8-.6 1.7 0 2.5M12 3.5c-.6.8-.6 1.7 0 2.5',
@@ -111,6 +113,7 @@
     refresh: 'p:M19 12a7 7 0 1 1-2.05-4.95|p:M19 5v4h-4',
     search: 'c:10.5 10.5 5.5|p:M15 15l4.5 4.5',
     upload: 'p:M12 15V4.5|p:M7.5 9 12 4.5 16.5 9|p:M5 15v3.5h14V15',
+    archive: 'p:M4 5h16v4H4z|p:M5.5 9v10h13V9|p:M10 13h4',
     download: 'p:M12 4.5V15|p:M7.5 10.5 12 15l4.5-4.5|p:M5 15v3.5h14V15',
     x: 'p:M6.5 6.5l11 11M17.5 6.5l-11 11',
     check: 'p:M5 12.5l4.5 4.5L19 7.5',
@@ -828,8 +831,9 @@
     { path: '/player', key: 'player', icon: 'music', usesBot: true },
     { path: '/playlists', key: 'playlists', icon: 'playlist' },
     { path: '/radios', key: 'radios', icon: 'radio' },
+    { path: '/library', key: 'library', icon: 'folder' },
     { path: '/stats', key: 'stats', icon: 'chart' },
-    { path: '/plugins', key: 'plugins', icon: 'box', admin: true, sub: true, children: [['/plugins', 'plugins.all'], ['/plugins/custom', 'commands.custom'], ['/plugins/texts', 'commands.tabTexts']] },
+    { path: '/plugins', key: 'plugins', icon: 'box', admin: true, sub: true, children: [['/plugins', 'plugins.all'], ['/plugins/custom', 'commands.custom'], ['/plugins/texts', 'commands.tabTexts'], ['/plugins/scripts', 'scripts.nav']] },
     { path: '/users', key: 'users', icon: 'users', admin: true },
     { path: '/settings', key: 'settings', icon: 'sliders', admin: true, sub: true },
     { path: '/logs', key: 'logs', icon: 'file', admin: true, sub: true, children: [['/logs/live', 'logs.tabLive'], ['/logs/history', 'logs.tabHistory'], ['/logs/audit', 'settings.sec.audit']] },
@@ -901,7 +905,7 @@
     const admin = F.isAdmin();
     const byKey = (k) => NAV.find((n) => n.key === k);
     const groups = [
-      ['music', ['dashboard', 'bots', 'player', 'playlists', 'radios']],
+      ['music', ['dashboard', 'bots', 'player', 'playlists', 'radios', 'library']],
       ['manage', admin ? ['plugins', 'users', 'settings', 'logs'] : []],
       ['other', ['stats', 'faq']],
     ].filter((g) => g[1].length);

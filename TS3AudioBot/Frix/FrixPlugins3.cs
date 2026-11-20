@@ -66,11 +66,12 @@ public sealed class NowPlayingStatusPlugin : FrixPlugin
 	[
 		new("nick", "bool", "Bot adını değiştir", "Change the nickname", true),
 		new("nickFormat", "text", "Ad biçimi", "Nickname format", "♪ {title}", null,
-			"{title}, {user}, {bot} kullanılabilir. TeamSpeak adı en fazla 30 karakter; uzunsa kısaltılır.",
-			"Use {title}, {user}, {bot}. TeamSpeak nicknames are max 30 characters; longer ones are cut."),
+			"{title}, {artist}, {song}, {user}, {bot} kullanılabilir. TeamSpeak adı en fazla 30 karakter; uzunsa kısaltılır.",
+			"Use {title}, {artist}, {song}, {user}, {bot}. TeamSpeak nicknames are max 30 characters; longer ones are cut."),
 		new("desc", "bool", "Açıklamayı değiştir", "Change the description", true),
 		new("descFormat", "text", "Açıklama biçimi", "Description format", "🎵 {title} · {user}", null,
-			"{title}, {user}, {bot} kullanılabilir.", "Use {title}, {user}, {bot}."),
+			"{title}, {artist}, {song}, {user}, {bot} kullanılabilir. {artist}: \"Sanatçı - Şarkı\" başlıklarında sanatçı; {song}: şarkı adı.",
+			"Use {title}, {artist}, {song}, {user}, {bot}. {artist}: the artist in \"Artist - Song\" titles; {song}: the song name."),
 		new("idleDesc", "text", "Boştayken açıklama", "Description when idle", "", null,
 			"Boş bırakırsan açıklama temizlenir.", "Leave empty to clear the description."),
 	];
@@ -98,7 +99,8 @@ public sealed class NowPlayingStatusPlugin : FrixPlugin
 		if (data is null || !Ctx.Connected)
 			return Task.CompletedTask;
 		var title = data.ResourceData.ResourceTitle ?? "?";
-		var values = new[] { ("title", title), ("user", FrixChat.NameOf(data.EffectiveOwnerUid)), ("bot", Ctx.BaseNickname()) };
+		var (artist, song) = SplitTitle(title);
+		var values = new[] { ("title", title), ("artist", artist), ("song", song), ("user", FrixChat.NameOf(data.EffectiveOwnerUid)), ("bot", Ctx.BaseNickname()) };
 		return Ctx.RunOnBot(async () =>
 		{
 			if (B("nick"))
@@ -134,6 +136,18 @@ public sealed class NowPlayingStatusPlugin : FrixPlugin
 	private static readonly NLog.Logger Log = NLog.LogManager.GetCurrentClassLogger();
 
 	/// <summary>Emoji ve birleşik karakterleri bölmeden kısaltır.</summary>
+	/// <summary>"Sanatçı - Şarkı (Official Video)" → ("Sanatçı", "Şarkı"). Ayraç yoksa sanatçı boş, şarkı = başlık.</summary>
+	internal static (string artist, string song) SplitTitle(string title)
+	{
+		var t = System.Text.RegularExpressions.Regex.Replace(title, @"\s*[\(\[](official|resmi|lyrics?|audio|video|music video|klip|hd|4k|mv)[^\)\]]*[\)\]]", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
+		foreach (var sep in new[] { " - ", " – ", " — ", " | " })
+		{
+			var i = t.IndexOf(sep, StringComparison.Ordinal);
+			if (i > 0) return (t[..i].Trim(), t[(i + sep.Length)..].Trim());
+		}
+		return ("", t);
+	}
+
 	private static string Cut(string text, int max)
 	{
 		var info = new StringInfo(text);

@@ -47,6 +47,9 @@ sunucularda ekransız çalışır.
   - *Sunucu araçları:* kayıt botu (`!kayit`), geçici kanal oluşturucu, kanal adında bilgi, destek bildirimi
   - *Aktivite:* dashboard'da çevrimiçi grafiği ve en yoğun saatler, aktiflik rütbeleri
   - *Eğlence ve araçlar:* anket, zar, yazı-tura, seçim, hava durumu, döviz, şarkı sözleri
+- **Kendi müzik kütüphanen**: panelden mp3 / ogg / flac / wav… yükle, çal, çalma listesine ekle; sohbette `!dosya <ad>`
+- **Scriptler**: kendi komutlarını ve otomasyonlarını JavaScript ile yaz (korumalı alanda, süre ve bellek sınırlı)
+- **Yedek alma / geri yükleme**: eklenti ayarları, metinler, komutlar, radyolar, çalma listeleri, avatar resimleri
 - **Çalma listeleri** (`!liste`) ve **istatistikler** (en çok çalınanlar, en çok şarkı açanlar, en aktifler)
 - Yerleşik komutlar yeniden adlandırılabilir, özel komut eklenebilir; komut adları kurulumda seçilen dile göre ayarlanır
 - **Özel komutlar** (metin cevabı ya da yönlendirme) ve düzenlenebilir bot cevapları
@@ -100,6 +103,15 @@ journalctl -u frix -f      # loglar (web panelde de var)
 sudo ufw allow 58913/tcp          # güvenlik duvarı varsa panel portunu aç
 ```
 
+### Docker
+```bash
+docker run -d --name frix --restart unless-stopped -p 58913:58913 -v frix-data:/data ghcr.io/lyusufdeniz/frix:latest
+```
+Tüm veriler `frix-data` biriminde durur. Hazır bir [`docker-compose.yml`](docker-compose.yml) da var. İmajlar `amd64` ve `arm64` için yayınlanır; panel portunu `FRIX_WEB_PORT` ile değiştirebilirsin.
+
+### Pterodactyl
+[`packaging/pterodactyl/egg-frix.json`](packaging/pterodactyl/egg-frix.json) dosyasını içe aktar (Admin → Nests → Import Egg), sunucu oluştur ve paneli sunucunun ana portunda aç. Sunucuyu yeniden kurmak Frix'i günceller, verilerin kalır.
+
 ### Dışarıdan erişim
 Panel **TCP 58913** portunu dinler. Dışarıdan kullanmak için güvenlik duvarında bu portu aç.
 Bağlantı düz HTTP'dir; internete açacaksan HTTPS'li bir ters vekil (Caddy, nginx…) arkasına koy.
@@ -125,6 +137,9 @@ Komut adları **varsayılan olarak İngilizcedir**. Kurulum sihirbazında Türk�
 | `!dice [2d6], !coin, !pick a \| b` | `!zar, !yazitura, !sec` | Zar, yazı-tura, seçim |
 | `!stats, !top, !time` | `!istatistik, !top, !sure` | İstatistik, en aktifler, kendi süren |
 | `!register <name>` | `!kayit` | Kullanıcı kaydı (yetkili, kayıt eklentisi) |
+| `!file <name>` | `!dosya` | Panel kütüphanesinden dosya çalar |
+| `!come` | `!gel` | Botu kanalına çağırır |
+| `!lastseen <name>` | `!gorulme` | Biri en son ne zaman çevrimiçiydi |
 | `!help` | `!yardim` | Yardım |
 
 Bot cevapları 9 dilde (TR, EN, DE, ES, FR, RU, PT, PL, IT). Özel komutlar, komut adları ve tüm cevap metinleri panelden değiştirilebilir.

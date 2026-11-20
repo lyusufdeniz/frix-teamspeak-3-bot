@@ -403,6 +403,23 @@ public sealed class Bot
 		}
 		if (!(message.Length >= 2 && message[0] == '!' && char.IsLetter(message[1])))
 			return;
+		// Frix: panelden yazılan script komutları
+		if (plugins is { } shost && textMessage.InvokerId != ts3FullClient.ClientId
+			&& shost.ScriptCommand(textMessage.InvokerId, textMessage.InvokerUid ?? Uid.Null, textMessage.InvokerName, message, textMessage.Target.ToString().ToLowerInvariant()) is { } sreply)
+		{
+			if (sreply.Length > 0)
+			{
+				var colored = FrixChat.Colorize(sreply);
+				var r = textMessage.Target switch
+				{
+					TextMessageTargetMode.Private => await ts3FullClient.SendPrivateMessage(colored, textMessage.InvokerId),
+					TextMessageTargetMode.Server => await ts3FullClient.SendServerMessage(colored, 1),
+					_ => await ts3FullClient.SendChannelMessage(colored),
+				};
+				r.UnwrapToLog(Log);
+			}
+			return;
+		}
 		var rewritten = Frix.FrixCommands.Rewrite(message);
 		if (rewritten is null)
 			return;

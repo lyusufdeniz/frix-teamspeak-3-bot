@@ -1,0 +1,18 @@
+# Frix — docker compose up -d
+# Panel: http://SUNUCU-IP:58913 (ilk açılışta yönetici hesabını oluşturursun)
+services:
+  frix:
+    image: ghcr.io/lyusufdeniz/frix:latest
+    container_name: frix
+    restart: unless-stopped
+    ports:
+      - "58913:58913"
+    volumes:
+      - frix-data:/data
+    environment:
+      # Panel portunu değiştirmek için (ports satırını da güncelle):
+      # FRIX_WEB_PORT: "58913"
+      TZ: Europe/Istanbul
+
+volumes:
+  frix-data:

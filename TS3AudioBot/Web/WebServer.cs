@@ -27,6 +27,9 @@ namespace TS3AudioBot.Web;
 
 public sealed class WebServer : IDisposable
 {
+	/// <summary>Frix: FRIX_WEB_PORT ortam değişkeni (Docker / Pterodactyl) ayar dosyasındaki portu ezer.</summary>
+	private ushort WebPort => ushort.TryParse(System.Environment.GetEnvironmentVariable("FRIX_WEB_PORT"), out var p) && p > 0 ? p : config.Port.Value;
+
 	private static readonly NLog.Logger Log = NLog.LogManager.GetCurrentClassLogger();
 	private const string DefaultFrontendFolder = "WebInterface";
 
@@ -109,18 +112,18 @@ public sealed class WebServer : IDisposable
 				var addrs = config.Hosts.Value;
 				if (addrs.Contains("*"))
 				{
-					kestrel.ListenAnyIP(config.Port.Value);
+					kestrel.ListenAnyIP(WebPort);
 				}
 				else if (addrs is ["localhost"])
 				{
-					kestrel.ListenLocalhost(config.Port.Value);
+					kestrel.ListenLocalhost(WebPort);
 				}
 				else
 				{
 					foreach (var addr in addrs)
 					{
 						var ip = IPAddress.Parse(addr);
-						kestrel.Listen(ip, config.Port.Value);
+						kestrel.Listen(ip, WebPort);
 					}
 				}
 			})
@@ -181,7 +184,7 @@ public sealed class WebServer : IDisposable
 
 		PanelAuth.Initialize();
 		PanelApi.Init(coreInjector);
-		Log.Info("Starting Webserver on port {0}", config.Port.Value);
+		Log.Info("Starting Webserver on port {0}", WebPort);
 		_ = Task.Run(async () =>
 		{
 			try

@@ -162,6 +162,22 @@ Bot boştayken avatarı, ayarladığın komutlara göre otomatik çizilir (yenid
 **Dili nasıl değiştiririm?**
 Tek bir dil ayarı var: Panel → Ayarlar → Genel → *Dil* (ilk kurulumda da sorulur). Panel, botun TeamSpeak cevapları ve komut adları hep bu dili kullanır: Türkçe, English, Deutsch, Español, Français, Русский, Português, Polski, Italiano. Komut adları Türkçe seçilirse Türkçe, diğer tüm dillerde İngilizce gelir (`!play`, `!next`, `!help`…). Dil değişince komutlara verdiğin özel adlar bu varsayılanlara döner; Türkçe adlar her zaman çalışır ve her komutu panelden istediğin gibi adlandırabilirsin. Tek tek cevapları Panel → Eklentiler → *Bot metinleri* bölümünden düzenleyebilirsin.
 
+
+**Kendi müzik dosyalarımı nasıl çalarım?**
+Panel → *Kütüphane* → *Dosya yükle* (mp3, ogg, opus, wav, flac, m4a, aac, webm, wma; dosya başına en fazla 200 MB). Dosyalar `music-library/` klasöründe durur. Satırdaki düğmelerle çalar, kuyruğa ya da bir çalma listesine eklersin; sohbette `!dosya <ad>` da çalışır.
+
+**Scriptlerle ne yapabilirim?**
+Panel → Eklentiler → *Scriptler*. JavaScript ile kendi komutunu (`frix.command('selam', (args, ctx) => 'Merhaba ' + ctx.user)`) ya da olaylara tepki veren otomasyonlar (`frix.on('connect' | 'channel' | 'message' | 'song' | 'tick', …)`) yazarsın. Scriptler dosya, ağ ya da sistem erişimi olmadan çalışır; her çağrı 2 saniye ve 32 MB ile sınırlıdır. Tam liste düzenleyicideki *API başvurusu* bölümünde, hatalar *Script logları* penceresinde.
+
+**Ayarlarımı nasıl yedeklerim / taşırım?**
+Panel → Ayarlar → *Yedekleme*. İstediğin bölümleri seçip tek bir JSON dosyası indirirsin; *Yedekten geri yükle* ile başka bir kurulumda içeriğini görüp seçtiğin bölümleri geri yüklersin. Kullanıcılar ve şifreler, bot bağlantı ayarları ve kütüphanedeki müzik dosyaları yedeğe girmez.
+
+**Botu kanalıma nasıl çağırırım, biri en son ne zaman buradaydı?**
+`!gel` botu yazdığın kanala taşır. `!gorulme <isim>` kişinin şu an çevrimiçi olup olmadığını ya da en son ne zaman görüldüğünü söyler (botların gördüğü herkes dakikada bir kaydedilir).
+
+**Docker ya da Pterodactyl ile kurabilir miyim?**
+Evet: README'deki *Docker* ve *Pterodactyl* bölümlerine bak. Docker'da veriler `/data` biriminde, Pterodactyl'de sunucunun klasöründe durur; panel portu `FRIX_WEB_PORT` ile (Pterodactyl'de otomatik) ayarlanır.
+
 ---
 
 ## English
@@ -323,3 +339,18 @@ While idle, the avatar is drawn automatically from your commands (renamed comman
 
 **How do I change the language?**
 There is one language setting: Panel → Settings → General → *Language* (also asked during setup). The panel, the bot's TeamSpeak replies and the command names all use it: Türkçe, English, Deutsch, Español, Français, Русский, Português, Polski, Italiano. Command names are Turkish when Turkish is chosen and English in every other language (`!play`, `!next`, `!help`…). Changing the language resets custom command names to these defaults; the Turkish names always work and every command can be renamed in the panel. Individual replies can be edited in Panel → Plugins → *Bot texts*.
+
+**How do I play my own music files?**
+Panel → *Library* → *Upload files* (mp3, ogg, opus, wav, flac, m4a, aac, webm, wma; up to 200 MB each). Files are kept in `music-library/`. Use the buttons on each row to play, queue or add them to a playlist; `!file <name>` works in chat too.
+
+**What can I do with scripts?**
+Panel → Plugins → *Scripts*. Write your own commands in JavaScript (`frix.command('hello', (args, ctx) => 'Hi ' + ctx.user)`) or automations that react to events (`frix.on('connect' | 'channel' | 'message' | 'song' | 'tick', …)`). Scripts have no file, network or system access; each call is limited to 2 seconds and 32 MB. The full list is under *API reference* in the editor; errors show in *Script logs*.
+
+**How do I back up / move my settings?**
+Panel → Settings → *Backup*. Choose the parts and download one JSON file; *Restore from backup* on another install shows what is inside and restores the parts you pick. Users and passwords, bot connection settings and the library's music files are not included.
+
+**How do I bring the bot to my channel, or see when someone was last online?**
+`!come` moves the bot to your channel. `!lastseen <name>` says whether someone is online right now or when they were last seen (everyone the bots see is recorded once a minute).
+
+**Can I run Frix with Docker or Pterodactyl?**
+Yes: see the *Docker* and *Pterodactyl* sections of the README. With Docker all data is in the `/data` volume, with Pterodactyl in the server's folder; the panel port is set with `FRIX_WEB_PORT` (automatic on Pterodactyl).

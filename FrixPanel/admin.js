@@ -79,6 +79,7 @@
     const sub = location.pathname.replace(/\/+$/, '').split('/')[2];
     if (sub === 'custom') { root.append(F.pageHead(t('commands.custom'), t('commands.customSub'))); commandsTab(root); return {}; }
     if (sub === 'texts') { root.append(F.pageHead(t('commands.tabTexts'), t('commands.textsSub'))); textsTab(root); return {}; }
+    if (sub === 'scripts') { scriptsTab(root); return {}; }
     let botName = F.state.selected;
     let builtins = [];
     const sel = h('select', { class: 'input', 'aria-label': t('plugins.bot') });
@@ -498,6 +499,103 @@
     return { onBots };
   };
 
+  // ================================================================== SCRIPTS
+  const SCRIPT_API = [
+    ['frix.command(name, (args, ctx) => text)', 'scripts.api.command'],
+    ['frix.on(event, (e) => { … })', 'scripts.api.on'],
+    ['frix.sendChannel(text) · frix.sendServer(text)', 'scripts.api.send'],
+    ['frix.sendPrivate(id, text) · frix.poke(id, text)', 'scripts.api.private'],
+    ['frix.clients()', 'scripts.api.clients'],
+    ['frix.store.get(key) · frix.store.set(key, value)', 'scripts.api.store'],
+    ['frix.log(value) · frix.botName · frix.serverName', 'scripts.api.log'],
+  ];
+  function scriptsTab(root) {
+    let tmpl = '';
+    const list = h('div', { class: 'cmd-list script-list' }, F.skeleton(3, 'sk-row'));
+    root.append(F.pageHead(t('scripts.title'), t('scripts.sub'), [
+      F.btn(t('scripts.logs'), { kind: 'ghost', icon: 'file', onClick: showLogs }),
+      F.btn(t('scripts.new'), { kind: 'primary', icon: 'plus', onClick: () => edit(null) })]),
+      h('div', { class: 'callout' }, icon('info'), h('div', null, h('p', null, F.rich(t('scripts.hint'))))), list);
+    async function load() {
+      try {
+        const r = await F.api('GET', 'scripts');
+        tmpl = r.template || '';
+        render(r.items || []);
+      } catch (e) { F.fail(e); list.replaceChildren(F.empty('alert', t('err.loadFailed'))); }
+    }
+    function render(items) {
+      if (!items.length) { list.replaceChildren(F.empty('code', t('scripts.none'), t('scripts.noneHint'))); return; }
+      const head = h('div', { class: 'tbl-row script-trow tbl-head fit-skip' },
+        h('span', { text: t('scripts.f.name') }), h('span', { text: t('scripts.f.state') }), h('span', { text: t('scripts.f.modified') }), h('span', { text: t('plugins.enabled') }), h('span'));
+      list.replaceChildren(head, ...items.map((s) => {
+        const sw = F.switchEl(s.enabled, null, { 'aria-label': t('plugins.enabled') + ': ' + s.name });
+        sw.input.addEventListener('change', async () => {
+          try { await F.api('PUT', 'scripts/' + enc(s.name) + '/enabled', { enabled: sw.input.checked }); F.toast(t('common.saved')); setTimeout(load, 1500); }
+          catch (e) { sw.input.checked = !sw.input.checked; F.fail(e); }
+        });
+        const state = s.error ? h('span', { class: 'badge badge-danger', title: s.error, text: t('scripts.error') })
+          : s.enabled ? F.badge(t('scripts.running'), 'accent') : F.badge(t('scripts.off'));
+        return h('div', { class: 'tbl-row script-trow' + (s.enabled ? '' : ' disabled') },
+          h('code', { class: 'cmd-trigger', text: s.name + '.js' }),
+          h('span', { class: 'script-state' }, state, s.error ? h('span', { class: 'muted small tbl-ellipsis', text: s.error, title: s.error }) : null),
+          h('span', { class: 'muted small', text: new Date(s.modified).toLocaleString() }),
+          sw,
+          h('span', { class: 'tbl-actions' },
+            F.btn(t('common.edit'), { kind: 'ghost', icon: 'edit', cls: 'btn-sm', onClick: () => edit(s.name) }),
+            F.iconBtn('trash', t('common.delete'), () => del(s.name), 'danger')));
+      }));
+    }
+    async function edit(name) {
+      let code = tmpl;
+      if (name) { try { code = (await F.api('GET', 'scripts/' + enc(name))).code; } catch (e) { F.fail(e); return; } }
+      const nameIn = F.input({ value: name || '', maxlength: 40, placeholder: 'selam', pattern: '[A-Za-z0-9_-]{1,40}', disabled: !!name });
+      const ta = h('textarea', { class: 'input script-editor', spellcheck: 'false', autocapitalize: 'off', autocomplete: 'off' });
+      ta.value = code;
+      // Tab inserts two spaces instead of leaving the editor
+      ta.addEventListener('keydown', (e) => {
+        if (e.key !== 'Tab' || e.shiftKey) return;
+        e.preventDefault();
+        const a = ta.selectionStart;
+        ta.value = ta.value.slice(0, a) + '  ' + ta.value.slice(ta.selectionEnd);
+        ta.setSelectionRange(a + 2, a + 2);
+      });
+      const enabled = F.switchEl(true, t('scripts.enableOnSave'));
+      const api = h('details', { class: 'pf-fold script-api' }, h('summary', null, icon('code'), h('span', { text: t('scripts.apiTitle') })),
+        h('dl', { class: 'kv script-kv' }, SCRIPT_API.flatMap(([sig, key]) => [h('dt', null, h('code', { text: sig })), h('dd', { class: 'muted small', text: t(key) })])),
+        h('p', { class: 'muted small', text: t('scripts.api.events') }), h('p', { class: 'muted small', text: t('scripts.api.limits') }));
+      F.modal({
+        title: name ? name + '.js' : t('scripts.new'), size: 'wide',
+        body: h('div', { class: 'script-edit' }, name ? null : F.field(t('scripts.f.name'), nameIn, t('scripts.nameHelp')), ta, name ? null : enabled, api),
+        actions: [{ label: t('common.cancel') }, {
+          label: t('common.save'), kind: 'primary', primary: true, icon: 'check', onClick: async () => {
+            const n = (name || nameIn.value).trim();
+            if (!/^[A-Za-z0-9_-]{1,40}$/.test(n)) { F.toast(t('err.bad_script_name'), 'err'); nameIn.focus(); return false; }
+            try {
+              await F.api('PUT', 'scripts/' + enc(n), name ? { code: ta.value } : { code: ta.value, enabled: enabled.input.checked });
+              F.toast(t('scripts.saved')); setTimeout(load, 1500); return true;
+            } catch (e) { F.fail(e); return false; }
+          },
+        }],
+      });
+      setTimeout(() => (name ? ta : nameIn).focus(), 50);
+    }
+    async function del(name) {
+      if (!(await F.confirm(t('scripts.deleteConfirm', { name }), { danger: true, ok: t('common.delete') }))) return;
+      try { await F.api('DELETE', 'scripts/' + enc(name)); F.toast(t('common.deleted')); load(); } catch (e) { F.fail(e); }
+    }
+    async function showLogs() {
+      let lines = [];
+      try { lines = (await F.api('GET', 'scripts/log')) || []; } catch (e) { F.fail(e); return; }
+      const body = lines.length ? h('div', { class: 'script-log' }, lines.map((l) => h('div', { class: 'script-log-row ' + l.level },
+        h('span', { class: 'muted small', text: new Date(l.time).toLocaleTimeString() }), h('code', { text: l.script }), h('span', { class: 'muted small', text: l.bot }),
+        h('span', { class: 'script-log-text', text: l.text })))) : F.empty('file', t('scripts.noLogs'));
+      F.modal({ title: t('scripts.logs'), size: 'wide', body, actions: [
+        { label: t('logs.clear'), icon: 'trash', onClick: async () => { try { await F.api('DELETE', 'scripts/log'); } catch (e) { F.fail(e); } return true; } },
+        { label: t('common.close') }] });
+    }
+    load();
+  }
+
   // ================================================================== COMMANDS + TEXTS
   function commandsTab(pane) {
     const custom = h('div', { class: 'cmd-list' }, F.skeleton(3, 'sk-row'));
@@ -912,6 +1010,7 @@
     { key: 'general', icon: 'sliders' },
     { key: 'youtube', icon: 'music' },
     { key: 'updates', icon: 'download' },
+    { key: 'backup', icon: 'archive' },
     { key: 'system', icon: 'info' },
   ];
   Pages.settings = function (root) {
@@ -935,6 +1034,7 @@
         general: () => [langCard(), panelCard()],
         youtube: () => [ytdlpCard(), cookieCard()],
         updates: () => [updateCard()],
+        backup: () => [backupCard(), restoreCard()],
         system: () => [sysCard(), supportCard(), restartCard()],
       };
       body.replaceChildren(...SETTINGS_SECTIONS.map((sec) => {
@@ -981,6 +1081,54 @@
         } catch (e) { F.fail(e); }
       }));
       return card('globe', t('settings.lang'), t('settings.langHelp'), h('div', { class: 'set-row' }, h('div', { class: 'grow' }, sel), save));
+    }
+    const BACKUP_SECTIONS = ['plugins', 'texts', 'commands', 'radios', 'playlists', 'settings', 'avatars', 'stats'];
+    /** download a backup of the chosen parts (statistics are big: off by default) */
+    function backupCard() {
+      const boxes = BACKUP_SECTIONS.map((k) => {
+        const cb = h('input', { type: 'checkbox', checked: k !== 'stats', value: k });
+        return h('label', { class: 'check bk-check' }, cb, h('span', { text: t('backup.sec.' + k) }));
+      });
+      const dl = F.btn(t('backup.download'), { kind: 'primary', icon: 'download', onClick: () => {
+        const secs = boxes.map((b) => b.querySelector('input')).filter((i) => i.checked).map((i) => i.value);
+        if (!secs.length) { F.toast(t('backup.pickOne'), 'err'); return; }
+        const a = h('a', { href: '/panel/api/backup?sections=' + encodeURIComponent(secs.join(',')), download: '' });
+        document.body.append(a); a.click(); a.remove();
+      } });
+      return card('archive', t('backup.title'), t('backup.help'), h('div', { class: 'bk-grid' }, boxes), h('div', null, dl));
+    }
+    /** restore: pick a file, see what is inside, choose the parts to replace */
+    function restoreCard() {
+      const file = h('input', { type: 'file', accept: '.json,application/json', hidden: true });
+      const pick = F.btn(t('backup.choose'), { kind: 'ghost', icon: 'upload', onClick: () => file.click() });
+      file.addEventListener('change', () => F.busy(pick, async () => {
+        const f = file.files && file.files[0];
+        file.value = '';
+        if (!f) return;
+        const text = await f.text();
+        let info;
+        try { info = await F.api('POST', 'backup/inspect', text, { text: true }); } catch (e) { F.fail(e); return; }
+        const boxes = (info.sections || []).map((s2) => {
+          const cb = h('input', { type: 'checkbox', checked: true, value: s2.key });
+          return h('label', { class: 'check bk-check' }, cb, h('span', { text: t('backup.sec.' + s2.key) }), h('span', { class: 'muted small', text: ' · ' + s2.count }));
+        });
+        F.modal({
+          title: t('backup.restoreTitle'),
+          body: h('div', null,
+            h('p', { class: 'muted small', text: t('backup.fileInfo', { version: info.version || '?', date: info.created ? new Date(info.created).toLocaleString() : '?' }) }),
+            h('div', { class: 'bk-grid' }, boxes),
+            h('div', { class: 'callout small warn' }, icon('alert'), h('div', { text: t('backup.replaceWarn') }))),
+          actions: [{ label: t('common.cancel') }, {
+            label: t('backup.restore'), kind: 'danger', primary: true, icon: 'upload', onClick: async () => {
+              const secs = boxes.map((b) => b.querySelector('input')).filter((i) => i.checked).map((i) => i.value);
+              if (!secs.length) { F.toast(t('backup.pickOne'), 'err'); return false; }
+              try { await F.api('POST', 'backup/restore', JSON.stringify({ data: text, sections: secs }), { text: true }); F.toast(t('backup.restored')); bumpAvatar(); return true; }
+              catch (e) { F.fail(e); return false; }
+            },
+          }],
+        });
+      }));
+      return card('upload', t('backup.restoreTitle'), t('backup.restoreHelp'), h('div', null, pick, file));
     }
     function sysCard() {
       return card('info', t('settings.system'), null,
