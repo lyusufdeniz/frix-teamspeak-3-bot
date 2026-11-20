@@ -20,17 +20,17 @@ public static class FrixGroups
 	public static readonly PluginGroup[] All =
 	[
 		new("g_music", "Müzik", "Music",
-			"Şarkı çalma ve müzik özellikleri: komutlar, ses eşitleme, otomatik devam, favoriler, oylamayla geçme, DJ modu, yalnızken duraklatma.",
-			"Playing songs and music features: commands, volume levelling, autoplay, favourites, vote skip, DJ mode, pause when alone.",
-			["music", "normalize", "autoplay", "favorites", "voteskip", "djmode", "alonepause"]),
+			"Şarkı çalma ve müzik özellikleri: komutlar, ses eşitleme, otomatik devam, favoriler, oylamayla geçme, DJ modu, yalnızken duraklatma, çalan şarkıyı bot adı / açıklaması yapma.",
+			"Playing songs and music features: commands, volume levelling, autoplay, favourites, vote skip, DJ mode, pause when alone, the playing song as the bot's name / description.",
+			["music", "normalize", "autoplay", "favorites", "voteskip", "djmode", "alonepause", "npstatus"]),
 		new("g_radio", "Radyo", "Radio",
 			"Panelde eklenen radyolar (!radyo) ve kuyruk boşken otomatik radyo.",
 			"Radios added in the panel (!radio) and a radio when the queue is idle.",
 			["radio", "idleradio"]),
-		new("g_look", "Bot görünümü", "Bot appearance",
-			"Botun avatarı ve çalan şarkıyı ad / açıklama olarak gösterme.",
-			"The bot's avatar and showing the playing song as its name / description.",
-			["avatar", "npstatus"]),
+		new("g_look", "Avatar oluşturucu", "Avatar creator",
+			"Botun avatarını oluşturur: boştayken açık eklentilerin komutlarını gösteren kart, çalarken şarkının kapağı.",
+			"Creates the bot's avatar: a card with the commands of the enabled plugins while idle, the song cover while playing.",
+			["avatar"]),
 		new("g_reconnect", "Otomatik yeniden bağlan", "Auto reconnect",
 			"Bot sunucudan düşünce kendiliğinden tekrar bağlanır ve aynı kanala girer.",
 			"When the bot drops it reconnects by itself and rejoins the same channel.",
@@ -139,6 +139,42 @@ public static class FrixGroups
 		}
 		catch (Exception ex) { Log.Warn(ex, "Eklenti ayarları gruplara taşınamadı"); }
 		MigrateSeconds();
+		MigrateLook();
+	}
+
+	/// <summary>"Şarkı adı → bot adı" (npstatus) g_look'tan g_music'e taşındı; g_look artık sadece avatar.</summary>
+	private static void MigrateLook()
+	{
+		try
+		{
+			foreach (var r in FrixDb.Query("SELECT bot, enabled, config FROM plugins WHERE id='g_look'"))
+			{
+				var bot = (string)r["bot"]!;
+				var look = JsonNode.Parse((r["config"] as string) ?? "{}") as JsonObject ?? [];
+				if (!look.Any(kv => kv.Key == "npstatus" || kv.Key == "avatar" || kv.Key.StartsWith("npstatus.", StringComparison.Ordinal))) continue;
+				var master = (long)r["enabled"]! != 0;
+				static bool Flag(JsonObject o, string k, bool def) => o.TryGetPropertyValue(k, out var v) && v is JsonValue jv && jv.TryGetValue<bool>(out var b) ? b : def;
+				var npOn = master && Flag(look, "npstatus", Protos["npstatus"].DefaultEnabled);
+				var avatarOn = master && Flag(look, "avatar", Protos["avatar"].DefaultEnabled);
+
+				var mrow = FrixDb.Query("SELECT enabled, config FROM plugins WHERE bot=$b AND id='g_music'", ("$b", bot)).FirstOrDefault();
+				var music = mrow is null ? new JsonObject() : JsonNode.Parse((mrow["config"] as string) ?? "{}") as JsonObject ?? [];
+				music["npstatus"] = npOn;
+				var lookNew = new JsonObject();
+				foreach (var (k, v) in look)
+				{
+					if (k.StartsWith("npstatus.", StringComparison.Ordinal)) music[k] = v?.DeepClone();
+					else if (k.StartsWith("avatar.", StringComparison.Ordinal)) lookNew[k] = v?.DeepClone();
+				}
+				var musicOn = mrow is null ? DefaultOn(Get("g_music")!) : (long)mrow["enabled"]! != 0;
+				if (npOn) musicOn = true;
+				FrixDb.Exec("INSERT INTO plugins(bot,id,enabled,config) VALUES($b,'g_music',$e,$c) ON CONFLICT(bot,id) DO UPDATE SET enabled=excluded.enabled, config=excluded.config",
+					("$b", bot), ("$e", musicOn ? 1 : 0), ("$c", music.ToJsonString()));
+				FrixDb.Exec("UPDATE plugins SET enabled=$e, config=$c WHERE bot=$b AND id='g_look'",
+					("$e", avatarOn ? 1 : 0), ("$c", lookNew.ToJsonString()), ("$b", bot));
+			}
+		}
+		catch (Exception ex) { Log.Warn(ex, "Şarkı adı ayarı müziğe taşınamadı"); }
 	}
 
 	/// <summary>Dakika cinsinden eski aralıkları saniyeye çevirir (interval → intervalSec).</summary>

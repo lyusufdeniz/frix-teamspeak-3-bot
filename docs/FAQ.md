@@ -148,10 +148,10 @@ Panel → Eklentiler → *Zamanlanmış çalma*. Her satır bir plan: `09:00 | r
 *Sunucu aktivitesi* eklentisi (varsayılan açık) çevrimiçi kişi sayısını 5 dakikada bir kaydeder. Dashboard'da son 24 saat grafiği ve gün × saat ısı haritası (en yoğun saatler) görünür.
 
 **Çalan şarkı botun adında / açıklamasında görünsün**
-Panel → Eklentiler → *Bot görünümü* → *Şarkı adı → bot adı/açıklaması*. Ad ve açıklama biçimini ayrı ayrı ayarlarsın (`{title}`, `{user}`, `{bot}`). TeamSpeak adları en fazla 30 karakter olduğu için uzun adlar kısaltılır. Çalma bitince bot eski adına döner.
+Panel → Eklentiler → *Müzik* → *Şarkı adı → bot adı/açıklaması*. Ad ve açıklama biçimini ayrı ayrı ayarlarsın (`{title}`, `{user}`, `{bot}`). TeamSpeak adları en fazla 30 karakter olduğu için uzun adlar kısaltılır. Çalma bitince bot eski adına döner.
 
 **Avatarı nasıl kapatırım ya da şarkı kapağını istemiyorum**
-Panel → Eklentiler → *Bot görünümü* → *Avatar*: boşta komut kartı ve çalarken şarkı kapağı ayrı ayrı açılıp kapanır. Avatar özelliğini kapatırsan bot avatarı kaldırılır.
+Panel → Eklentiler → *Avatar oluşturucu*: boşta komut kartı ve çalarken şarkı kapağı ayrı ayrı açılıp kapanır. Avatar özelliğini kapatırsan bot avatarı kaldırılır.
 
 **Bot cevaplarını renkli / kalın yapabilir miyim?**
 Evet: Panel → Eklentiler → *Bot metinleri*. Üstteki *Mesaj görünümü* kartında tüm cevapların varsayılan rengini, hata rengini ve kalınlığı seçersin. Her cevabın üstündeki araç çubuğuyla seçili yazıyı kalın, italik, altı çizili ya da renkli yaparsın (TeamSpeak BBCode: `[b]`, `[i]`, `[u]`, `[s]`, `[color=#FF0000]`, `[url]`); altındaki önizleme TeamSpeak'te nasıl görüneceğini gösterir. Kendi `[color]` etiketi olan cevaplara varsayılan renk eklenmez.
@@ -310,10 +310,10 @@ Both are one plugin now: Panel → Plugins → *Welcome & announcements* → *An
 The *Server activity* plugin (on by default) records how many people are online every 5 minutes. The dashboard shows the last 24 hours and a day × hour heat map of the busiest times.
 
 **Show the playing song in the bot's nickname / description**
-Panel → Plugins → *Bot appearance* → *Song → bot name/description*. Set the nickname and description formats separately (`{title}`, `{user}`, `{bot}`). TeamSpeak nicknames are max 30 characters, so long titles are cut. The bot gets its own name back when playback stops.
+Panel → Plugins → *Music* → *Song → bot name/description*. Set the nickname and description formats separately (`{title}`, `{user}`, `{bot}`). TeamSpeak nicknames are max 30 characters, so long titles are cut. The bot gets its own name back when playback stops.
 
 **How do I turn the avatar or the song cover off?**
-Panel → Plugins → *Bot appearance* → *Avatar*: the idle command card and the song cover while playing can be switched separately. Turning the avatar feature off removes the bot's avatar.
+Panel → Plugins → *Avatar creator*: the idle command card and the song cover while playing can be switched separately. Turning the avatar feature off removes the bot's avatar.
 
 **Can the bot's replies be coloured / bold?**
 Yes: Panel → Plugins → *Bot texts*. The *Message look* card sets the default colour, error colour and bold for all replies. The toolbar above each reply makes the selected text bold, italic, underlined or coloured (TeamSpeak BBCode: `[b]`, `[i]`, `[u]`, `[s]`, `[color=#FF0000]`, `[url]`); the preview below shows how it will look in TeamSpeak. Replies with their own `[color]` tag don't get the default colour.

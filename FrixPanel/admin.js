@@ -11,33 +11,30 @@
   const bumpAvatar = () => { F.avatarStamp = Date.now(); document.querySelectorAll('img.avatar-img').forEach((i) => { i.closest('.avatar-box').classList.remove('missing'); i.src = '/panel/api/avatar?t=' + F.avatarStamp; }); };
   F.bumpAvatar = bumpAvatar;
 
+  /** one built-in command: usage + new name. Saved when the field is left or Enter is pressed; the old name keeps working. */
   function builtinRow(b) {
     const supported = 'alias' in b;
     const alias = F.input({ value: b.alias || '', placeholder: b.trigger, maxlength: 32, 'aria-label': t('commands.renameLabel', { trigger: b.trigger }), disabled: !supported });
-    const keep = h('input', { type: 'checkbox', checked: b.keepOld !== false, disabled: !supported });
-    const keepLbl = h('label', { class: 'check' }, keep, h('span', { text: t('commands.keepOld') }));
-    const result = h('code', { class: 'builtin-result' });
-    const paint = () => {
-      const a = (b.alias || '').trim();
-      result.textContent = a ? '!' + b.trigger + ' → !' + a + (b.keepOld ? '  (+ !' + b.trigger + ')' : '') : '!' + b.trigger;
-      result.classList.toggle('renamed', !!a);
-    };
-    paint();
-    const save = F.btn(t('common.save'), { kind: 'ghost', icon: 'check', disabled: !supported });
-    save.addEventListener('click', () => F.busy(save, async () => {
-      const body = { alias: alias.value.trim().replace(/^!/, ''), keepOld: keep.checked };
+    const state = h('span', { class: 'builtin-state', 'aria-hidden': 'true' });
+    let saving = false;
+    const save = async () => {
+      const v = alias.value.trim().replace(/^!/, '');
+      if (saving || v === (b.alias || '')) return;
+      saving = true; state.replaceChildren(icon('refresh')); state.className = 'builtin-state busy';
       try {
-        await F.api('PUT', 'commands/builtin/' + enc(b.trigger), body);
-        b.alias = body.alias || null; b.keepOld = body.keepOld; alias.value = body.alias; paint();
-        F.toast(body.alias ? t('commands.renamed', { from: b.trigger, to: body.alias }) : t('commands.renameReset', { trigger: b.trigger }));
+        await F.api('PUT', 'commands/builtin/' + enc(b.trigger), { alias: v, keepOld: true });
+        b.alias = v || null; alias.value = v;
+        state.replaceChildren(icon('check')); state.className = 'builtin-state ok';
+        F.toast(v ? t('commands.renamed', { from: b.trigger, to: v }) : t('commands.renameReset', { trigger: b.trigger }));
         bumpAvatar();
-      } catch (e) { F.fail(e); }
-    }));
-    alias.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save.click(); } });
+      } catch (e) { F.fail(e); state.replaceChildren(); state.className = 'builtin-state'; alias.value = b.alias || ''; }
+      saving = false;
+    };
+    alias.addEventListener('change', save);
+    alias.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); alias.blur(); } });
     return h('div', { class: 'builtin-row' },
       h('div', { class: 'builtin-usage-cell' }, h('code', { class: 'builtin-usage', text: b.usage })),
-      h('div', { class: 'input-prefix builtin-alias' }, h('span', { text: '!' }), alias),
-      keepLbl, save, result);
+      h('div', { class: 'input-prefix builtin-alias' }, h('span', { text: '!' }), alias), state);
   }
 
   /** rename rows for the built-in commands that belong to one plugin (or to none: id = null) */
@@ -197,7 +194,9 @@
         } else { ctl = F.input({ value: val == null ? '' : String(val) }); get = () => ctl.value; }
         getters.push([f.key, get]);
         const help = f.help ? F.loc(f.help) : null;
-        const fe = f.type === 'bool' ? h('div', { class: 'field' }, ctl, help ? h('div', { class: 'help', text: help }) : null) : F.field(F.loc(f.label), ctl, help, { cls: f.type === 'textarea' || f.type === 'channels' ? 'span2' : '' });
+        const bb = BB_FIELDS.has(f.key) && (f.type === 'text' || f.type === 'textarea');
+        if (bb) ctl = bbField(ctl).el;
+        const fe = f.type === 'bool' ? h('div', { class: 'field' }, ctl, help ? h('div', { class: 'help', text: help }) : null) : F.field(F.loc(f.label), ctl, help, { cls: bb || f.type === 'textarea' || f.type === 'channels' ? 'span2' : '' });
         if (curSec) curSec.els.push(fe);
         return fe;
       });
@@ -310,11 +309,14 @@
       const kind = F.select([['text', t('commands.kind.text')], ['alias', t('commands.kind.alias')]], c ? c.kind : 'text');
       const kindHelp = h('div', { class: 'callout small' });
       const value = F.textarea({ value: c ? c.value : '', rows: 3, maxlength: 1000 });
+      const bbv = bbField(value);
       const desc = F.input({ value: c && c.description ? c.description : '', maxlength: 200 });
       const en = F.switchEl(c ? c.enabled : true, t('commands.enabled'));
       const sync = () => {
         kindHelp.replaceChildren(icon('info'), h('div', null, F.rich(t('commands.kindHelp.' + kind.value))));
         value.placeholder = kind.value === 'alias' ? '!play' : 'Discord: https://discord.gg/… {user}';
+        const txt = kind.value === 'text';
+        bbv.bar.hidden = !txt; bbv.prev.classList.toggle('off', !txt);
       };
       kind.addEventListener('change', sync); sync();
       F.modal({
@@ -322,7 +324,7 @@
         body: h('div', null,
           F.field(t('commands.f.trigger'), h('div', { class: 'input-prefix' }, h('span', { text: '!' }), trig), t('commands.f.triggerHelp')),
           F.field(t('commands.f.kind'), kind), kindHelp,
-          F.field(t('commands.f.value'), value),
+          F.field(t('commands.f.value'), bbv.el),
           F.field(t('commands.f.desc'), desc, t('commands.f.descHelp')), en),
         actions: [{ label: t('common.cancel') }, {
           label: t('common.save'), kind: 'primary', primary: true, icon: 'check', onClick: async () => {
@@ -366,6 +368,19 @@
       b('B', 'b', t('texts.bb.bold'), 'b'), b('I', 'i', t('texts.bb.italic'), 'i'), b('U', 'u', t('texts.bb.underline'), 'u'), b('S', 's', t('texts.bb.strike'), 's'),
       b('URL', 'url', t('texts.bb.link'), 'url'),
       h('span', { class: 'bb-sep' }), ...sw, custom, h('span', { class: 'bb-sep' }), strip);
+  }
+  // plugin fields whose text is sent to TeamSpeak chat / pokes (BBCode works there)
+  const BB_FIELDS = new Set(['welcome.message', 'advertisement.messages', 'advertisement.schedule', 'afkmover.message', 'namefilter.message',
+    'supportnotify.staffMessage', 'supportnotify.userMessage', 'supportnotify.noStaffMessage',
+    'registration.staffMessage', 'registration.userMessage', 'registration.doneMessage',
+    'ranks.message', 'channelguard.message', 'antiflood.warnMessage']);
+  /** text field + BBCode toolbar + live preview */
+  function bbField(ctl) {
+    const prev = h('div', { class: 'bb-preview bb-field-prev' });
+    const paint = () => { prev.hidden = !ctl.value.trim(); prev.replaceChildren(bbRender(ctl.value, null)); };
+    ctl.addEventListener('input', paint); paint();
+    const bar = bbToolbar(ctl);
+    return { el: h('div', { class: 'bb-field' }, bar, ctl, prev), bar, prev, paint };
   }
   const safeColor = (c) => (/^(#[0-9a-f]{3}|#[0-9a-f]{6}|[a-z]{3,20})$/i.test(String(c).trim()) ? String(c).trim() : 'inherit');
   /** safe BBCode → DOM preview (only tags TeamSpeak supports in chat), mimics FrixChat.Color */

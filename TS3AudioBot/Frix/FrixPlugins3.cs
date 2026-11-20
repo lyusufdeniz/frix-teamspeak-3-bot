@@ -147,15 +147,15 @@ public sealed class AvatarPlugin : FrixPlugin
 {
 	public override string Id => "avatar";
 	public override bool DefaultEnabled => true;
-	public override string NameTr => "Avatar";
-	public override string NameEn => "Avatar";
+	public override string NameTr => "Avatar oluşturucu";
+	public override string NameEn => "Avatar creator";
 	public override string DescTr => "Botun TeamSpeak avatarını yönetir. Kapatırsan bot avatarı kaldırılır ve bir daha değiştirilmez.";
 	public override string DescEn => "Manages the bot's TeamSpeak avatar. Turning it off removes the avatar and stops changing it.";
 	public override PluginField[] Schema =>
 	[
 		new("idleAuto", "bool", "Boştayken komut kartını otomatik oluştur", "Generate the command card when idle", true, null,
-			"Komut adların, özel komutların ve radyolara göre otomatik çizilir. Kapalıysa boşta avatar kaldırılır.",
-			"Drawn automatically from your command names, custom commands and radios. If off, the avatar is removed when idle."),
+			"Açık eklentilerin komutlarına (müzik, radyo, favoriler, eğlence, kayıt…), özel komutlara ve radyolara göre otomatik çizilir. Kapalıysa boşta avatar kaldırılır.",
+			"Drawn automatically from the commands of the enabled plugins (music, radio, favourites, fun, registration…), custom commands and radios. If off, the avatar is removed when idle."),
 		new("songCover", "bool", "Çalan şarkının görselini koy", "Show the playing song's cover", true, null,
 			"YouTube küçük resmi avatar olur. Kapalıysa çalarken de boştaki avatar kalır.",
 			"The YouTube thumbnail becomes the avatar. If off, the idle avatar stays while playing."),

@@ -27,7 +27,7 @@ public static class FrixAvatar
 	public static Action? RefreshAllBots { get; set; }
 
 	private const int Width = 300;
-	private const int MaxRows = 14;
+	private const int MaxRows = 20;
 
 	public static void Invalidate()
 	{
@@ -97,6 +97,16 @@ public static class FrixAvatar
 			rows.Add((N("calan"), FrixText.Raw("avatar.calan")));
 			rows.Add((N("siradaki"), FrixText.Raw("avatar.siradaki")));
 		}
+		// diğer açık eklentilerin komutları
+		if (On("liste")) rows.Add((N("liste"), FrixText.Raw("avatar.liste")));
+		if (On("fav")) rows.Add((N("fav") + " " + N("favs"), FrixText.Raw("avatar.fav")));
+		if (On("soz")) rows.Add((N("soz"), FrixText.Raw("avatar.soz")));
+		if (On("anket")) rows.Add((N("anket"), FrixText.Raw("avatar.anket")));
+		if (On("hava")) rows.Add((N("hava"), FrixText.Raw("avatar.hava")));
+		if (On("doviz")) rows.Add((N("doviz"), FrixText.Raw("avatar.doviz")));
+		if (On("zar")) rows.Add((N("zar"), N("yazitura") + " · " + N("sec")));
+		if (On("sure")) rows.Add((N("sure") + " " + N("top"), FrixText.Raw("avatar.sure")));
+		if (On("kayit")) rows.Add((N("kayit"), FrixText.Raw("avatar.kayit")));
 
 		foreach (var c in FrixCommands.List().Where(c => c.Enabled))
 		{

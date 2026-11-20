@@ -37,9 +37,9 @@ sunucularda ekransız çalışır.
 - Sol menülü düzen; koyu (füme + mavi) ve açık tema
 - Arama sonuçları, "şarkı ekleniyor" ilerleme çubuğu, kuyruk taşıma/silme, sarma, ses ayarlı oynatıcı
 - Her bot için ayrı açılan **10 eklenti**; benzer özellikler tek eklentinin içinde, her biri ayrı açılıp kapanır:
-  - *Müzik:* komutlar, ses seviyesi eşitleme, otomatik devam (kuyruk bitince benzer şarkılar), favoriler (`!fav`, `!favs`), oylamayla geç, DJ yetkisi ve kuyruk limiti, yalnızken duraklat
+  - *Müzik:* komutlar, ses seviyesi eşitleme, otomatik devam (kuyruk bitince benzer şarkılar), favoriler (`!fav`, `!favs`), oylamayla geç, DJ yetkisi ve kuyruk limiti, yalnızken duraklat, çalan şarkıyı bot adı/açıklaması yapma
   - *Radyo:* panelden eklenen radyolar (`!radyo`), boştayken radyo
-  - *Bot görünümü:* avatar (boşta komut kartı, şarkı kapağı), çalan şarkıyı bot adı/açıklaması yapma
+  - *Avatar oluşturucu:* boştayken açık eklentilerin komutlarını gösteren kart, çalarken şarkı kapağı
   - *Otomatik yeniden bağlan:* düşünce aynı kanala geri girer
   - *Karşılama ve duyurular:* karşılama mesajı, dönen duyurular ve zamanlı duyurular
   - *Zamanlanmış çalma:* belirli saatlerde radyo/liste başlatma, durdurma, ses ayarı
