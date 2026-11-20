@@ -36,6 +36,8 @@ public sealed partial class TsFullClient : TsBaseFunctions, IAudioActiveProducer
 	public override ClientType ClientType => ClientType.Full;
 	/// <summary>The client id given to this connection by the server.</summary>
 	public ClientId ClientId => context?.PacketHandler.ClientId ?? ClientId.Null;
+	/// <summary>Frix: bağlantı kalitesi (ping, paket kaybı) için ölçümler.</summary>
+	public NetworkStats? NetStats => context?.PacketHandler.NetworkStats;
 	/// <summary>The disconnect message when leaving.</summary>
 	public string QuitMessage { get; set; } = "Disconnected";
 	/// <summary>The <see cref="TsVersionSigned"/> used to connect.</summary>

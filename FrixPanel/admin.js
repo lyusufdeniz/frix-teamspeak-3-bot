@@ -212,6 +212,7 @@
         const label = F.loc(f.label);
         const help = f.help ? F.loc(f.help) : null;
         if (f.type === 'avatarimg') return avatarImage(f);
+        if (f.type === 'ranks') { const re = ranksEditor(val == null ? '' : String(val)); getters.push([f.key, re.get]); return h('div', { class: 'field span2' }, h('label', null, splitLabel(label)[0]), re.el); }
         if (f.type === 'schedule') { const sc = scheduleEditor(val == null ? '' : String(val)); getters.push([f.key, sc.get]); return h('div', { class: 'field span2' }, sc.el); }
         if (BB_FIELDS.has(f.key)) { const m = messageField(f, val); getters.push([f.key, m.get]); return m.el; }
         let ctl, get, wide = false;
@@ -299,6 +300,33 @@
           sel.addEventListener('change', sync); sync();
         });
         return el;
+      }
+
+      /** activity ranks: one row per rank (hours online → server group), sorted by hours */
+      function ranksEditor(text) {
+        const rows = h('div', { class: 'rank-rows' });
+        const empty = h('p', { class: 'muted small', text: t('ranks.empty') });
+        const items = [];
+        const renumber = () => { items.forEach((x, i) => { x.no.textContent = String(i + 1); }); empty.hidden = items.length > 0; };
+        function addRow(hours, group) {
+          const no = h('span', { class: 'rank-no' });
+          const hrs = F.input({ type: 'number', min: 1, value: hours == null ? '' : String(hours), placeholder: '10', inputmode: 'numeric' });
+          const grp = F.input({ type: 'number', min: 1, value: group == null ? '' : String(group), placeholder: 'ID', inputmode: 'numeric' });
+          const row = h('div', { class: 'rank-row' }, no,
+            h('div', { class: 'input-suffix' }, hrs, h('span', { text: t('ranks.hours') })),
+            h('span', { class: 'rank-arrow', text: '→' }), grp,
+            F.iconBtn('trash', t('common.delete'), () => { row.remove(); items.splice(items.indexOf(it), 1); renumber(); }, 'danger'));
+          const it = { no, get: () => (hrs.value ? [Number(hrs.value), grp.value.trim()] : null) };
+          items.push(it); rows.append(row); renumber();
+        }
+        text.split('\n').map((l) => l.trim()).filter(Boolean).forEach((l) => { const m = l.match(/^(\d+(?:[.,]\d+)?)\s*=\s*(\d*)$/); if (m) addRow(m[1].replace(',', '.'), m[2]); });
+        renumber();
+        const el = h('div', { class: 'sched' },
+          h('div', { class: 'rank-head muted small' }, h('span'), h('span', { text: t('ranks.after') }), h('span'), h('span', { text: t('ranks.group') })),
+          rows, empty,
+          F.btn(t('ranks.add'), { kind: 'ghost', icon: 'plus', cls: 'btn-sm sched-add', onClick: () => addRow(null, null) }),
+          h('p', { class: 'muted small', text: t('ranks.help') }));
+        return { el, get: () => items.map((x) => x.get()).filter(Boolean).sort((a, b) => a[0] - b[0]).map(([hh, g]) => hh + '=' + g).join('\n') };
       }
 
       /** scheduled playback: one row per plan (days, time, action, target) instead of free text */

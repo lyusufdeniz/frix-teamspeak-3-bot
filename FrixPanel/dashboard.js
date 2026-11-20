@@ -30,11 +30,14 @@
   };
 
   /** stat tile: icon, label, big value, foot (delta / hint) */
-  function tile(ic, label) {
+  /** stat tile; `go` = page path or a function, shown as an "open" button in the corner */
+  function tile(ic, label, go) {
     const value = h('div', { class: 'tile-value' });
     const foot = h('div', { class: 'tile-foot' });
+    const open = go ? h('button', { type: 'button', class: 'tile-go', title: t('dash.open'), 'aria-label': t('dash.open') + ': ' + label,
+      onclick: (e) => { e.stopPropagation(); if (typeof go === 'function') go(); else F.go(go); } }, icon('link')) : null;
     const el = h('section', { class: 'card tile' },
-      h('div', { class: 'tile-head' }, h('span', { class: 'tile-ic' }, icon(ic)), h('span', { class: 'tile-label', text: label })),
+      h('div', { class: 'tile-head' }, h('span', { class: 'tile-ic' }, icon(ic)), h('span', { class: 'tile-label', text: label }), open),
       value, foot);
     return {
       el,
@@ -157,11 +160,37 @@
 
   Pages.dashboard = function (root) {
     root.classList.add('dash-page');
-    const tBots = tile('server', t('dash.botsOnline'));
-    const tToday = tile('music', t('dash.playsToday'));
-    const tWeek = tile('chart', t('dash.playsWeek'));
-    const tUsers = tile('users', t('dash.onlineNow'));
-    const tUp = tile('clock', t('dash.uptime'));
+    const tBots = tile('server', t('dash.botsOnline'), '/bots');
+    const tToday = tile('music', t('dash.playsToday'), '/stats');
+    const tWeek = tile('chart', t('dash.playsWeek'), '/stats');
+    const tUsers = tile('users', t('dash.onlineNow'), () => openOnline());
+    const tUp = tile('clock', t('dash.uptime'), '/logs');
+    const tNet = tile('zap', t('dash.connection'), '/bots');
+    // click "Online now" to see who is online
+    tUsers.el.classList.add('tile-click');
+    tUsers.el.tabIndex = 0;
+    tUsers.el.setAttribute('role', 'button');
+    tUsers.el.title = t('dash.onlineList');
+    const openOnline = async () => {
+      let r;
+      try { r = await F.api('GET', 'online'); } catch (e) { F.fail(e); return; }
+      const ppl = (r && r.people) || [];
+      const multi = new Set(ppl.map((p) => p.server)).size > 1;
+      const st = (p) => [p.away ? h('span', { class: 'badge', text: t('dash.away') }) : null,
+        p.micOff ? h('span', { class: 'ol-ic', title: t('dash.micOff') }, icon('micOff')) : null,
+        p.soundOff ? h('span', { class: 'ol-ic', title: t('dash.soundOff') }, icon('volumeOff')) : null];
+      const body = !r.online ? F.empty('server', t('dash.onlineNone'))
+        : !ppl.length ? F.empty('users', t('dash.onlineEmpty'))
+        : h('div', { class: 'ol-list' },
+          h('div', { class: 'tbl-row ol-row tbl-head' }, h('span', { text: t('dash.olName') }), h('span', { text: t('dash.olChannel') }), h('span')),
+          ppl.map((p) => h('div', { class: 'tbl-row ol-row' + (p.away ? ' away' : '') },
+            h('span', { class: 'ol-name' }, p.country ? h('span', { class: 'ol-cc', text: p.country }) : null, h('span', { text: p.name })),
+            h('span', { class: 'muted small tbl-ellipsis', text: (multi ? p.server + ' › ' : '') + p.channel }),
+            h('span', { class: 'ol-st' }, st(p)))));
+      F.modal({ title: t('dash.onlineList') + (r.online ? ' · ' + ppl.length : ''), size: 'wide', body, actions: [{ label: t('common.close') }] });
+    };
+    tUsers.el.addEventListener('click', openOnline);
+    tUsers.el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openOnline(); } });
 
     // system (CPU line + memory figures in one card)
     const chart = lineChart([{ key: 'cpu', cls: 'main' }, { key: 'appCpu', cls: 'second' }]);
@@ -181,7 +210,15 @@
     const actInfo = h('span', { class: 'muted small' });
     const actBody = h('div', { class: 'act-body' }, h('div', { class: 'chart-box sm' }, usersLine.el), heat.el);
     const actEmpty = h('p', { class: 'muted small act-empty', text: t('dash.activityOff') });
-    const actCard = card('users', t('dash.activity'), actInfo, actBody, actEmpty);
+    // activity recording off: the card stays, blurred, with why and how to turn it on
+    const actOff = h('div', { class: 'act-off', hidden: true },
+      h('div', { class: 'act-off-box' },
+        h('span', { class: 'act-off-ic' }, icon('chart')),
+        h('strong', { text: t('dash.actOffTitle') }),
+        h('p', { class: 'muted small', text: t('dash.actOffWhy') }),
+        F.btn(t('dash.actOffOpen'), { kind: 'primary', icon: 'link', cls: 'btn-sm', onClick: () => F.go('/plugins') })));
+    const actWrap = h('div', { class: 'act-wrap' }, actBody, actOff);
+    const actCard = card('users', t('dash.activity'), actInfo, actWrap, actEmpty);
 
     // plays, top songs, bots
     const bars = barChart();
@@ -192,7 +229,7 @@
     const botsCard = card('server', t('nav.bots'), h('a', { href: '/bots', 'data-link': '', class: 'small link-arrow', text: t('dash.manage') + ' →' }), botList);
 
     root.append(h('div', { class: 'dash' },
-      h('div', { class: 'tile-grid' }, tBots.el, tToday.el, tWeek.el, tUsers.el, tUp.el),
+      h('div', { class: 'tile-grid' }, tBots.el, tToday.el, tWeek.el, tUsers.el, tNet.el, tUp.el),
       h('div', { class: 'dash-row' }, sysCard, actCard),
       h('div', { class: 'dash-row three' }, playsCard, songsCard, botsCard)));
 
@@ -233,6 +270,15 @@
           h('dt', { text: t('dash.threads') }), h('dd', { text: F.fmtNum(s.threads) }));
       }
       tUp.set(fmtUptime(s.uptime), null, 'frix v' + s.version);
+      // connection quality of the bots (worst one when there are several)
+      const nets = (d.net || []).filter((x) => x.ping != null);
+      if (!nets.length) tNet.set('–', null, (d.net || []).length ? t('dash.netWait') : t('dash.onlineNone'));
+      else {
+        const w = nets.reduce((a, b) => ((b.ping || 0) > (a.ping || 0) ? b : a));
+        const lossTxt = w.loss == null ? t('dash.lossNa') : t('dash.loss', { n: w.loss.toFixed(1) });
+        tNet.set(Math.round(w.ping) + ' ms', null, lossTxt + (nets.length > 1 ? ' · ' + w.bot : ''));
+        tNet.el.classList.toggle('warn', w.ping > 150 || (w.loss || 0) > 2);
+      }
       if (first) {
         tToday.set(F.fmtNum(d.plays.today), delta(d.plays.today, d.plays.yesterday), t('dash.vsYesterday'));
         tWeek.set(F.fmtNum(d.plays.week), delta(d.plays.week, d.plays.prevWeek), t('dash.vsLastWeek'));
@@ -244,7 +290,15 @@
           h('span', { class: 'ts-title', text: F.cleanTitle ? F.cleanTitle(x.title) : x.title }),
           h('span', { class: 'ts-count', text: '×' + x.count }))) : [h('li', { class: 'muted small', text: t('dash.noPlays') })]));
         const a = d.activity || {};
-        actBody.hidden = !a.any; actEmpty.hidden = !!a.any;
+        const off = a.enabled === false;
+        actWrap.classList.toggle('off', off); actOff.hidden = !off;
+        actBody.hidden = !a.any && !off; actEmpty.hidden = !!a.any || off;
+        if (off && !a.any) {
+          // nothing recorded yet: a sample shape behind the blur
+          usersLine.set(Array.from({ length: 24 }, (_, i) => 4 + Math.round(6 * Math.sin(i / 3.5) + (i % 5))));
+          heat.set(Array.from({ length: 7 }, (_, d2) => Array.from({ length: 24 }, (_, hr) => Math.max(0, Math.sin((hr - 6) / 4) * 6 + d2))));
+          actInfo.textContent = '';
+        }
         if (a.any) {
           usersLine.set((a.last24 || []).map((x) => x.users));
           heat.set(a.heat || []);

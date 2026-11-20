@@ -74,6 +74,7 @@ public static class PanelApi
 			case ["bots", var b, "queue"] when m == "GET": await Ok(ctx, await Queue(b)); return;
 			case ["radios"] when m == "GET": await Ok(ctx, FrixRadio.List()); return;
 			case ["stats"] when m == "GET": await Ok(ctx, Stats(ctx)); return;
+			case ["online"] when m == "GET": await Ok(ctx, await OnlineList()); return;
 			case ["dashboard"] when m == "GET": await Ok(ctx, await Dashboard(ctx.Request.Query["history"] == "1")); return;
 			case ["playlists"] when m == "GET": await Ok(ctx, FrixData.Playlists()); return;
 			case ["playlists", var pid] when m == "GET":
@@ -635,6 +636,7 @@ public static class PanelApi
 
 	private static async Task<object> Dashboard(bool withHistory)
 	{
+		var live = await LiveScan();
 		object Map(FrixSystem.Sample s) => new { t = s.Time, cpu = s.Cpu, appCpu = s.AppCpu, ramUsed = s.RamUsed, ramTotal = s.RamTotal, appMem = s.AppMem };
 		using var proc = System.Diagnostics.Process.GetCurrentProcess();
 		var last = FrixSystem.Last();
@@ -667,7 +669,8 @@ public static class PanelApi
 				thumbnail = x.Type == "youtube" ? $"https://i.ytimg.com/vi/{x.ResourceId}/mqdefault.jpg" : null,
 			}),
 			topUsers = FrixData.TopRequesters(30, 5).Select(x => new { user = x.User, count = x.Count }),
-			activity = ActivityInfo(await LiveOnline()),
+			activity = ActivityInfo(live.any ? live.people.Count : null),
+			net = live.net,
 			counts = new
 			{
 				radios = FrixRadio.List().Count,
@@ -678,14 +681,12 @@ public static class PanelApi
 		};
 	}
 
-	/// <summary>
-	/// Bağlı botların gördüğü gerçek kişi sayısı (botlar hariç, aynı sunucudaki kişiler bir kez sayılır).
-	/// Hiç bağlı bot yoksa null.
-	/// </summary>
-	private static async Task<long?> LiveOnline()
+	/// <summary>Bağlı botların gördüğü kişiler (botlar hariç) ve her botun ping / paket kaybı.</summary>
+	private static async Task<(List<OnlinePerson> people, List<object> net, bool any)> LiveScan()
 	{
-		var people = new HashSet<string>();
+		var people = new Dictionary<string, OnlinePerson>();
 		var ours = new HashSet<string>();
+		var net = new List<object>();
 		var any = false;
 		foreach (var name in FrixPluginHost.RunningBots)
 		{
@@ -693,7 +694,7 @@ public static class PanelApi
 			if (bot is null) continue;
 			try
 			{
-				var seen = await bot.Scheduler.Invoke(() =>
+				var res = await bot.Scheduler.Invoke(() =>
 				{
 					var full = bot.Injector.GetModuleOrThrow<TSLib.Full.TsFullClient>();
 					if (!full.Connected) return null;
@@ -701,18 +702,32 @@ public static class PanelApi
 					var self = full.Book.Clients.TryGetValue(full.ClientId, out var me) ? me.Uid?.Value : null;
 					var list = full.Book.Clients.Values
 						.Where(c => c.ClientType == TSLib.ClientType.Full && c.Id != full.ClientId && c.Uid is not null)
-						.Select(c => server + "|" + c.Uid!.Value).ToList();
-					return (object)(self, list);
+						.Select(c => new OnlinePerson(server + "|" + c.Uid!.Value, c.Name, server,
+							full.Book.Channels.TryGetValue(c.Channel, out var ch) ? ch.Name : "",
+							c.AwayMessage is not null, c.InputMuted || !c.InputHardwareEnabled, c.OutputMuted || !c.OutputHardwareEnabled, c.CountryCode ?? ""))
+						.ToList();
+					var (ping, loss) = full.NetStats?.Quality() ?? (null, null);
+					return new LiveBot(self, list, ping, loss);
 				});
-				if (seen is not ValueTuple<string?, List<string>> t) continue;
+				if (res is null) continue;
 				any = true;
-				if (t.Item1 is not null) ours.Add(t.Item1);
-				people.UnionWith(t.Item2);
+				if (res.Self is not null) ours.Add(res.Self);
+				foreach (var p in res.People) people.TryAdd(p.Key, p);
+				net.Add(new { bot = name, ping = res.Ping is { } pg ? Math.Round(pg) : (double?)null, loss = res.Loss is { } ls ? Math.Round(ls, 1) : (double?)null });
 			}
-			catch (Exception ex) { Log.Debug(ex, "Çevrimiçi sayısı alınamadı: {0}", name); }
+			catch (Exception ex) { Log.Debug(ex, "Bot durumu okunamadı: {0}", name); }
 		}
-		if (!any) return null;
-		return people.Count(p => !ours.Contains(p[(p.IndexOf('|') + 1)..]));
+		var real = people.Values.Where(p => !ours.Contains(p.Key[(p.Key.IndexOf('|') + 1)..])).OrderBy(p => p.Channel).ThenBy(p => p.Name).ToList();
+		return (real, net, any);
+	}
+
+	private sealed record OnlinePerson(string Key, string Name, string Server, string Channel, bool Away, bool MicOff, bool SoundOff, string Country);
+	private sealed record LiveBot(string? Self, List<OnlinePerson> People, double? Ping, double? Loss);
+
+	private static async Task<object> OnlineList()
+	{
+		var (people, _, any) = await LiveScan();
+		return new { online = any, people = people.Select(p => new { name = p.Name, server = p.Server, channel = p.Channel, away = p.Away, micOff = p.MicOff, soundOff = p.SoundOff, country = p.Country }) };
 	}
 
 	private static object ActivityInfo(long? live = null)
@@ -720,7 +735,8 @@ public static class PanelApi
 		var a = FrixData.Activity();
 		return new
 		{
-			any = a.Any || live is not null, now = live ?? a.Now, live = live is not null, peak = a.Peak, peakAt = a.PeakAt?.ToString("yyyy-MM-ddTHH:mm"),
+			any = a.Any || live is not null, now = live ?? a.Now, live = live is not null, peak = a.Peak,
+			enabled = AllConfigs().Any(c => c.Name is { } n && FrixPluginHost.Active(n, "activity")), peakAt = a.PeakAt?.ToString("yyyy-MM-ddTHH:mm"),
 			last24 = a.Last24.Select(x => new { hour = x.Hour.ToString("HH:mm"), users = x.Users }),
 			heat = a.Heat,
 		};

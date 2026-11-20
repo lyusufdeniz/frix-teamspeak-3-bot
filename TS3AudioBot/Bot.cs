@@ -42,6 +42,8 @@ public sealed class Bot
 	private readonly ConfBot config;
 	private readonly TickWorker idleTickWorker;
 	private CancellationTokenSource? avatarRequest;
+	// Frix: aynı anda iki avatar yüklemesi sunucuda "file_already_in_use" verir; yüklemeler sırayla yapılır
+	private readonly SemaphoreSlim avatarUploadLock = new(1, 1);
 
 	private bool isClosed;
 	internal BotInjector Injector { get; }
@@ -698,27 +700,54 @@ public sealed class Bot
 		}
 
 	upload:
-		if (setStream != null)
+		await avatarUploadLock.WaitAsync();
+		try
 		{
-			try
+			// beklerken daha yeni bir istek geldiyse bu eskidi: o yükleyecek
+			if (avatarRequest != cts)
 			{
-				using (setStream)
+				setStream?.Dispose();
+				return;
+			}
+			if (setStream != null)
+			{
+				try
 				{
-					var result = await ts3FullClient.UploadAvatar(setStream, cts.Token);
-					if (!result.Ok)
-						Log.Warn("Avatar yüklenemedi: {0} — botun sunucu grubundaki avatar boyut sınırı (i_client_max_avatar_filesize) düşük olabilir; eski avatar yerinde kalır.",
-							result.Error.ErrorFormat());
+					using (setStream)
+					{
+						var data = new MemoryStream();
+						await setStream.CopyToAsync(data);
+						for (var attempt = 1; ; attempt++)
+						{
+							data.Position = 0;
+							var result = await ts3FullClient.UploadAvatar(data, cts.Token);
+							if (result.Ok) break;
+							var err = result.Error.ErrorFormat();
+							// önceki yükleme sunucuda henüz kapanmadıysa kısa bir süre sonra bir kez daha dene
+							if (attempt < 3 && (err.Contains("file_already_in_use") || err.Contains("didn't finish")) && avatarRequest == cts)
+							{
+								await Task.Delay(1500 * attempt);
+								continue;
+							}
+							Log.Warn("Avatar yüklenemedi: {0} — botun sunucu grubundaki avatar boyut sınırı (i_client_max_avatar_filesize) düşük olabilir; eski avatar yerinde kalır.", err);
+							break;
+						}
+					}
+				}
+				catch (Exception ex)
+				{
+					Log.Warn(ex, "Could not change avatar");
 				}
 			}
-			catch (Exception ex)
+			else
 			{
-				Log.Warn(ex, "Could not change avatar");
+				var result = await ts3FullClient.DeleteAvatar();
+				result.UnwrapToLog(Log);
 			}
 		}
-		else
+		finally
 		{
-			var result = await ts3FullClient.DeleteAvatar();
-			result.UnwrapToLog(Log);
+			avatarUploadLock.Release();
 		}
 
 		if (avatarRequest == cts) avatarRequest = null;

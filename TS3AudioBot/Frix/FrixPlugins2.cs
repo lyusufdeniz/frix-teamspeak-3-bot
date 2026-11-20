@@ -154,7 +154,7 @@ public sealed class RanksPlugin : FrixPlugin
 	public override string DescEn => "Counts time spent on the server and grants server groups at set hours. See !sure and !top. Enable on one bot only.";
 	public override PluginField[] Schema =>
 	[
-		new("ranks", "textarea", "Rütbeler (her satır: saat=grupID)", "Ranks (one per line: hours=groupID)", "10=\n50=\n200=",
+		new("ranks", "ranks", "Rütbeler", "Ranks", "10=\n50=\n200=",
 			null, "Örn: 10=12 → 10 saate ulaşana 12 numaralı grup verilir", "E.g. 10=12 → group 12 at 10 hours"),
 		new("removeLower", "bool", "Yeni rütbe gelince eskisini kaldır", "Remove the previous rank when promoted", true),
 		new("excludeGroups", "text", "Rütbe verilmeyecek grup ID'leri", "Group IDs that never get ranks", ""),

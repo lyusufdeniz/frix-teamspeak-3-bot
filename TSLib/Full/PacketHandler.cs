@@ -586,6 +586,8 @@ internal sealed class PacketHandler<TIn, TOut>
 		var idDiff = packet.PacketId - lastReceivedPingId;
 		if (idDiff > 1 && idDiff < ReceivePacketWindowSize)
 			NetworkStats.LogLostPings(idDiff - 1);
+		if (idDiff > 0)
+			NetworkStats.LogPingReceived();
 		if (idDiff > 0 || idDiff < -ReceivePacketWindowSize)
 			lastReceivedPingId = packet.PacketId;
 		Span<byte> pongData = stackalloc byte[2];

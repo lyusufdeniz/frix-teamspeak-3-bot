@@ -55,9 +55,36 @@ public sealed class NetworkStats
 		}
 	}
 
-	public static void LogLostPings(int count)
+	// Frix: sunucunun gönderdiği ping'lerden kaçı geldi / kayboldu (son 200), kayıp yüzdesi buradan
+	private readonly Queue<bool> pingResults = new();
+
+	public void LogPingReceived()
 	{
-		// TODO
+		lock (queueLock)
+		{
+			pingResults.Enqueue(true);
+			while (pingResults.Count > 200) pingResults.Dequeue();
+		}
+	}
+
+	public void LogLostPings(int count)
+	{
+		lock (queueLock)
+		{
+			for (var i = 0; i < Math.Min(count, 200); i++) pingResults.Enqueue(false);
+			while (pingResults.Count > 200) pingResults.Dequeue();
+		}
+	}
+
+	/// <summary>Son ping (ms, son 5 ölçümün ortalaması) ve paket kaybı (%). Veri yoksa null.</summary>
+	public (double? pingMs, double? lossPct) Quality()
+	{
+		lock (queueLock)
+		{
+			double? ping = pingTimes.Count == 0 ? null : pingTimes.Reverse().Take(5).Average(t => t.TotalMilliseconds);
+			double? loss = pingResults.Count < 5 ? null : pingResults.Count(r => !r) * 100.0 / pingResults.Count;
+			return (ping, loss);
+		}
 	}
 
 	public void AddPing(TimeSpan ping)
@@ -195,6 +222,7 @@ public sealed class NetworkStats
 			outBytesTime.Clear();
 			inBytesTime.Clear();
 			pingTimes.Clear();
+			pingResults.Clear();
 		}
 	}
 
