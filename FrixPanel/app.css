@@ -1829,3 +1829,7 @@ html[data-theme="krem"] .msg-prev { background: #f6f6f8; }
 .side-gh:hover { color: var(--text); border-color: var(--text); text-decoration: none; }
 .modal .script-editor, textarea.script-editor { height: 46vh; min-height: 260px; }
 textarea.input.script-editor { font-family: var(--mono) !important; font-size: .82rem; letter-spacing: 0; }
+
+.gen-tile { cursor: pointer; }
+.gen-chev { margin-left: auto; display: inline-flex; color: var(--muted); }
+.gen-chev svg { width: 16px; height: 16px; transform: rotate(-90deg); }

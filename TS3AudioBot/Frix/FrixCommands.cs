@@ -55,9 +55,27 @@ public static class FrixCommands
 		["fav"] = ["favorites"], ["favs"] = ["favorites"], ["dosya"] = ["music"],
 	};
 
+	/// <summary>
+	/// TS3AudioBot'un kendi (Frix tablosunda olmayan) müzik komutları. Bunlar da Müzik / Radyo eklentisine bağlıdır;
+	/// yoksa eklenti kapalıyken "!play", "!next" gibi yazılınca çalışmaya devam ederler.
+	/// </summary>
+	private static readonly Dictionary<string, string[]> NativeRequirements = new(StringComparer.OrdinalIgnoreCase)
+	{
+		["play"] = ["music"], ["add"] = ["music"], ["search"] = ["music"], ["list"] = ["music"], ["history"] = ["music"],
+		["quiz"] = ["music"], ["arama"] = ["music"],
+		["next"] = ["music", "radio"], ["previous"] = ["music", "radio"], ["pause"] = ["music", "radio"], ["stop"] = ["music", "radio"],
+		["volume"] = ["music", "radio"], ["seek"] = ["music", "radio"], ["random"] = ["music", "radio"], ["repeat"] = ["music", "radio"],
+		["song"] = ["music", "radio"], ["clear"] = ["music", "radio"], ["jump"] = ["music", "radio"], ["kuyruk"] = ["music", "radio"],
+		["info"] = ["music", "radio"],
+	};
+
 	/// <summary>Yerleşik komut bu botta kullanılabilir mi (bağlı eklenti açık mı)?</summary>
 	public static bool IsAvailable(string builtin, string? bot)
-		=> bot is null || !Requirements.TryGetValue(builtin, out var reqs) || reqs.Any(r => FrixPluginHost.Active(bot, r));
+	{
+		if (bot is null) return true;
+		if (!Requirements.TryGetValue(builtin, out var reqs) && !NativeRequirements.TryGetValue(builtin, out reqs)) return true;
+		return reqs.Any(r => FrixPluginHost.Active(bot, r));
+	}
 
 	/// <summary>Verilen botlardan en az birinde kullanılabilir mi? Bot yoksa true.</summary>
 	public static bool IsAvailableAny(string builtin, IReadOnlyCollection<string> bots)

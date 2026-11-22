@@ -108,10 +108,6 @@
         radios = rd || [];
         builtins = (cm && cm.builtin) || [];
         list.replaceChildren(...grouped(pl || []));
-        const general = commandsBlock(builtins, null);
-        const tpa = F.$('#top-page-actions');
-        if (general && tpa && !tpa.querySelector('.gen-cmds')) tpa.prepend(F.btn(t('plugins.generalCmds'), { kind: 'ghost', icon: 'terminal', cls: 'gen-cmds',
-          onClick: () => F.modal({ title: t('plugins.generalCmds'), size: 'wide', body: commandsBlock(builtins, null), actions: [{ label: t('common.close') }] }) }));
         if (!pl || !pl.length) list.append(F.empty('box', t('plugins.none')));
       } catch (e) { F.fail(e); list.replaceChildren(F.empty('alert', t('err.loadFailed'))); }
     }
@@ -136,9 +132,29 @@
         cards.forEach((c) => { c.onToggle = paint; });
         paint();
         const hid = F.uid('pg');
+        // commands that belong to no plugin (help, custom command runner, …) live with the extras
+        const extra = key === 'extras' ? generalTile() : null;
         return h('section', { class: 'plugin-group', 'aria-labelledby': hid },
-          h('div', { class: 'plugin-group-head' }, h('h2', { id: hid, text: t('plugins.group.' + key) }), count), h('div', { class: 'plugin-grid' }, cards));
+          h('div', { class: 'plugin-group-head' }, h('h2', { id: hid, text: t('plugins.group.' + key) }), count), h('div', { class: 'plugin-grid' }, cards, extra));
       });
+    }
+    /** tile for the commands without a plugin: always on, opens their rename list */
+    function generalTile() {
+      const block = commandsBlock(builtins, null);
+      if (!block) return null;
+      const n = block.querySelectorAll('.builtin-row').length;
+      const open = () => F.modal({ title: [h('span', { class: 'plugin-ic sm' }, icon('terminal')), ' ', t('plugins.generalCmds')], size: 'wide',
+        body: h('div', { class: 'plugin-body pf-dialog' }, h('p', { class: 'muted small pf-desc', text: t('plugins.generalDesc') }), commandsBlock(builtins, null)),
+        actions: [{ label: t('common.close') }] });
+      const el = h('article', { class: 'card plugin-tile on gen-tile', tabindex: '0', role: 'button' },
+        h('div', { class: 'tile-top' }, h('span', { class: 'plugin-ic' }, icon('terminal')),
+          h('div', { class: 'tile-titles' }, h('h3', { class: 'plugin-name', text: t('plugins.generalCmds') }),
+            h('span', { class: 'plugin-state', text: t('plugins.cmdCount', { n }) })),
+          h('span', { class: 'gen-chev' }, icon('chevron'))),
+        h('p', { class: 'plugin-desc', text: t('plugins.generalDesc') }));
+      el.addEventListener('click', open);
+      el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+      return el;
     }
     // ---- plugin dialog building blocks
     // rarely changed settings: shown under "More settings" inside their feature card
