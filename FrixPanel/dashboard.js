@@ -165,7 +165,86 @@
     const tWeek = tile('chart', t('dash.playsWeek'), '/stats');
     const tUsers = tile('users', t('dash.onlineNow'), () => openOnline());
     const tUp = tile('clock', t('dash.uptime'), '/logs');
-    const tNet = tile('zap', t('dash.connection'), '/bots');
+    const tNet = tile('zap', t('dash.connection'), () => openConnection());
+    // scope: the bot chosen in the sidebar, or every bot together (remembered)
+    const lsGet = (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } };
+    const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (_) { /* */ } };
+    let scope = lsGet('frix.dashScope') === 'all' ? 'all' : 'bot';
+    let scopeBot = F.state.selected || '';
+    const scopeName = h('span');
+    const segBot = h('button', { type: 'button', class: 'tab' }, icon('server'), scopeName);
+    const segAll = h('button', { type: 'button', class: 'tab', text: t('dash.allBots') });
+    const seg = h('div', { class: 'tabs seg dash-scope', role: 'group', 'aria-label': t('dash.scope') }, segBot, segAll);
+    const paintScope = () => {
+      const b = F.bot(scopeBot);
+      scopeName.textContent = b ? F.botLabel(b) : t('dash.selectedBot');
+      segBot.setAttribute('aria-pressed', String(scope === 'bot')); segBot.classList.toggle('on', scope === 'bot');
+      segAll.setAttribute('aria-pressed', String(scope === 'all')); segAll.classList.toggle('on', scope === 'all');
+    };
+    const setScope = (v) => { if (scope === v) return; scope = v; lsSet('frix.dashScope', v); paintScope(); first = true; load(); };
+    segBot.addEventListener('click', () => setScope('bot'));
+    segAll.addEventListener('click', () => setScope('all'));
+    const tpa = F.$('#top-page-actions');
+    if (tpa) tpa.prepend(seg);
+    paintScope();
+    const botParam = () => (scope === 'bot' && scopeBot ? 'bot=' + F.enc(scopeBot) : '');
+    // detailed connection state of one bot, refreshed while the dialog is open
+    const openConnection = () => {
+      const bots = F.state.bots || [];
+      if (!bots.length) { F.toast(t('bots.none'), 'err'); return; }
+      let cur = scope === 'bot' && scopeBot ? scopeBot : (bots.find((b) => b.live) || bots[0]).name;
+      const pick = F.select(bots.map((b) => [b.name, F.botLabel(b)]), cur);
+      const body = h('div', { class: 'conn' }, h('div', { class: 'conn-top' }, pick), h('div', { class: 'conn-body' }, F.skeleton(3, 'sk-row')));
+      const out = body.querySelector('.conn-body');
+      const kbps = (b) => (b == null ? '–' : ((b * 8) / 1000).toFixed(1) + ' kbit/s');
+      let timer2 = null;
+      const paint = async () => {
+        let r;
+        try { r = await F.api('GET', 'bots/' + F.enc(cur) + '/connection'); } catch (e) { out.replaceChildren(F.empty('alert', F.errMsg(e))); return; }
+        if (r.state !== 'connected') {
+          out.replaceChildren(h('div', { class: 'conn-state ' + r.state }, h('span', { class: 'dot dot-' + (r.state === 'offline' ? 'offline' : 'connecting') }),
+            h('strong', { text: t('conn.state.' + r.state) }), h('span', { class: 'muted small mono', text: r.address })));
+          return;
+        }
+        const pingCls = r.ping == null ? '' : r.ping > 150 ? 'bad' : r.ping > 80 ? 'mid' : 'good';
+        const lossCls = r.loss == null ? '' : r.loss > 2 ? 'bad' : r.loss > 0.5 ? 'mid' : 'good';
+        const big = (label, value, cls, sub) => h('div', { class: 'conn-big ' + (cls || '') }, h('span', { class: 'muted small', text: label }), h('strong', { text: value }), sub ? h('span', { class: 'muted small', text: sub }) : null);
+        // ping history (last 60 keepalives)
+        const pts = r.pings || [];
+        const W = 600, H = 90, max = Math.max(50, ...pts) * 1.15;
+        const path = pts.map((v, i) => (i ? 'L' : 'M') + ((W * i) / Math.max(1, pts.length - 1)).toFixed(1) + ',' + (H - (H * v) / max).toFixed(1)).join(' ');
+        const svgNS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(svgNS, 'svg');
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('preserveAspectRatio', 'none'); svg.setAttribute('class', 'conn-chart');
+        if (path) {
+          const fillP = document.createElementNS(svgNS, 'path'); fillP.setAttribute('d', path + ` L${W},${H} L0,${H} Z`); fillP.setAttribute('class', 'chart-fill conn-fill'); svg.append(fillP);
+          const line = document.createElementNS(svgNS, 'path'); line.setAttribute('d', path); line.setAttribute('class', 'chart-line main'); svg.append(line);
+        }
+        const fmtDur = (sec) => { if (sec == null) return '–'; const hh = Math.floor(sec / 3600), mm = Math.floor((sec % 3600) / 60); return hh ? hh + ' sa ' + mm + ' dk' : mm + ' dk'; };
+        out.replaceChildren(
+          h('div', { class: 'conn-state connected' }, h('span', { class: 'dot dot-connected' }), h('strong', { text: r.server ? r.server.name : t('conn.state.connected') }),
+            h('span', { class: 'muted small mono', text: r.address })),
+          h('div', { class: 'conn-grid' },
+            big(t('conn.ping'), r.ping == null ? '–' : Math.round(r.ping) + ' ms', pingCls, r.avgPing == null ? null : t('conn.avg', { n: Math.round(r.avgPing) }) + (r.jitter != null ? ' · ' + t('conn.jitter', { n: r.jitter }) : '')),
+            big(t('conn.loss'), r.loss == null ? '–' : r.loss.toFixed(1) + '%', lossCls, r.loss == null ? t('dash.lossNa') : null),
+            big(t('conn.down'), kbps(r.inSec), '', t('conn.perMin', { v: F.fmtBytes(r.inMin || 0) })),
+            big(t('conn.up'), kbps(r.outSec), '', t('conn.perMin', { v: F.fmtBytes(r.outMin || 0) }))),
+          h('div', { class: 'conn-chart-box' }, h('span', { class: 'muted small', text: t('conn.pingHistory') }), svg),
+          h('dl', { class: 'kv conn-kv' },
+            h('dt', { text: t('conn.connectedFor') }), h('dd', { text: fmtDur(r.connectedFor) }),
+            h('dt', { text: t('conn.server') }), h('dd', { text: r.server ? r.server.version + ' · ' + r.server.platform : '–' }),
+            h('dt', { text: t('conn.clients') }), h('dd', { text: r.clients + (r.server ? ' / ' + r.server.maxClients : '') }),
+            h('dt', { text: t('conn.me') }), h('dd', { text: r.me ? r.me.nickname + ' (#' + r.me.id + ')' : '–' }),
+            h('dt', { text: t('conn.channel') }), h('dd', { text: r.me && r.me.channel ? r.me.channel + (r.me.channelCodec ? ' · ' + r.me.channelCodec + ' q' + r.me.codecQuality : '') : '–' }),
+            h('dt', { text: t('conn.audio') }), h('dd', { text: r.bitrate + ' kbps' + (r.playing ? ' · ' + t('conn.playing') : '') }),
+            h('dt', { text: t('conn.packets') }), h('dd', { text: F.fmtNum(r.packetsIn || 0) + ' ↓ · ' + F.fmtNum(r.packetsOut || 0) + ' ↑' })));
+      };
+      pick.addEventListener('change', () => { cur = pick.value; out.replaceChildren(...F.skeleton(3, 'sk-row')); paint(); });
+      F.modal({ title: [icon('zap'), ' ', t('conn.title')], size: 'wide', body, actions: [{ label: t('common.close') }],
+        onClose: () => clearInterval(timer2) });
+      paint();
+      timer2 = setInterval(() => { if (!document.body.contains(body)) { clearInterval(timer2); return; } paint(); }, 2000);
+    };
     // click "Online now" to see who is online
     tUsers.el.classList.add('tile-click');
     tUsers.el.tabIndex = 0;
@@ -173,7 +252,7 @@
     tUsers.el.title = t('dash.onlineList');
     const openOnline = async () => {
       let r;
-      try { r = await F.api('GET', 'online'); } catch (e) { F.fail(e); return; }
+      try { r = await F.api('GET', 'online' + (botParam() ? '?' + botParam() : '')); } catch (e) { F.fail(e); return; }
       const ppl = (r && r.people) || [];
       const multi = new Set(ppl.map((p) => p.server)).size > 1;
       const st = (p) => [p.away ? h('span', { class: 'badge', text: t('dash.away') }) : null,
@@ -251,7 +330,8 @@
 
     async function load() {
       let d;
-      try { d = await F.api('GET', 'dashboard' + (first ? '?history=1' : '')); } catch (e) { if (first) F.fail(e); return; }
+      const qs = [first ? 'history=1' : '', botParam()].filter(Boolean).join('&');
+      try { d = await F.api('GET', 'dashboard' + (qs ? '?' + qs : '')); } catch (e) { if (first) F.fail(e); return; }
       if (!alive) return;
       const s = d.system;
       if (first && s.history) history = s.history;
@@ -277,6 +357,7 @@
         const w = nets.reduce((a, b) => ((b.ping || 0) > (a.ping || 0) ? b : a));
         const lossTxt = w.loss == null ? t('dash.lossNa') : t('dash.loss', { n: w.loss.toFixed(1) });
         tNet.set(Math.round(w.ping) + ' ms', null, lossTxt + (nets.length > 1 ? ' · ' + w.bot : ''));
+        tNet.el.title = t('conn.title');
         tNet.el.classList.toggle('warn', w.ping > 150 || (w.loss || 0) > 2);
       }
       if (first) {
@@ -317,9 +398,20 @@
     timer = setInterval(load, 2000);
     const slow = setInterval(() => { first = true; }, 60000); // refresh slow-changing parts every minute
     if (F.state.botsLoaded) paintBots(F.state.bots);
+    // connection tile opens the details too
+    tNet.el.classList.add('tile-click');
+    tNet.el.tabIndex = 0;
+    tNet.el.setAttribute('role', 'button');
+    tNet.el.addEventListener('click', openConnection);
+    tNet.el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openConnection(); } });
     return {
-      onBots: paintBots,
-      destroy() { alive = false; clearInterval(timer); clearInterval(slow); root.classList.remove('dash-page'); },
+      onBots(bots) {
+        paintBots(bots);
+        // the sidebar picked another bot: show its data
+        if (F.state.selected && F.state.selected !== scopeBot) { scopeBot = F.state.selected; paintScope(); if (scope === 'bot') { first = true; load(); } }
+        else paintScope();
+      },
+      destroy() { alive = false; clearInterval(timer); clearInterval(slow); root.classList.remove('dash-page'); seg.remove(); },
     };
   };
 })();

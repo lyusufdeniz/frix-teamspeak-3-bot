@@ -1833,3 +1833,24 @@ textarea.input.script-editor { font-family: var(--mono) !important; font-size: .
 .gen-tile { cursor: pointer; }
 .gen-chev { margin-left: auto; display: inline-flex; color: var(--muted); }
 .gen-chev svg { width: 16px; height: 16px; transform: rotate(-90deg); }
+
+/* dashboard scope + connection dialog */
+.dash-scope .tab { display: inline-flex; align-items: center; gap: 6px; max-width: 240px; }
+.dash-scope .tab span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-scope .tab svg { width: 14px; height: 14px; flex: none; }
+.conn { display: flex; flex-direction: column; gap: 14px; }
+.conn-top { max-width: 320px; }
+.conn-body { display: flex; flex-direction: column; gap: 14px; }
+.conn-state { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.conn-state strong { font-size: 1.05rem; }
+.conn-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.conn-big { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--raised); }
+.conn-big strong { font-size: 1.45rem; font-variant-numeric: tabular-nums; }
+.conn-big.good strong { color: #4caf7a; }
+.conn-big.mid strong { color: #f2b45c; }
+.conn-big.bad strong { color: #ef6b6b; }
+.conn-chart-box { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; }
+.conn-chart { width: 100%; height: 90px; display: block; }
+.conn-fill { fill: color-mix(in srgb, var(--accent) 18%, transparent); }
+.conn-kv { grid-template-columns: 170px 1fr; }
+@media (max-width: 720px) { .conn-grid { grid-template-columns: 1fr 1fr; } .conn-kv { grid-template-columns: 1fr; } }

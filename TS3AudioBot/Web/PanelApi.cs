@@ -75,8 +75,10 @@ public static class PanelApi
 			case ["bots", var b, "queue"] when m == "GET": await Ok(ctx, await Queue(b)); return;
 			case ["radios"] when m == "GET": await Ok(ctx, FrixRadio.List()); return;
 			case ["stats"] when m == "GET": await Ok(ctx, Stats(ctx)); return;
-			case ["online"] when m == "GET": await Ok(ctx, await OnlineList()); return;
-			case ["dashboard"] when m == "GET": await Ok(ctx, await Dashboard(ctx.Request.Query["history"] == "1")); return;
+			case ["online"] when m == "GET": await Ok(ctx, await OnlineList(ctx.Request.Query["bot"].ToString() is { Length: > 0 } ob ? ob : null)); return;
+			case ["dashboard"] when m == "GET":
+				await Ok(ctx, await Dashboard(ctx.Request.Query["history"] == "1", ctx.Request.Query["bot"].ToString() is { Length: > 0 } db ? db : null)); return;
+			case ["bots", var b, "connection"] when m == "GET": await Ok(ctx, await Connection(b)); return;
 			case ["playlists"] when m == "GET": await Ok(ctx, FrixData.Playlists()); return;
 			case ["library"] when m == "GET":
 				await Ok(ctx, new
@@ -760,9 +762,12 @@ public static class PanelApi
 
 	// ================================================================== istatistik ve çalma listeleri
 
-	private static async Task<object> Dashboard(bool withHistory)
+	private static async Task<object> Dashboard(bool withHistory, string? bot = null)
 	{
-		var live = await LiveScan();
+		if (bot is not null && !AllConfigs().Any(c => c.Name == bot)) bot = null;
+		var live = await LiveScan(bot);
+		// aktivite: seçili botun sunucusu (bağlıyken öğrenilen son ad)
+		var server = bot is null ? null : FrixDb.GetMeta("server:" + bot) ?? "?"; // henüz hiç bağlanmadıysa sunucu bilinmiyor: aktivite boş
 		object Map(FrixSystem.Sample s) => new { t = s.Time, cpu = s.Cpu, appCpu = s.AppCpu, ramUsed = s.RamUsed, ramTotal = s.RamTotal, appMem = s.AppMem };
 		using var proc = System.Diagnostics.Process.GetCurrentProcess();
 		var last = FrixSystem.Last();
@@ -781,21 +786,22 @@ public static class PanelApi
 			},
 			plays = new
 			{
-				today = FrixData.PlayCountSince(DateTime.UtcNow.Date),
-				yesterday = FrixData.PlayCountBetween(DateTime.UtcNow.Date.AddDays(-1), DateTime.UtcNow.Date),
-				week = FrixData.PlayCount(7),
-				prevWeek = FrixData.PlayCountBetween(DateTime.UtcNow.AddDays(-14), DateTime.UtcNow.AddDays(-7)),
-				month = FrixData.PlayCount(30),
-				total = FrixData.PlayCount(0),
+				today = FrixData.PlayCountSince(DateTime.UtcNow.Date, bot),
+				yesterday = FrixData.PlayCountBetween(DateTime.UtcNow.Date.AddDays(-1), DateTime.UtcNow.Date, bot),
+				week = FrixData.PlayCount(7, bot),
+				prevWeek = FrixData.PlayCountBetween(DateTime.UtcNow.AddDays(-14), DateTime.UtcNow.AddDays(-7), bot),
+				month = FrixData.PlayCount(30, bot),
+				total = FrixData.PlayCount(0, bot),
 			},
-			perDay = FrixData.PlaysPerDay(14).Select(x => new { day = x.Day, count = x.Count }),
-			topSongs = FrixData.TopSongs(30, 5).Select(x => new
+			bot,
+			perDay = FrixData.PlaysPerDay(14, bot).Select(x => new { day = x.Day, count = x.Count }),
+			topSongs = FrixData.TopSongs(30, 5, bot).Select(x => new
 			{
 				title = x.Title, count = x.Count,
 				thumbnail = x.Type == "youtube" ? $"https://i.ytimg.com/vi/{x.ResourceId}/mqdefault.jpg" : null,
 			}),
-			topUsers = FrixData.TopRequesters(30, 5).Select(x => new { user = x.User, count = x.Count }),
-			activity = ActivityInfo(live.any ? live.people.Count : null),
+			topUsers = FrixData.TopRequesters(30, 5, bot).Select(x => new { user = x.User, count = x.Count }),
+			activity = ActivityInfo(live.any ? live.people.Count : null, server, bot),
 			net = live.net,
 			counts = new
 			{
@@ -808,7 +814,7 @@ public static class PanelApi
 	}
 
 	/// <summary>Bağlı botların gördüğü kişiler (botlar hariç) ve her botun ping / paket kaybı.</summary>
-	private static async Task<(List<OnlinePerson> people, List<object> net, bool any)> LiveScan()
+	private static async Task<(List<OnlinePerson> people, List<object> net, bool any)> LiveScan(string? onlyBot = null)
 	{
 		var people = new Dictionary<string, OnlinePerson>();
 		var ours = new HashSet<string>();
@@ -816,6 +822,7 @@ public static class PanelApi
 		var any = false;
 		foreach (var name in FrixPluginHost.RunningBots)
 		{
+			if (onlyBot is not null && name != onlyBot) continue;
 			var bot = Running(name);
 			if (bot is null) continue;
 			try
@@ -825,6 +832,7 @@ public static class PanelApi
 					var full = bot.Injector.GetModuleOrThrow<TSLib.Full.TsFullClient>();
 					if (!full.Connected) return null;
 					var server = full.Book.Server?.Name ?? name;
+					if (full.Book.Server?.Name is { Length: > 0 } sn) FrixDb.SetMeta("server:" + name, sn);
 					var self = full.Book.Clients.TryGetValue(full.ClientId, out var me) ? me.Uid?.Value : null;
 					var list = full.Book.Clients.Values
 						.Where(c => c.ClientType == TSLib.ClientType.Full && c.Id != full.ClientId && c.Uid is not null)
@@ -847,22 +855,59 @@ public static class PanelApi
 		return (real, net, any);
 	}
 
+	/// <summary>Bir botun ayrıntılı bağlantı durumu (panelde bağlantı penceresi).</summary>
+	private static async Task<object> Connection(string name)
+	{
+		var conf = AllConfigs().FirstOrDefault(c => c.Name == name) ?? throw NotFound("bot_not_found");
+		var address = conf.Connect.Address.Value;
+		var bot = Running(name);
+		if (bot is null) return new { bot = name, address, state = "offline" };
+		return await bot.Scheduler.Invoke(() =>
+		{
+			var full = bot.Injector.GetModuleOrThrow<TSLib.Full.TsFullClient>();
+			if (!full.Connected) return (object)new { bot = name, address, state = "connecting" };
+			var srv = full.Book.Server;
+			var me = full.Book.Clients.TryGetValue(full.ClientId, out var c) ? c : null;
+			var ch = me is not null && full.Book.Channels.TryGetValue(me.Channel, out var cc) ? cc : null;
+			var snap = full.NetStats?.Snapshot();
+			var pings = snap?.Pings ?? [];
+			double? Avg() => pings.Length == 0 ? null : Math.Round(pings.Average(), 1);
+			double? Jitter() => pings.Length < 2 ? null : Math.Round(pings.Zip(pings.Skip(1), (a, b2) => Math.Abs(a - b2)).Average(), 1);
+			var pm = bot.Injector.GetModuleOrThrow<PlayManager>();
+			return new
+			{
+				bot = name, address, state = "connected",
+				server = srv is null ? null : new { name = srv.Name, version = srv.Version, platform = srv.Platform, maxClients = srv.MaxClients },
+				clients = full.Book.Clients.Values.Count(x => x.ClientType == TSLib.ClientType.Full),
+				me = me is null ? null : new { id = full.ClientId.Value, nickname = me.Name, channel = ch?.Name, channelCodec = ch?.Codec.ToString(), codecQuality = ch?.CodecQuality },
+				ping = pings.Length > 0 ? pings[^1] : (double?)null, avgPing = Avg(), jitter = Jitter(), pings,
+				loss = snap?.LossPct is { } l ? Math.Round(l, 1) : (double?)null,
+				inSec = snap?.InSec, outSec = snap?.OutSec, inMin = snap?.InMin, outMin = snap?.OutMin,
+				packetsIn = snap?.PacketsIn, packetsOut = snap?.PacketsOut,
+				bitrate = conf.Audio.Bitrate.Value,
+				playing = pm.IsPlaying,
+				connectedFor = FrixPluginHost.For(name)?.ConnectedSeconds,
+			};
+		});
+	}
+
 	private sealed record OnlinePerson(string Key, string Name, string Server, string Channel, bool Away, bool MicOff, bool SoundOff, string Country);
 	private sealed record LiveBot(string? Self, List<OnlinePerson> People, double? Ping, double? Loss);
 
-	private static async Task<object> OnlineList()
+	private static async Task<object> OnlineList(string? bot = null)
 	{
-		var (people, _, any) = await LiveScan();
+		var (people, _, any) = await LiveScan(bot);
 		return new { online = any, people = people.Select(p => new { name = p.Name, server = p.Server, channel = p.Channel, away = p.Away, micOff = p.MicOff, soundOff = p.SoundOff, country = p.Country }) };
 	}
 
-	private static object ActivityInfo(long? live = null)
+	private static object ActivityInfo(long? live = null, string? server = null, string? bot = null)
 	{
-		var a = FrixData.Activity();
+		var a = FrixData.Activity(server);
 		return new
 		{
 			any = a.Any || live is not null, now = live ?? a.Now, live = live is not null, peak = a.Peak,
-			enabled = AllConfigs().Any(c => c.Name is { } n && FrixPluginHost.Active(n, "activity")), peakAt = a.PeakAt?.ToString("yyyy-MM-ddTHH:mm"),
+			enabled = bot is not null ? FrixPluginHost.Active(bot, "activity") : AllConfigs().Any(c => c.Name is { } n && FrixPluginHost.Active(n, "activity")),
+			server, peakAt = a.PeakAt?.ToString("yyyy-MM-ddTHH:mm"),
 			last24 = a.Last24.Select(x => new { hour = x.Hour.ToString("HH:mm"), users = x.Users }),
 			heat = a.Heat,
 		};

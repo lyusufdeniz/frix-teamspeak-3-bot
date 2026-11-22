@@ -64,17 +64,19 @@ CREATE TABLE IF NOT EXISTS playlist_items (
 	public static long PlayCount(int days, string? bot = null)
 		=> (long)(FrixDb.Scalar("SELECT COUNT(*) FROM play_stats WHERE time >= $s AND ($b IS NULL OR bot = $b)", ("$s", Since(days)), ("$b", bot)) ?? 0L);
 
-	public static long PlayCountSince(DateTime fromUtc)
-		=> (long)(FrixDb.Scalar("SELECT COUNT(*) FROM play_stats WHERE time >= $s", ("$s", fromUtc.ToString("O"))) ?? 0L);
+	public static long PlayCountSince(DateTime fromUtc, string? bot = null)
+		=> (long)(FrixDb.Scalar("SELECT COUNT(*) FROM play_stats WHERE time >= $s AND ($b IS NULL OR bot = $b)", ("$s", fromUtc.ToString("O")), ("$b", bot)) ?? 0L);
 
-	public static long PlayCountBetween(DateTime fromUtc, DateTime toUtc)
-		=> (long)(FrixDb.Scalar("SELECT COUNT(*) FROM play_stats WHERE time >= $s AND time < $e", ("$s", fromUtc.ToString("O")), ("$e", toUtc.ToString("O"))) ?? 0L);
+	public static long PlayCountBetween(DateTime fromUtc, DateTime toUtc, string? bot = null)
+		=> (long)(FrixDb.Scalar("SELECT COUNT(*) FROM play_stats WHERE time >= $s AND time < $e AND ($b IS NULL OR bot = $b)",
+			("$s", fromUtc.ToString("O")), ("$e", toUtc.ToString("O")), ("$b", bot)) ?? 0L);
 
 	/// <summary>Son N günün (UTC) günlük çalma sayıları; boş günler 0.</summary>
-	public static List<(string Day, long Count)> PlaysPerDay(int days)
+	public static List<(string Day, long Count)> PlaysPerDay(int days, string? bot = null)
 	{
 		var from = DateTime.UtcNow.Date.AddDays(-(days - 1));
-		var rows = FrixDb.Query("SELECT substr(time,1,10) AS d, COUNT(*) AS c FROM play_stats WHERE time >= $s GROUP BY d", ("$s", from.ToString("O")))
+		var rows = FrixDb.Query("SELECT substr(time,1,10) AS d, COUNT(*) AS c FROM play_stats WHERE time >= $s AND ($b IS NULL OR bot = $b) GROUP BY d",
+				("$s", from.ToString("O")), ("$b", bot))
 			.ToDictionary(r => (string)r["d"]!, r => (long)r["c"]!);
 		return Enumerable.Range(0, days).Select(i => from.AddDays(i).ToString("yyyy-MM-dd")).Select(d => (d, rows.GetValueOrDefault(d))).ToList();
 	}
@@ -123,10 +125,11 @@ CREATE TABLE IF NOT EXISTS playlist_items (
 	}
 
 	/// <summary>Son 24 saat (saatlik en yüksek) ve son 28 günün gün×saat ortalaması (yerel saat). Sunucular toplanır.</summary>
-	public static (List<(DateTime Hour, long Users)> Last24, double[][] Heat, long Peak, DateTime? PeakAt, long? Now, bool Any) Activity()
+	/// <param name="server">sadece bu TeamSpeak sunucusu (null = hepsi)</param>
+	public static (List<(DateTime Hour, long Users)> Last24, double[][] Heat, long Peak, DateTime? PeakAt, long? Now, bool Any) Activity(string? server = null)
 	{
-		var rows = FrixDb.Query("SELECT time, SUM(users) AS u FROM server_activity WHERE time >= $s GROUP BY time",
-				("$s", DateTime.UtcNow.AddDays(-28).ToString("O")))
+		var rows = FrixDb.Query("SELECT time, SUM(users) AS u FROM server_activity WHERE time >= $s AND ($v IS NULL OR server = $v) GROUP BY time",
+				("$s", DateTime.UtcNow.AddDays(-28).ToString("O")), ("$v", server))
 			.Select(r => (t: DateTime.Parse((string)r["time"]!, null, System.Globalization.DateTimeStyles.RoundtripKind).ToLocalTime(), u: (long)r["u"]!)).ToList();
 		var nowH = DateTime.Now;
 		nowH = new DateTime(nowH.Year, nowH.Month, nowH.Day, nowH.Hour, 0, 0);

@@ -248,6 +248,8 @@ public sealed class FrixPluginHost
 	}
 
 	public void OnConnected() => connectedAt = DateTime.UtcNow;
+	/// <summary>Bağlantı süresi (saniye); bağlı değilse null.</summary>
+	public long? ConnectedSeconds => connectedAt == DateTime.MaxValue ? null : (long)(DateTime.UtcNow - connectedAt).TotalSeconds;
 	public void OnDisconnected() => connectedAt = DateTime.MaxValue;
 
 	private async Task Each(Func<FrixPlugin, Task> action)

@@ -76,6 +76,21 @@ public sealed class NetworkStats
 		}
 	}
 
+	/// <summary>Bağlantı ayrıntıları: son ping'ler (ms), kayıp (%), son saniye / dakikadaki gelen-giden bayt.</summary>
+	public (double[] Pings, double? LossPct, long InSec, long OutSec, long InMin, long OutMin, long PacketsIn, long PacketsOut) Snapshot()
+	{
+		lock (queueLock)
+		{
+			GetWithin(inBytesTime, TimeSecond, out var inS);
+			GetWithin(outBytesTime, TimeSecond, out var outS);
+			GetWithin(inBytesTime, TimeMinute, out var inM);
+			GetWithin(outBytesTime, TimeMinute, out var outM);
+			static long Sum(DataCategory d) => d.Speech + d.Keepalive + d.Control;
+			double? loss = pingResults.Count < 5 ? null : pingResults.Count(r => !r) * 100.0 / pingResults.Count;
+			return ([.. pingTimes.Select(t => Math.Round(t.TotalMilliseconds, 1))], loss, Sum(inS), Sum(outS), Sum(inM), Sum(outM), inPackets.Sum(), outPackets.Sum());
+		}
+	}
+
 	/// <summary>Son ping (ms, son 5 ölçümün ortalaması) ve paket kaybı (%). Veri yoksa null.</summary>
 	public (double? pingMs, double? lossPct) Quality()
 	{
