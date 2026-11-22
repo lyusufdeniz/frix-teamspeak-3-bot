@@ -949,7 +949,7 @@
     };
     const side = h('aside', { class: 'sidebar', id: 'sidebar', 'aria-label': t('nav.main') },
       h('div', { class: 'side-brand' }, h('a', { href: '/', 'data-link': '', class: 'brand', 'aria-label': 'frix' }, F.brand(true))),
-      h('div', { class: 'side-bot', title: t('top.botSelect') }, h('label', { class: 'bot-select-wrap' }, botDot, botSel)),
+      h('div', { class: 'side-bot', title: t('top.botSelect') }, h('div', { class: 'bot-select-wrap' }, botDot, botSel)),
       h('nav', { class: 'sidenav' }, groups.map(([, keys]) => h('div', { class: 'side-group' }, h('ul', null, keys.map(link))))),
       h('div', { class: 'side-player', id: 'side-player' }),
       h('div', { class: 'side-foot muted small' }, h('span', { text: 'frix ' + (S.version ? 'v' + S.version : '') }),

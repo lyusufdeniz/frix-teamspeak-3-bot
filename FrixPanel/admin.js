@@ -83,7 +83,8 @@
     let botName = F.state.selected;
     let builtins = [];
     const sel = h('select', { class: 'input', 'aria-label': t('plugins.bot') });
-    sel.addEventListener('change', () => { botName = sel.value; load(); });
+    // the page follows the bot chosen in the sidebar (and changing it here changes it there)
+    sel.addEventListener('change', () => { if (sel.value === botName) return; botName = sel.value; F.selectBot(botName); load(); });
     const list = h('div', { class: 'plugin-list' }, F.skeleton(3, 'sk-row'));
     root.append(F.pageHead(t('plugins.title'), t('plugins.sub'), h('label', { class: 'inline-field' }, h('span', { class: 'label-inline', text: t('plugins.bot') }), sel)), list);
     let radios = [];
@@ -511,7 +512,12 @@
       return el;
     }
     let first = true;
-    function onBots() { fillSel(); if (first) { first = false; load(); } }
+    function onBots() {
+      fillSel();
+      const want = F.state.selected && F.bot(F.state.selected) ? F.state.selected : botName;
+      if (want && want !== botName) { botName = want; sel.value = botName; if (!first) { load(); return; } }
+      if (first) { first = false; load(); }
+    }
     return { onBots };
   };
 
