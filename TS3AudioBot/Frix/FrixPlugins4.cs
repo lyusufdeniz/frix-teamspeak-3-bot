@@ -84,7 +84,7 @@ public sealed class AutoplayPlugin : FrixPlugin
 		{
 			if (B("announce"))
 				await Ctx.Client.SendChannelMessage(FrixChat.Colorize(FrixText.Get("autoplay.next", ("title", next.Value.title))));
-			await Ctx.PlayManager.PlayNow(InvokerData.Anonymous, new AudioResource(next.Value.id, next.Value.title, "youtube"));
+			await Ctx.PlayManager.PlayNow(FrixChat.SystemInvoker("autoplay"), new AudioResource(next.Value.id, next.Value.title, "youtube"));
 		});
 	}
 
@@ -193,7 +193,7 @@ public sealed class ScheduledPlayPlugin : FrixPlugin
 				var st = FrixRadio.Find(arg) ?? throw new InvalidOperationException("radyo yok: " + arg);
 				var url = await FrixRadio.ResolveStreamUrl(st.Url);
 				var res = new AudioResource(url, st.Name, "media").Add("radio", st.Name);
-				await Ctx.RunOnBot(() => Ctx.PlayManager.PlayNow(InvokerData.Anonymous, res));
+				await Ctx.RunOnBot(() => Ctx.PlayManager.PlayNow(FrixChat.SystemInvoker("schedule"), res));
 				break;
 			}
 		case "liste" or "playlist":
@@ -201,7 +201,7 @@ public sealed class ScheduledPlayPlugin : FrixPlugin
 				var list = FrixData.FindPlaylist(arg) ?? throw new InvalidOperationException("liste yok: " + arg);
 				var items = FrixData.PlaylistItems(list.Id).Select(i => new PlaylistItem(new AudioResource(i.ResourceId, i.Title, i.Type))).ToList();
 				if (items.Count == 0) return;
-				await Ctx.RunOnBot(() => Ctx.PlayManager.Play(InvokerData.Anonymous, items));
+				await Ctx.RunOnBot(() => Ctx.PlayManager.Play(FrixChat.SystemInvoker("schedule"), items));
 				break;
 			}
 		case "dur" or "stop":

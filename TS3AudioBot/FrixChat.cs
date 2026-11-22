@@ -19,10 +19,15 @@ public static class FrixChat
 			Names[u.Value] = name;
 	}
 
+	/// <summary>Frix'in kendi başlattığı çalmalar için (zamanlanmış çalma, boştayken radyo, otomatik devam) ayrı istekçi.</summary>
+	public static InvokerData SystemInvoker(string kind) => new(new Uid("frix:" + kind));
+
 	public static string NameOf(Uid? uid)
 	{
 		if (uid is null || uid.Value == Uid.Anonymous || uid.Value == Uid.Null)
 			return FrixText.Raw("user.webpanel");
+		if (uid.Value.Value is { } sys && sys.StartsWith("frix:", System.StringComparison.Ordinal))
+			return FrixText.Raw("user." + sys[5..]);
 		return Names.TryGetValue(uid.Value.Value, out var n) ? n : FrixText.Raw("user.unknown");
 	}
 

@@ -536,7 +536,7 @@ public sealed class IdleRadioPlugin : FrixPlugin
 		if (station is null) return;
 		var url = await FrixRadio.ResolveStreamUrl(station.Url);
 		var res = new AudioResource(url, station.Name, "media").Add("radio", station.Name);
-		await Ctx.RunOnBot(() => Ctx.PlayManager.PlayNow(InvokerData.Anonymous, res));
+		await Ctx.RunOnBot(() => Ctx.PlayManager.PlayNow(FrixChat.SystemInvoker("idleradio"), res));
 	}
 }
 
