@@ -192,6 +192,7 @@
       <a href="#screens" data-t="nav.screens">Screenshots</a>
       <a href="#install" data-t="nav.install">Install</a>
       <a href="#commands" data-t="nav.commands">Commands</a>
+      <a href="docs.html" data-t="nav.docs">Docs</a>
     </nav>
     <div class="lang" role="group" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="tr">TR</button></div>
     <a class="gh" href="https://github.com/lyusufdeniz/frix-teamspeak-bot"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg><span>GitHub</span></a>
@@ -225,6 +226,7 @@
       <div class="cta">
         <a class="btn btn-primary" href="https://github.com/lyusufdeniz/frix-teamspeak-bot/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m-5-5 5 5 5-5M5 19h14"/></svg><span data-t="hero.download">Download</span></a>
         <a class="btn btn-ghost" href="#install"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5"/></svg><span data-t="hero.install">Installation guide</span></a>
+        <a class="btn btn-ghost" href="docs.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg><span data-t="hero.docs">Documentation</span></a>
       </div>
       <div class="version" id="version">&nbsp;</div>
       <img class="shot-hero" data-shot="dashboard" src="screens/dashboard-en.png" alt="Frix dashboard" width="1920" height="1200">
@@ -331,7 +333,8 @@ sudo bash install.sh</pre></div>
       <div data-t="foot.tm">Frix is not affiliated with TeamSpeak Systems GmbH.</div>
     </div>
     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-      <a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/blob/main/docs/FAQ.md" data-t="foot.faq">FAQ</a>
+      <a href="docs.html" data-t="foot.docs">Documentation</a>
+      <a href="docs.html#troubleshooting" data-t="foot.faq">FAQ</a>
       <a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/releases" data-t="foot.releases">Releases</a>
       <a class="coffee" href="https://buymeacoffee.com/lyusufdeniz">☕ <span data-t="foot.coffee">Buy me a coffee</span></a>
     </div>
@@ -342,6 +345,7 @@ sudo bash install.sh</pre></div>
 (() => {
   const T = {
     tr: {
+      'nav.docs': 'Dokümantasyon', 'hero.docs': 'Dokümantasyon', 'foot.docs': 'Dokümantasyon',
       'nav.features': 'Özellikler', 'nav.screens': 'Ekran görüntüleri', 'nav.install': 'Kurulum', 'nav.commands': 'Komutlar',
       'hero.free': 'Ücretsiz ve açık kaynak',
       'hero.title': 'Müzik, moderasyon ve sunucu yönetimi — <em>tek TeamSpeak botu</em>.',

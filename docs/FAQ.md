@@ -1,3 +1,5 @@
+> **Tam dokümantasyon / Full documentation:** https://frix-teamspeak.github.io/docs.html
+
 # SSS / FAQ
 
 🇹🇷 Türkçe aşağıda · 🇬🇧 [English below](#english)

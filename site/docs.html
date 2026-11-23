@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frix Docs — TeamSpeak bot documentation</title>
+<meta name="description" content="Documentation of Frix TeamSpeak Bot: installation, web panel, plugins and their settings, chat commands, texts, scripts, administration and troubleshooting.">
+<meta property="og:title" content="Frix Docs">
+<meta property="og:image" content="https://frix-teamspeak.github.io/banner.png">
+<meta name="theme-color" content="#1b1c20">
+<link rel="icon" href="favicon.ico">
+<style>
+  @font-face { font-family: "JetBrains Mono"; src: url("fonts/JetBrainsMono-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "JetBrains Mono"; src: url("fonts/JetBrainsMono-Bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+  :root {
+    --bg: #17181b; --bg2: #1d1e22; --surface: #222328; --raised: #2a2b31; --line: #33343b; --line2: #42434b;
+    --text: #ecedf1; --muted: #9a9ba5; --accent: #5b8def; --accent-2: #8fb0f5; --fox: #ec6b2d;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    --ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--ui); -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  header.nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  .nav .in { display: flex; align-items: center; gap: 22px; height: 64px; max-width: 1440px; margin: 0 auto; padding: 0 24px; }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--text); font: 700 1.35rem var(--mono); letter-spacing: -.02em; }
+  .brand:hover { text-decoration: none; }
+  .brand img { width: 34px; height: 34px; }
+  .brand small { display: block; font: 400 .7rem var(--mono); color: var(--muted); margin-top: -3px; }
+  .docs-badge { font: 700 .72rem var(--mono); color: var(--accent-2); background: rgba(91,141,239,.13); border: 1px solid rgba(91,141,239,.3); padding: 2px 8px; border-radius: 999px; }
+  .nav nav { display: flex; gap: 18px; margin-left: auto; }
+  .nav nav a { color: var(--muted); font-size: .93rem; }
+  .nav nav a:hover { color: var(--text); text-decoration: none; }
+  .lang { display: flex; border: 1px solid var(--line2); border-radius: 999px; overflow: hidden; }
+  .lang button { background: none; border: 0; color: var(--muted); font: 600 .78rem var(--ui); padding: 6px 11px; cursor: pointer; }
+  .lang button.on { background: var(--raised); color: var(--text); }
+
+  .layout { display: grid; grid-template-columns: 270px minmax(0, 1fr) 220px; gap: 40px; max-width: 1440px; margin: 0 auto; padding: 0 24px; }
+  /* step navigation */
+  .side { position: sticky; top: 64px; align-self: start; height: calc(100vh - 64px); overflow: auto; padding: 28px 0; }
+  .side h4 { margin: 0 0 14px; font: 700 .74rem var(--mono); color: var(--muted); letter-spacing: .12em; text-transform: uppercase; }
+  .steps { list-style: none; margin: 0; padding: 0; position: relative; }
+  .steps::before { content: ""; position: absolute; left: 13px; top: 16px; bottom: 16px; width: 2px; background: var(--line2); }
+  .steps .fill { position: absolute; left: 13px; top: 16px; width: 2px; background: var(--accent); transition: height .25s ease; }
+  .steps li { position: relative; }
+  .steps a { display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 0; color: var(--muted); font-weight: 600; font-size: .93rem; border-radius: 8px; }
+  .steps a:hover { color: var(--text); text-decoration: none; }
+  .steps .n { position: relative; z-index: 1; width: 28px; height: 28px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--bg); border: 2px solid var(--line2); font: 700 .76rem var(--mono); }
+  .steps li.done .n { border-color: var(--accent); color: var(--accent-2); }
+  .steps li.on .n { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 5px rgba(91,141,239,.18); }
+  .steps li.on a { color: var(--text); }
+  .side-foot { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--line); font-size: .88rem; display: flex; flex-direction: column; gap: 8px; }
+  .side-foot a { color: var(--muted); }
+  .side-foot a:hover { color: var(--text); }
+
+  /* article */
+  article { padding: 34px 0 80px; min-width: 0; }
+  .crumb { color: var(--muted); font: 600 .78rem var(--mono); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }
+  article h1 { font-size: 2.3rem; letter-spacing: -.02em; line-height: 1.15; margin: 0 0 18px; }
+  article h2 { font-size: 1.5rem; letter-spacing: -.01em; margin: 46px 0 12px; padding-top: 14px; border-top: 1px solid var(--line); scroll-margin-top: 80px; }
+  article h3 { font-size: 1.12rem; margin: 30px 0 8px; scroll-margin-top: 80px; }
+  article p, article li { color: #d3d5dc; }
+  article strong { color: var(--text); }
+  article em { color: var(--muted); }
+  article code { font-family: var(--mono); font-size: .84em; background: var(--raised); color: #e6e8ee; padding: 1px 6px; border-radius: 5px; }
+  article pre { position: relative; background: #121316; border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto; }
+  article pre code { background: none; padding: 0; font-size: .85rem; line-height: 1.6; color: #d7dbe5; }
+  .copy { position: absolute; top: 8px; right: 8px; background: var(--raised); border: 1px solid var(--line2); color: var(--muted); border-radius: 7px; padding: 3px 9px; font: 600 .72rem var(--ui); cursor: pointer; }
+  .copy:hover { color: var(--text); }
+  article table { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: .9rem; display: block; overflow-x: auto; }
+  article th, article td { border: 1px solid var(--line); padding: 8px 11px; text-align: left; vertical-align: top; }
+  article th { background: var(--surface); color: var(--text); font-weight: 700; white-space: nowrap; }
+  article td { color: #cfd2da; }
+  article tr:nth-child(even) td { background: rgba(255,255,255,.015); }
+  article blockquote { margin: 16px 0; padding: 10px 16px; border-left: 3px solid var(--accent); background: rgba(91,141,239,.08); border-radius: 0 8px 8px 0; }
+  article blockquote p { margin: 0; }
+  article hr { border: 0; border-top: 1px solid var(--line); margin: 30px 0; }
+  .pager { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 50px; }
+  .pager a { display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--line2); border-radius: 12px; padding: 14px 18px; color: var(--text); background: var(--surface); }
+  .pager a:hover { border-color: var(--accent); text-decoration: none; }
+  .pager a span { color: var(--muted); font-size: .8rem; }
+  .pager a.next { text-align: right; grid-column: 2; }
+  .loading { color: var(--muted); padding: 40px 0; }
+
+  /* on this page */
+  .toc { position: sticky; top: 64px; align-self: start; padding: 34px 0; max-height: calc(100vh - 64px); overflow: auto; font-size: .85rem; }
+  .toc h4 { margin: 0 0 10px; font: 700 .72rem var(--mono); color: var(--muted); letter-spacing: .12em; text-transform: uppercase; }
+  .toc a { display: block; color: var(--muted); padding: 4px 0 4px 12px; border-left: 2px solid var(--line); }
+  .toc a.on { color: var(--text); border-left-color: var(--accent); }
+  .toc a:hover { color: var(--text); text-decoration: none; }
+
+  .mob { display: none; }
+  @media (max-width: 1180px) { .layout { grid-template-columns: 250px minmax(0, 1fr); } .toc { display: none; } }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    .side { display: none; }
+    .mob { display: block; padding: 16px 0 0; }
+    .mob select { width: 100%; background: var(--surface); color: var(--text); border: 1px solid var(--line2); border-radius: 10px; padding: 10px 12px; font: 600 .95rem var(--ui); }
+    .nav nav { display: none; }
+    article h1 { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="in">
+    <a class="brand" href="./"><img src="logo.svg" alt=""><span>frix<small>teamspeak bot</small></span></a>
+    <span class="docs-badge">DOCS</span>
+    <nav>
+      <a href="./" data-t="nav.home">Home</a>
+      <a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/releases/latest" data-t="nav.download">Download</a>
+      <a href="https://github.com/lyusufdeniz/frix-teamspeak-bot">GitHub</a>
+    </nav>
+    <div class="lang" role="group" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="tr">TR</button></div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="side">
+    <h4 data-t="side.title">Documentation</h4>
+    <ol class="steps" id="steps"><span class="fill" id="fill"></span></ol>
+    <div class="side-foot">
+      <a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/issues" data-t="side.issue">Report a problem</a>
+      <a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/tree/main/site/docs" data-t="side.source">Edit these pages on GitHub</a>
+    </div>
+  </aside>
+  <main>
+    <div class="mob"><select id="mobSel" aria-label="Page"></select></div>
+    <article id="doc"><div class="loading">Loading…</div></article>
+  </main>
+  <aside class="toc" id="toc"></aside>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script>
+(() => {
+  const PAGES = [
+    ['introduction', 'Introduction', 'Giriş'],
+    ['installation', 'Installation', 'Kurulum'],
+    ['panel', 'Web panel', 'Web panel'],
+    ['plugins', 'Plugins', 'Eklentiler'],
+    ['commands', 'Commands', 'Komutlar'],
+    ['customization', 'Texts & commands', 'Metinler ve komutlar'],
+    ['scripts', 'Scripts', 'Scriptler'],
+    ['administration', 'Administration', 'Yönetim'],
+    ['troubleshooting', 'Troubleshooting', 'Sorun giderme'],
+  ];
+  const T = {
+    tr: { 'nav.home': 'Ana sayfa', 'nav.download': 'İndir', 'side.title': 'Dokümantasyon', 'side.issue': 'Sorun bildir',
+      'side.source': 'Bu sayfaları GitHub\'da düzenle', prev: 'Önceki', next: 'Sonraki', onpage: 'Bu sayfada', copy: 'Kopyala', copied: 'Kopyalandı',
+      loading: 'Yükleniyor…', fail: 'Sayfa yüklenemedi.', docs: 'Dokümantasyon' },
+    en: { prev: 'Previous', next: 'Next', onpage: 'On this page', copy: 'Copy', copied: 'Copied', loading: 'Loading…', fail: 'The page could not be loaded.', docs: 'Documentation' },
+  };
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+  const en = {};
+  $$('[data-t]').forEach((e) => { en[e.dataset.t] = e.textContent; });
+  let lang = 'en';
+  try { lang = localStorage.getItem('frix.site.lang') || ((navigator.language || '').toLowerCase().startsWith('tr') ? 'tr' : 'en'); } catch (_) { /* */ }
+  const tr = (k) => (lang === 'tr' && T.tr[k] != null ? T.tr[k] : (T.en[k] != null ? T.en[k] : en[k]));
+  const title = (p) => (lang === 'tr' ? p[2] : p[1]);
+  const slug = (s) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+  let page = PAGES[0][0];
+  const cache = {};
+
+  function route() {
+    const h = decodeURIComponent(location.hash.slice(1));
+    const [p, anchor] = h.split(':');
+    if (PAGES.some((x) => x[0] === p)) return { p, anchor };
+    if (h && document.getElementById(h)) return { p: page, anchor: h };   // a heading in the current page
+    return { p: page, anchor: null };
+  }
+
+  function paintNav() {
+    const i = PAGES.findIndex((x) => x[0] === page);
+    const ol = $('#steps');
+    ol.replaceChildren($('#fill') || Object.assign(document.createElement('span'), { className: 'fill', id: 'fill' }));
+    PAGES.forEach((p, k) => {
+      const li = document.createElement('li');
+      li.className = k === i ? 'on' : k < i ? 'done' : '';
+      li.innerHTML = '<a href="#' + p[0] + '"><span class="n">' + (k + 1) + '</span><span></span></a>';
+      li.querySelector('span:last-child').textContent = title(p);
+      ol.append(li);
+    });
+    requestAnimationFrame(() => {
+      const items = $$('#steps li .n');
+      if (items[i]) $('#fill').style.height = (items[i].getBoundingClientRect().top - items[0].getBoundingClientRect().top) + 'px';
+    });
+    const sel = $('#mobSel');
+    sel.replaceChildren(...PAGES.map((p, k) => { const o = document.createElement('option'); o.value = p[0]; o.textContent = (k + 1) + '. ' + title(p); return o; }));
+    sel.value = page;
+  }
+
+  async function load(anchor) {
+    const art = $('#doc');
+    const key = lang + '/' + page;
+    let md = cache[key];
+    if (md == null) {
+      art.innerHTML = '<div class="loading"></div>'; art.firstChild.textContent = tr('loading');
+      try { const r = await fetch('docs/' + key + '.md', { cache: 'no-cache' }); if (!r.ok) throw new Error(r.status); md = cache[key] = await r.text(); }
+      catch (_) { art.innerHTML = '<div class="loading"></div>'; art.firstChild.textContent = tr('fail'); return; }
+    }
+    const i = PAGES.findIndex((x) => x[0] === page);
+    art.innerHTML = '<div class="crumb"></div>' + marked.parse(md);
+    art.firstChild.textContent = tr('docs') + ' · ' + (i + 1) + '/' + PAGES.length;
+    // heading ids, copy buttons, internal links
+    const used = {};
+    $$('h2, h3', art).forEach((hh) => { let id = slug(hh.textContent) || 'h'; if (used[id]) id += '-' + (++used[id]); else used[id] = 1; hh.id = id; });
+    $$('pre', art).forEach((pre) => {
+      const b = document.createElement('button'); b.className = 'copy'; b.type = 'button'; b.textContent = tr('copy');
+      b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(pre.querySelector('code').textContent); b.textContent = tr('copied'); setTimeout(() => { b.textContent = tr('copy'); }, 1400); } catch (_) { /* */ } });
+      pre.append(b);
+    });
+    $$('a[href^="http"]', art).forEach((a) => { a.target = '_blank'; a.rel = 'noopener'; });
+    // previous / next
+    const pager = document.createElement('div'); pager.className = 'pager';
+    const mk = (p, cls, label) => { const a = document.createElement('a'); a.className = cls; a.href = '#' + p[0]; a.innerHTML = '<span></span><strong></strong>'; a.firstChild.textContent = label; a.lastChild.textContent = title(p); return a; };
+    if (i > 0) pager.append(mk(PAGES[i - 1], 'prev', '← ' + tr('prev')));
+    if (i < PAGES.length - 1) pager.append(mk(PAGES[i + 1], 'next', tr('next') + ' →'));
+    art.append(pager);
+    // on this page
+    const toc = $('#toc');
+    const h2s = $$('h2', art);
+    toc.replaceChildren();
+    if (h2s.length) {
+      const hd = document.createElement('h4'); hd.textContent = tr('onpage'); toc.append(hd);
+      h2s.forEach((hh) => { const a = document.createElement('a'); a.href = '#' + page + ':' + hh.id; a.textContent = hh.textContent; a.dataset.id = hh.id; toc.append(a); });
+    }
+    document.title = title(PAGES[i]) + ' — Frix Docs';
+    if (anchor && document.getElementById(anchor)) document.getElementById(anchor).scrollIntoView();
+    else window.scrollTo(0, 0);
+    spy();
+  }
+
+  function spy() {
+    const h2s = $$('#doc h2');
+    let cur = null;
+    h2s.forEach((hh) => { if (hh.getBoundingClientRect().top < 140) cur = hh.id; });
+    $$('#toc a').forEach((a) => a.classList.toggle('on', a.dataset.id === cur));
+  }
+
+  function go() {
+    const r = route();
+    if (r.p !== page) { page = r.p; paintNav(); load(r.anchor); }
+    else if (r.anchor && document.getElementById(r.anchor)) document.getElementById(r.anchor).scrollIntoView();
+    else if (!r.anchor) { paintNav(); load(null); }
+  }
+
+  function applyLang() {
+    document.documentElement.lang = lang;
+    $$('[data-t]').forEach((e) => { e.textContent = tr(e.dataset.t); });
+    $$('.lang button').forEach((b) => b.classList.toggle('on', b.dataset.lang === lang));
+  }
+
+  $$('.lang button').forEach((b) => b.addEventListener('click', () => {
+    lang = b.dataset.lang; try { localStorage.setItem('frix.site.lang', lang); } catch (_) { /* */ }
+    applyLang(); paintNav(); load(null);
+  }));
+  $('#mobSel').addEventListener('change', (e) => { location.hash = e.target.value; });
+  window.addEventListener('hashchange', go);
+  window.addEventListener('scroll', spy, { passive: true });
+
+  applyLang();
+  const r = route();
+  page = r.p;
+  paintNav();
+  load(r.anchor);
+})();
+</script>
+</body>
+</html>
