@@ -19,7 +19,7 @@ public static class FrixWeb
 	private static HttpClient Create()
 	{
 		var h = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
-		h.DefaultRequestHeaders.UserAgent.ParseAdd("FrixTS3Bot/2.0 (+https://github.com/lyusufdeniz/frix-teamspeak-3-bot)");
+		h.DefaultRequestHeaders.UserAgent.ParseAdd("FrixTS3Bot/2.0 (+https://github.com/lyusufdeniz/frix-teamspeak-bot)");
 		return h;
 	}
 

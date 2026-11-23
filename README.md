@@ -1,17 +1,17 @@
 <div align="center">
 
-<img src="docs/images/banner.png" alt="Frix TeamSpeak 3 Bot" width="100%">
+<img src="docs/images/banner.png" alt="Frix TeamSpeak Bot" width="100%">
 
-# 🦊 Frix TeamSpeak 3 Bot
+# 🦊 Frix TeamSpeak Bot
 
-**Music, moderation and server management for TeamSpeak 3 — one self-hosted bot with a modern web panel.**
+**Music, moderation and server management for TeamSpeak 3 & 6 — one self-hosted bot with a modern web panel.**
 Plays YouTube (incl. live streams), radios and your own files, keeps your server tidy, greets and ranks your users,
 and runs your own JavaScript automations. No TeamSpeak client, VLC or virtual audio cable needed.
 
-[Türkçe](README.tr.md) · [FAQ](docs/FAQ.md) · [API](docs/API.md) · [Releases](https://github.com/lyusufdeniz/frix-teamspeak-3-bot/releases)
+[Website](https://lyusufdeniz.github.io/frix-teamspeak-bot/) · [Türkçe](README.tr.md) · [FAQ](docs/FAQ.md) · [API](docs/API.md) · [Releases](https://github.com/lyusufdeniz/frix-teamspeak-bot/releases)
 
-<a href="https://github.com/lyusufdeniz/frix-teamspeak-3-bot/releases/latest"><img src="https://img.shields.io/github/v/release/lyusufdeniz/frix-teamspeak-3-bot?label=release&color=5b8def" alt="Latest release"></a>
-<a href="https://github.com/lyusufdeniz/frix-teamspeak-3-bot/pkgs/container/frix"><img src="https://img.shields.io/badge/docker-ghcr.io%2Flyusufdeniz%2Ffrix-2496ED?logo=docker&logoColor=white" alt="Docker image"></a>
+<a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/releases/latest"><img src="https://img.shields.io/github/v/release/lyusufdeniz/frix-teamspeak-bot?label=release&color=5b8def" alt="Latest release"></a>
+<a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/pkgs/container/frix"><img src="https://img.shields.io/badge/docker-ghcr.io%2Flyusufdeniz%2Ffrix-2496ED?logo=docker&logoColor=white" alt="Docker image"></a>
 <a href="https://buymeacoffee.com/lyusufdeniz"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-support%20Frix-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy me a coffee"></a>
 
 <img src="docs/images/screens/dashboard-en.png" alt="Frix dashboard" width="100%">
@@ -81,7 +81,7 @@ The bot connects to your TeamSpeak server by itself and streams audio directly w
 
 ### Windows (Server / 10 / 11)
 1. Download `Frix-win-x64.zip` from [Releases](../../releases) and extract it, e.g. to `C:\Frix`.
-2. Run **`Frix.exe`**. A green note icon appears in the system tray (no console window).
+2. Run **`Frix.exe`**. The Frix fox icon appears in the system tray (no console window).
 3. Open **http://localhost:58913** and create your admin account.
 4. In the panel, go to **Bots → New bot**, enter your TeamSpeak address (e.g. `localhost:9987`) and start it.
 
@@ -92,7 +92,7 @@ The bot is restarted automatically if it crashes.
 
 ### Linux (Debian/Ubuntu, Fedora, Arch, Alpine)
 ```bash
-wget https://github.com/lyusufdeniz/frix-teamspeak-3-bot/releases/latest/download/Frix-linux-x64.zip
+wget https://github.com/lyusufdeniz/frix-teamspeak-bot/releases/latest/download/Frix-linux-x64.zip
 unzip Frix-linux-x64.zip && cd Frix-linux-x64
 sudo bash install.sh
 ```
@@ -153,8 +153,8 @@ Bot replies are available in 9 languages (TR, EN, DE, ES, FR, RU, PT, PL, IT). C
 ## 🛠 Building from source
 Requirements: .NET 10 SDK, git (with submodules), bash, curl, unzip.
 ```bash
-git clone --recurse-submodules https://github.com/lyusufdeniz/frix-teamspeak-3-bot.git
-cd frix-teamspeak-3-bot
+git clone --recurse-submodules https://github.com/lyusufdeniz/frix-teamspeak-bot.git
+cd frix-teamspeak-bot
 ./packaging/package.sh win-x64     # or linux-x64 / linux-arm64
 ```
 The package appears in `dist/`. Pushing a tag like `v2.0.1` builds both packages and publishes a release via GitHub Actions.

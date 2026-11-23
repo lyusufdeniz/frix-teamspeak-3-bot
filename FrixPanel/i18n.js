@@ -12,7 +12,7 @@ window.I18N = {
     'login.title': 'Giriş yap', 'login.subtitle': 'Botu yönetmek için panel hesabınla giriş yap.', 'login.user': 'Kullanıcı adı',
     'login.pass': 'Şifre', 'login.submit': 'Giriş yap', 'login.fill': 'Kullanıcı adı ve şifre gerekli.',
 
-    'setup.title': 'Frix TeamSpeak 3 Bot kurulumu', 'setup.welcome': 'Hoş geldin! İki kısa adımda paneli hazırlayalım.',
+    'setup.title': 'Frix TeamSpeak Bot kurulumu', 'setup.welcome': 'Hoş geldin! İki kısa adımda paneli hazırlayalım.',
     'setup.progress': 'Kurulum adımları', 'setup.step1': 'Dil', 'setup.step2': 'Yönetici hesabı', 'setup.chooseLang': 'Dil seç',
     'setup.next': 'Devam', 'setup.back': 'Geri', 'setup.create': 'Hesabı oluştur',
     'setup.accountIntro': 'Panelin ilk yönetici (admin) hesabını oluştur. Bu şifreyi unutma; şifreler otomatik üretilmez.',
@@ -277,7 +277,7 @@ window.I18N = {
     'login.title': 'Sign in', 'login.subtitle': 'Sign in with your panel account to manage the bot.', 'login.user': 'Username',
     'login.pass': 'Password', 'login.submit': 'Sign in', 'login.fill': 'Username and password are required.',
 
-    'setup.title': 'Frix TeamSpeak 3 Bot setup', 'setup.welcome': 'Welcome! Let\'s get the panel ready in two short steps.',
+    'setup.title': 'Frix TeamSpeak Bot setup', 'setup.welcome': 'Welcome! Let\'s get the panel ready in two short steps.',
     'setup.progress': 'Setup steps', 'setup.step1': 'Language', 'setup.step2': 'Admin account', 'setup.chooseLang': 'Choose a language',
     'setup.next': 'Continue', 'setup.back': 'Back', 'setup.create': 'Create account',
     'setup.accountIntro': 'Create the first administrator account of the panel. Don\'t forget this password; no passwords are generated automatically.',
@@ -542,7 +542,7 @@ window.I18N = {
     'login.title': 'Anmelden', 'login.subtitle': 'Melde dich mit deinem Panel-Konto an, um den Bot zu verwalten.', 'login.user': 'Benutzername',
     'login.pass': 'Passwort', 'login.submit': 'Anmelden', 'login.fill': 'Benutzername und Passwort sind erforderlich.',
 
-    'setup.title': 'Frix TeamSpeak 3 Bot einrichten', 'setup.welcome': 'Willkommen! Wir richten das Panel in zwei kurzen Schritten ein.',
+    'setup.title': 'Frix TeamSpeak Bot einrichten', 'setup.welcome': 'Willkommen! Wir richten das Panel in zwei kurzen Schritten ein.',
     'setup.progress': 'Einrichtungsschritte', 'setup.step1': 'Sprache', 'setup.step2': 'Admin-Konto', 'setup.chooseLang': 'Wähle eine Sprache',
     'setup.next': 'Weiter', 'setup.back': 'Zurück', 'setup.create': 'Konto erstellen',
     'setup.accountIntro': 'Erstelle das erste Administratorkonto des Panels. Vergiss dieses Passwort nicht; Passwörter werden nicht automatisch erzeugt.',
@@ -808,7 +808,7 @@ window.I18N = {
     'login.title': 'Iniciar sesión', 'login.subtitle': 'Inicia sesión con tu cuenta del panel para gestionar el bot.', 'login.user': 'Usuario',
     'login.pass': 'Contraseña', 'login.submit': 'Entrar', 'login.fill': 'El usuario y la contraseña son obligatorios.',
 
-    'setup.title': 'Configuración de Frix TeamSpeak 3 Bot', 'setup.welcome': '¡Bienvenido! Vamos a preparar el panel en dos pasos rápidos.',
+    'setup.title': 'Configuración de Frix TeamSpeak Bot', 'setup.welcome': '¡Bienvenido! Vamos a preparar el panel en dos pasos rápidos.',
     'setup.progress': 'Pasos de configuración', 'setup.step1': 'Idioma', 'setup.step2': 'Cuenta de administrador', 'setup.chooseLang': 'Elige un idioma',
     'setup.next': 'Continuar', 'setup.back': 'Atrás', 'setup.create': 'Crear cuenta',
     'setup.accountIntro': 'Crea la primera cuenta de administrador del panel. No olvides esta contraseña; no se generan contraseñas automáticamente.',
@@ -1074,7 +1074,7 @@ window.I18N = {
     'login.title': 'Connexion', 'login.subtitle': 'Connecte-toi avec ton compte du panneau pour gérer le bot.', 'login.user': 'Nom d\'utilisateur',
     'login.pass': 'Mot de passe', 'login.submit': 'Se connecter', 'login.fill': 'Le nom d\'utilisateur et le mot de passe sont requis.',
 
-    'setup.title': 'Installation de Frix TeamSpeak 3 Bot', 'setup.welcome': 'Bienvenue ! Préparons le panneau en deux petites étapes.',
+    'setup.title': 'Installation de Frix TeamSpeak Bot', 'setup.welcome': 'Bienvenue ! Préparons le panneau en deux petites étapes.',
     'setup.progress': 'Étapes d\'installation', 'setup.step1': 'Langue', 'setup.step2': 'Compte admin', 'setup.chooseLang': 'Choisis une langue',
     'setup.next': 'Continuer', 'setup.back': 'Retour', 'setup.create': 'Créer le compte',
     'setup.accountIntro': 'Crée le premier compte administrateur du panneau. N\'oublie pas ce mot de passe : aucun mot de passe n\'est généré automatiquement.',
@@ -1340,7 +1340,7 @@ window.I18N = {
     'login.title': 'Вход', 'login.subtitle': 'Войди под учётной записью панели, чтобы управлять ботом.', 'login.user': 'Имя пользователя',
     'login.pass': 'Пароль', 'login.submit': 'Войти', 'login.fill': 'Нужно ввести имя пользователя и пароль.',
 
-    'setup.title': 'Настройка Frix TeamSpeak 3 Bot', 'setup.welcome': 'Добро пожаловать! Подготовим панель за два коротких шага.',
+    'setup.title': 'Настройка Frix TeamSpeak Bot', 'setup.welcome': 'Добро пожаловать! Подготовим панель за два коротких шага.',
     'setup.progress': 'Шаги настройки', 'setup.step1': 'Язык', 'setup.step2': 'Аккаунт администратора', 'setup.chooseLang': 'Выбери язык',
     'setup.next': 'Далее', 'setup.back': 'Назад', 'setup.create': 'Создать аккаунт',
     'setup.accountIntro': 'Создай первый аккаунт администратора панели. Не забудь этот пароль: пароли не генерируются автоматически.',
@@ -1606,7 +1606,7 @@ window.I18N = {
     'login.title': 'Entrar', 'login.subtitle': 'Entre com sua conta do painel para gerenciar o bot.', 'login.user': 'Usuário',
     'login.pass': 'Senha', 'login.submit': 'Entrar', 'login.fill': 'Usuário e senha são obrigatórios.',
 
-    'setup.title': 'Configuração do Frix TeamSpeak 3 Bot', 'setup.welcome': 'Bem-vindo! Vamos preparar o painel em duas etapas rápidas.',
+    'setup.title': 'Configuração do Frix TeamSpeak Bot', 'setup.welcome': 'Bem-vindo! Vamos preparar o painel em duas etapas rápidas.',
     'setup.progress': 'Etapas da configuração', 'setup.step1': 'Idioma', 'setup.step2': 'Conta de admin', 'setup.chooseLang': 'Escolha um idioma',
     'setup.next': 'Continuar', 'setup.back': 'Voltar', 'setup.create': 'Criar conta',
     'setup.accountIntro': 'Crie a primeira conta de administrador do painel. Não esqueça esta senha; nenhuma senha é gerada automaticamente.',
@@ -1872,7 +1872,7 @@ window.I18N = {
     'login.title': 'Zaloguj się', 'login.subtitle': 'Zaloguj się kontem panelu, aby zarządzać botem.', 'login.user': 'Nazwa użytkownika',
     'login.pass': 'Hasło', 'login.submit': 'Zaloguj się', 'login.fill': 'Podaj nazwę użytkownika i hasło.',
 
-    'setup.title': 'Konfiguracja Frix TeamSpeak 3 Bot', 'setup.welcome': 'Witaj! Przygotujmy panel w dwóch krótkich krokach.',
+    'setup.title': 'Konfiguracja Frix TeamSpeak Bot', 'setup.welcome': 'Witaj! Przygotujmy panel w dwóch krótkich krokach.',
     'setup.progress': 'Kroki konfiguracji', 'setup.step1': 'Język', 'setup.step2': 'Konto admina', 'setup.chooseLang': 'Wybierz język',
     'setup.next': 'Dalej', 'setup.back': 'Wstecz', 'setup.create': 'Utwórz konto',
     'setup.accountIntro': 'Utwórz pierwsze konto administratora panelu. Zapamiętaj to hasło; hasła nie są generowane automatycznie.',
@@ -2138,7 +2138,7 @@ window.I18N = {
     'login.title': 'Accedi', 'login.subtitle': 'Accedi con il tuo account del pannello per gestire il bot.', 'login.user': 'Nome utente',
     'login.pass': 'Password', 'login.submit': 'Accedi', 'login.fill': 'Nome utente e password sono obbligatori.',
 
-    'setup.title': 'Configurazione di Frix TeamSpeak 3 Bot', 'setup.welcome': 'Benvenuto! Prepariamo il pannello in due brevi passaggi.',
+    'setup.title': 'Configurazione di Frix TeamSpeak Bot', 'setup.welcome': 'Benvenuto! Prepariamo il pannello in due brevi passaggi.',
     'setup.progress': 'Passaggi di configurazione', 'setup.step1': 'Lingua', 'setup.step2': 'Account admin', 'setup.chooseLang': 'Scegli una lingua',
     'setup.next': 'Continua', 'setup.back': 'Indietro', 'setup.create': 'Crea account',
     'setup.accountIntro': 'Crea il primo account amministratore del pannello. Non dimenticare questa password: nessuna password viene generata automaticamente.',

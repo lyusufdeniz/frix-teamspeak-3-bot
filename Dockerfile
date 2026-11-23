@@ -1,4 +1,4 @@
-# Frix TeamSpeak 3 bot — Docker imajı
+# Frix TeamSpeak bot — Docker imajı
 #   docker run -d -p 58913:58913 -v frix-data:/data ghcr.io/lyusufdeniz/frix:latest
 # Tüm veriler (veritabanı, botlar, kütüphane, scriptler) /data altında tutulur.
 # Aynı imaj Pterodactyl'de de çalışır (STARTUP değişkeni varsa /home/container kullanılır).

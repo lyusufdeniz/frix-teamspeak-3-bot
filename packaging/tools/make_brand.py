@@ -113,8 +113,8 @@ def banner(path, bg=None):
     reg = ImageFont.truetype(os.path.join(FONT_DIR, "JetBrainsMono-Regular.ttf"), s(26))
     draw_fox(d, s(880), s(28), s(320), bg)
     d.text((s(96), s(86)), "frix", font=bold, fill=CREAM)
-    d.text((s(100), s(212)), "teamspeak 3 bot", font=reg, fill="#93b4f3")
-    d.text((s(100), s(256)), "music · radio · live streams · web panel", font=reg, fill="#9a9ba5")
+    d.text((s(100), s(212)), "teamspeak bot", font=reg, fill="#93b4f3")
+    d.text((s(100), s(256)), "music · moderation · server tools · web panel", font=reg, fill="#9a9ba5")
     img = img.resize((W, H), Image.LANCZOS)
     img.save(path, optimize=True)
 

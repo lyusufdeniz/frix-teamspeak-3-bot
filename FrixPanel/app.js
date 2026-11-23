@@ -389,7 +389,7 @@
   }).observe(document.documentElement, { childList: true, subtree: true });
 
   F.SUPPORT_URL = 'https://buymeacoffee.com/lyusufdeniz';
-  F.REPO_URL = 'https://github.com/lyusufdeniz/frix-teamspeak-3-bot';
+  F.REPO_URL = 'https://github.com/lyusufdeniz/frix-teamspeak-bot';
   /** text containing `code` segments → nodes */
   F.rich = function (str) {
     const out = [];
@@ -885,7 +885,7 @@
   F.setTheme(lsGet(LS_THEME) === 'krem' ? 'krem' : 'lacivert');
 
   F.brand = (sub) => h('span', { class: 'brand-mark' }, h('img', { src: '/logo.svg', alt: '', width: 32, height: 32 }),
-    h('span', { class: 'brand-text' }, h('span', { class: 'wordmark', text: 'frix' }), sub ? h('span', { class: 'brand-sub', text: 'teamspeak 3 bot' }) : null));
+    h('span', { class: 'brand-text' }, h('span', { class: 'wordmark', text: 'frix' }), sub ? h('span', { class: 'brand-sub', text: 'teamspeak bot' }) : null));
 
   function buildShell() {
     const app = F.$('#app');

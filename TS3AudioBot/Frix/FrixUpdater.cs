@@ -18,7 +18,7 @@ namespace TS3AudioBot.Frix;
 public static class FrixUpdater
 {
 	private static readonly NLog.Logger Log = NLog.LogManager.GetCurrentClassLogger();
-	public const string DefaultRepo = "lyusufdeniz/frix-teamspeak-3-bot";
+	public const string DefaultRepo = "lyusufdeniz/frix-teamspeak-bot";
 	public const int UpdateExitCode = 4;
 
 	public static string CurrentVersion { get; } = FindVersion();

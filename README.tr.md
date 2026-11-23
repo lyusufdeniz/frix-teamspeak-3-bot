@@ -1,17 +1,17 @@
 <div align="center">
 
-<img src="docs/images/banner.png" alt="Frix TeamSpeak 3 Bot" width="100%">
+<img src="docs/images/banner.png" alt="Frix TeamSpeak Bot" width="100%">
 
-# 🦊 Frix TeamSpeak 3 Bot
+# 🦊 Frix TeamSpeak Bot
 
-**TeamSpeak 3 için müzik, moderasyon ve sunucu yönetimi — modern web panelli, kendi sunucunda çalışan tek bot.**
+**TeamSpeak 3 ve 6 için müzik, moderasyon ve sunucu yönetimi — modern web panelli, kendi sunucunda çalışan tek bot.**
 YouTube (canlı yayınlar dahil), radyolar ve kendi dosyalarını çalar; sunucunu düzenli tutar, kullanıcılarını karşılar
 ve rütbe verir, kendi JavaScript otomasyonlarını çalıştırır. TeamSpeak istemcisi, VLC ya da sanal ses kablosu gerekmez.
 
-[English](README.md) · [SSS](docs/FAQ.md) · [API](docs/API.md) · [Sürümler](https://github.com/lyusufdeniz/frix-teamspeak-3-bot/releases)
+[Web sitesi](https://lyusufdeniz.github.io/frix-teamspeak-bot/) · [English](README.md) · [SSS](docs/FAQ.md) · [API](docs/API.md) · [Sürümler](https://github.com/lyusufdeniz/frix-teamspeak-bot/releases)
 
-<a href="https://github.com/lyusufdeniz/frix-teamspeak-3-bot/releases/latest"><img src="https://img.shields.io/github/v/release/lyusufdeniz/frix-teamspeak-3-bot?label=s%C3%BCr%C3%BCm&color=5b8def" alt="Son sürüm"></a>
-<a href="https://github.com/lyusufdeniz/frix-teamspeak-3-bot/pkgs/container/frix"><img src="https://img.shields.io/badge/docker-ghcr.io%2Flyusufdeniz%2Ffrix-2496ED?logo=docker&logoColor=white" alt="Docker imajı"></a>
+<a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/releases/latest"><img src="https://img.shields.io/github/v/release/lyusufdeniz/frix-teamspeak-bot?label=s%C3%BCr%C3%BCm&color=5b8def" alt="Son sürüm"></a>
+<a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/pkgs/container/frix"><img src="https://img.shields.io/badge/docker-ghcr.io%2Flyusufdeniz%2Ffrix-2496ED?logo=docker&logoColor=white" alt="Docker imajı"></a>
 <a href="https://buymeacoffee.com/lyusufdeniz"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-Frix'e%20destek%20ol-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy me a coffee"></a>
 
 <img src="docs/images/screens/dashboard-tr.png" alt="Frix genel bakış" width="100%">
@@ -81,7 +81,7 @@ sunucularda ekransız, **Docker**'da ve **Pterodactyl**'de çalışır.
 
 ### Windows (Server / 10 / 11)
 1. [Releases](../../releases) sayfasından `Frix-win-x64.zip` dosyasını indir ve örneğin `C:\Frix` klasörüne çıkar.
-2. **`Frix.exe`** dosyasını çalıştır. Saatin yanında yeşil nota simgesi çıkar (konsol penceresi açılmaz).
+2. **`Frix.exe`** dosyasını çalıştır. Saatin yanında Frix tilki simgesi çıkar (konsol penceresi açılmaz).
 3. **http://localhost:58913** adresini aç ve yönetici hesabını oluştur.
 4. Panelde **Botlar → Yeni bot** ile TeamSpeak adresini gir (ör. `localhost:9987`) ve botu başlat.
 
@@ -92,7 +92,7 @@ Bot çökerse otomatik yeniden açılır.
 
 ### Linux (Debian/Ubuntu, Fedora, Arch, Alpine)
 ```bash
-wget https://github.com/lyusufdeniz/frix-teamspeak-3-bot/releases/latest/download/Frix-linux-x64.zip
+wget https://github.com/lyusufdeniz/frix-teamspeak-bot/releases/latest/download/Frix-linux-x64.zip
 unzip Frix-linux-x64.zip && cd Frix-linux-x64
 sudo bash install.sh
 ```
@@ -153,8 +153,8 @@ Bot cevapları 9 dilde (TR, EN, DE, ES, FR, RU, PT, PL, IT). Özel komutlar, kom
 ## 🛠 Kaynaktan derleme
 Gerekenler: .NET 10 SDK, git (alt modüllerle), bash, curl, unzip.
 ```bash
-git clone --recurse-submodules https://github.com/lyusufdeniz/frix-teamspeak-3-bot.git
-cd frix-teamspeak-3-bot
+git clone --recurse-submodules https://github.com/lyusufdeniz/frix-teamspeak-bot.git
+cd frix-teamspeak-bot
 ./packaging/package.sh win-x64     # ya da linux-x64 / linux-arm64
 ```
 Paket `dist/` klasöründe oluşur. `v2.0.1` gibi bir etiket gönderildiğinde GitHub Actions iki paketi de derleyip sürüm yayınlar.

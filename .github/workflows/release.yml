@@ -88,5 +88,5 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/frix:latest
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.description=Frix TeamSpeak 3 music and server bot
+            org.opencontainers.image.description=Frix TeamSpeak music and server bot
             org.opencontainers.image.licenses=OSL-3.0
