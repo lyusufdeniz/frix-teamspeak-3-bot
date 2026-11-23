@@ -8,7 +8,7 @@
 YouTube (canlı yayınlar dahil), radyolar ve kendi dosyalarını çalar; sunucunu düzenli tutar, kullanıcılarını karşılar
 ve rütbe verir, kendi JavaScript otomasyonlarını çalıştırır. TeamSpeak istemcisi, VLC ya da sanal ses kablosu gerekmez.
 
-[Web sitesi](https://lyusufdeniz.github.io/frix-teamspeak-bot/) · [English](README.md) · [SSS](docs/FAQ.md) · [API](docs/API.md) · [Sürümler](https://github.com/lyusufdeniz/frix-teamspeak-bot/releases)
+[Web sitesi](https://frix-teamspeak.github.io/) · [English](README.md) · [SSS](docs/FAQ.md) · [API](docs/API.md) · [Sürümler](https://github.com/lyusufdeniz/frix-teamspeak-bot/releases)
 
 <a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/releases/latest"><img src="https://img.shields.io/github/v/release/lyusufdeniz/frix-teamspeak-bot?label=s%C3%BCr%C3%BCm&color=5b8def" alt="Son sürüm"></a>
 <a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/pkgs/container/frix"><img src="https://img.shields.io/badge/docker-ghcr.io%2Flyusufdeniz%2Ffrix-2496ED?logo=docker&logoColor=white" alt="Docker imajı"></a>

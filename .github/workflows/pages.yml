@@ -3,7 +3,7 @@ name: Pages
 on:
   push:
     branches: [ main ]
-    paths: [ "site/**", "docs/images/**", ".github/workflows/pages.yml" ]
+    paths: [ "site-redirect/**", ".github/workflows/pages.yml" ]
   workflow_dispatch:
 
 permissions:
@@ -20,13 +20,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Assemble the site
-        run: |
-          mkdir -p _site/screens _site/fonts
-          cp -r site/. _site/
-          cp docs/images/screens/*.png _site/screens/
-          cp docs/images/logo.svg docs/images/banner.png docs/images/favicon.ico _site/
-          cp FrixPanel/assets/fonts/JetBrainsMono-Regular.ttf FrixPanel/assets/fonts/JetBrainsMono-Bold.ttf _site/fonts/
+      # the website moved to https://frix-teamspeak.github.io/ (repo frix-teamspeak/frix-teamspeak.github.io);
+      # this address only redirects there
+      - name: Redirect page
+        run: mkdir -p _site && cp site-redirect/index.html site-redirect/404.html _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

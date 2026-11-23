@@ -8,7 +8,7 @@
 Plays YouTube (incl. live streams), radios and your own files, keeps your server tidy, greets and ranks your users,
 and runs your own JavaScript automations. No TeamSpeak client, VLC or virtual audio cable needed.
 
-[Website](https://lyusufdeniz.github.io/frix-teamspeak-bot/) · [Türkçe](README.tr.md) · [FAQ](docs/FAQ.md) · [API](docs/API.md) · [Releases](https://github.com/lyusufdeniz/frix-teamspeak-bot/releases)
+[Website](https://frix-teamspeak.github.io/) · [Türkçe](README.tr.md) · [FAQ](docs/FAQ.md) · [API](docs/API.md) · [Releases](https://github.com/lyusufdeniz/frix-teamspeak-bot/releases)
 
 <a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/releases/latest"><img src="https://img.shields.io/github/v/release/lyusufdeniz/frix-teamspeak-bot?label=release&color=5b8def" alt="Latest release"></a>
 <a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/pkgs/container/frix"><img src="https://img.shields.io/badge/docker-ghcr.io%2Flyusufdeniz%2Ffrix-2496ED?logo=docker&logoColor=white" alt="Docker image"></a>
