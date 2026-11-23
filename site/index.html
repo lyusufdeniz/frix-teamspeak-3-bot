@@ -27,7 +27,7 @@
   body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 var(--ui); -webkit-font-smoothing: antialiased; }
   a { color: var(--accent-2); text-decoration: none; }
   a:hover { text-decoration: underline; }
-  img { max-width: 100%; display: block; }
+  img { max-width: 100%; height: auto; display: block; }
   code, pre, .mono { font-family: var(--mono); }
   .wrap { max-width: var(--max); margin: 0 auto; padding: 0 20px; }
 
@@ -67,10 +67,10 @@
   .btn-ghost { color: var(--text); border-color: var(--line2); background: var(--surface); }
   .btn-ghost:hover { border-color: var(--muted); }
   .version { color: var(--muted); font: .8rem var(--mono); }
-  .shot-hero { margin: 46px auto 0; max-width: 1080px; border-radius: 16px; border: 1px solid var(--line2); box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.02); overflow: hidden; }
+  .shot-hero { margin: 46px auto 0; max-width: 1240px; cursor: zoom-in; border-radius: 16px; border: 1px solid var(--line2); box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.02); overflow: hidden; }
 
   /* sections */
-  section.block { padding: 80px 0; border-top: 1px solid var(--line); }
+  section.block { padding: 80px 0; border-top: 1px solid var(--line); scroll-margin-top: 64px; }
   .kicker { font: 700 .78rem var(--mono); color: var(--accent-2); text-transform: uppercase; letter-spacing: .12em; }
   h2 { font-size: clamp(1.6rem, 3.2vw, 2.3rem); letter-spacing: -.02em; margin: 8px 0 12px; }
   .sub { color: var(--muted); max-width: 720px; margin: 0 0 36px; }
@@ -90,8 +90,53 @@
   .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
   .tabs button { background: var(--surface); border: 1px solid var(--line); color: var(--muted); padding: 8px 14px; border-radius: 999px; font: 600 .86rem var(--ui); cursor: pointer; }
   .tabs button.on { color: var(--text); border-color: var(--accent); background: rgba(91,141,239,.14); }
-  .gallery { border-radius: 14px; border: 1px solid var(--line2); overflow: hidden; background: var(--bg2); }
+  /* the gallery is wider than the text column so the panel is not squeezed */
+  .gallery-wrap { max-width: 1400px; margin: 0 auto; padding: 0 20px; }
+  .gallery { position: relative; border-radius: 14px; border: 1px solid var(--line2); overflow: hidden; background: var(--bg2); cursor: zoom-in; box-shadow: 0 24px 70px rgba(0,0,0,.45); }
   .gallery img { width: 100%; }
+  .zoom-hint { position: absolute; right: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 6px; background: rgba(23,24,27,.82); border: 1px solid var(--line2); color: var(--text); font: 600 .78rem var(--ui); padding: 6px 10px; border-radius: 8px; pointer-events: none; }
+  .zoom-hint svg { width: 14px; height: 14px; }
+  .gnav { position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line2); background: rgba(23,24,27,.82); color: var(--text); display: grid; place-items: center; cursor: pointer; }
+  .gnav:hover { border-color: var(--accent); }
+  .gnav svg { width: 18px; height: 18px; }
+  .gnav.prev { left: 12px; } .gnav.next { right: 12px; }
+
+  /* lightbox */
+  .lb { position: fixed; inset: 0; z-index: 50; background: rgba(8,9,11,.92); display: flex; flex-direction: column; }
+  .lb[hidden] { display: none; }
+  .lb-bar { display: flex; align-items: center; gap: 12px; padding: 12px 18px; color: var(--muted); font-size: .92rem; background: #0b0c0e; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+  .lb-bar strong { color: var(--text); }
+  .lb-close { margin-left: auto; background: var(--surface); border: 1px solid var(--line2); color: var(--text); border-radius: 9px; padding: 7px 12px; cursor: pointer; font: 600 .86rem var(--ui); }
+  .lb-body { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 0 18px 24px; }
+  .lb-body img { max-width: none; width: min(1920px, 100%); height: auto; border-radius: 10px; border: 1px solid var(--line2); cursor: zoom-out; }
+  .lb-body img.full { width: 1920px; }
+
+  /* step navigation on the left */
+  .steps { position: fixed; left: 26px; top: 50%; transform: translateY(-50%); z-index: 9; display: none; }
+  .steps ol { list-style: none; margin: 0; padding: 0; position: relative; }
+  .steps ol::before { content: ""; position: absolute; left: 13px; top: 14px; bottom: 14px; width: 2px; background: var(--line2); border-radius: 2px; }
+  .steps .fill { position: absolute; left: 13px; top: 14px; width: 2px; height: 0; background: var(--accent); border-radius: 2px; transition: height .25s ease; }
+  .steps li { position: relative; }
+  .steps a { display: flex; align-items: center; gap: 12px; padding: 9px 0; color: var(--muted); font-size: .86rem; font-weight: 600; }
+  .steps a:hover { color: var(--text); text-decoration: none; }
+  .steps .n { position: relative; z-index: 1; width: 28px; height: 28px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--bg); border: 2px solid var(--line2); font: 700 .78rem var(--mono); color: var(--muted); transition: all .2s ease; }
+  .steps li.done .n { border-color: var(--accent); color: var(--accent-2); }
+  .steps li.on .n { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 5px rgba(91,141,239,.18); }
+  .steps li.on a { color: var(--text); }
+  .steps .lbl { white-space: nowrap; }
+  @media (min-width: 1280px) {
+    .steps { display: block; }
+    /* keep wide images clear of the step line */
+    .gallery-wrap { max-width: min(1400px, calc(100vw - 150px)); }
+    .shot-hero { max-width: min(1240px, calc(100vw - 150px)); }
+  }
+  @media (min-width: 1280px) and (max-width: 1559px) { .steps .lbl { display: none; } .steps { left: 16px; } }
+  @media (min-width: 1560px) {
+    /* labels are shown: wide images start after them */
+    .gallery-wrap { max-width: min(1400px, calc(100vw - 440px)); }
+    .shot-hero { max-width: min(1240px, calc(100vw - 440px)); }
+  }
+
   .caption { color: var(--muted); font-size: .92rem; margin-top: 12px; }
 
   /* install */
@@ -124,6 +169,7 @@
   .coffee:hover { text-decoration: none; filter: brightness(1.05); }
 
   @media (max-width: 900px) {
+    .gnav { display: none; }
     .grid { grid-template-columns: 1fr 1fr; }
     .cmds { grid-template-columns: 1fr 1fr; }
     .install { grid-template-columns: 1fr; }
@@ -151,6 +197,22 @@
     <a class="gh" href="https://github.com/lyusufdeniz/frix-teamspeak-bot"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg><span>GitHub</span></a>
   </div>
 </header>
+
+<nav class="steps" aria-label="Sections">
+  <span class="fill"></span>
+  <ol>
+    <li data-step="top"><a href="#top"><span class="n">1</span><span class="lbl" data-t="st.top">Overview</span></a></li>
+    <li data-step="features"><a href="#features"><span class="n">2</span><span class="lbl" data-t="nav.features">Features</span></a></li>
+    <li data-step="screens"><a href="#screens"><span class="n">3</span><span class="lbl" data-t="nav.screens">Screenshots</span></a></li>
+    <li data-step="install"><a href="#install"><span class="n">4</span><span class="lbl" data-t="nav.install">Install</span></a></li>
+    <li data-step="commands"><a href="#commands"><span class="n">5</span><span class="lbl" data-t="nav.commands">Commands</span></a></li>
+  </ol>
+</nav>
+
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true">
+  <div class="lb-bar"><strong id="lbTitle"></strong><span id="lbHint" data-t="lb.hint">Click the image for full size · ← → to browse · Esc to close</span><button type="button" class="lb-close" id="lbClose" data-t="lb.close">Close</button></div>
+  <div class="lb-body"><img id="lbImg" alt=""></div>
+</div>
 
 <main id="top">
   <section class="hero">
@@ -203,9 +265,15 @@
       <h2 data-t="sc.title">A panel you will actually enjoy</h2>
       <p class="sub" data-t="sc.sub">Dark and light themes, works on phones, no page scrolling on desktop.</p>
       <div class="tabs" id="shotTabs"></div>
-      <div class="gallery"><img id="shotImg" src="screens/plugins-en.png" alt="" width="1920" height="1200"></div>
-      <p class="caption" id="shotCap"></p>
     </div>
+    <div class="gallery-wrap">
+      <div class="gallery" id="gallery"><img id="shotImg" src="screens/plugins-en.png" alt="" width="1920" height="1200">
+        <button type="button" class="gnav prev" id="gPrev" aria-label="Previous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg></button>
+        <button type="button" class="gnav next" id="gNext" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></button>
+        <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5M11 8v6M8 11h6"/></svg><span data-t="lb.zoom">Click to enlarge</span></span>
+      </div>
+    </div>
+    <div class="wrap"><p class="caption" id="shotCap"></p></div>
   </section>
 
   <section class="block" id="install">
@@ -299,6 +367,7 @@ sudo bash install.sh</pre></div>
       'foot.license': '<a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/blob/main/LICENSE">OSL-3.0</a> lisansıyla ücretsiz ve açık kaynak, <a href="https://github.com/Splamy/TS3AudioBot">TS3AudioBot</a> üzerine kurulu.',
       'foot.tm': 'Frix, TeamSpeak Systems GmbH ile bağlantılı değildir.', 'foot.faq': 'SSS', 'foot.releases': 'Sürümler', 'foot.coffee': 'Bana bir kahve ısmarla',
       'copy': 'Kopyala', 'copied': 'Kopyalandı', 'latest': 'Son sürüm',
+      'st.top': 'Tanıtım', 'lb.hint': 'Tam boyut için resme tıkla · ← → ile gez · Esc ile kapat', 'lb.close': 'Kapat', 'lb.zoom': 'Büyütmek için tıkla',
     },
     en: { 'copied': 'Copied', 'latest': 'Latest release' },
   };
@@ -362,6 +431,49 @@ sudo bash install.sh</pre></div>
     const text = b.nextElementSibling.textContent;
     try { await navigator.clipboard.writeText(text); b.textContent = tr('copied'); setTimeout(() => { b.textContent = tr('copy'); }, 1500); } catch (_) { /* */ }
   }));
+  // gallery arrows
+  const go = (d) => { shot = (shot + d + SHOTS.length) % SHOTS.length; paintShot(); };
+  $('#gPrev').addEventListener('click', (e) => { e.stopPropagation(); go(-1); });
+  $('#gNext').addEventListener('click', (e) => { e.stopPropagation(); go(1); });
+
+  // lightbox: the screenshot at full width; click toggles real size, arrows browse
+  const lb = $('#lb'), lbImg = $('#lbImg');
+  let lbList = null, lbIndex = 0;
+  function lbPaint() {
+    const it = lbList[lbIndex];
+    lbImg.src = it.src; lbImg.alt = it.title; lbImg.classList.remove('full');
+    $('#lbTitle').textContent = it.title;
+  }
+  function lbOpen(list, i) { lbList = list; lbIndex = i; lbPaint(); lb.hidden = false; document.body.style.overflow = 'hidden'; $('#lbClose').focus(); }
+  function lbClose() { lb.hidden = true; document.body.style.overflow = ''; }
+  const galleryList = () => SHOTS.map((s) => ({ src: 'screens/' + s[0] + '-' + lang + '.png', title: lang === 'tr' ? s[2] : s[1] }));
+  $('#gallery').addEventListener('click', () => lbOpen(galleryList(), shot));
+  $$('.shot-hero').forEach((img) => img.addEventListener('click', () => lbOpen([{ src: img.src, title: lang === 'tr' ? 'Genel bakış' : 'Dashboard' }], 0)));
+  lbImg.addEventListener('click', () => lbImg.classList.toggle('full'));
+  $('#lbClose').addEventListener('click', lbClose);
+  lb.addEventListener('click', (e) => { if (e.target === lb || e.target.classList.contains('lb-body')) lbClose(); });
+  document.addEventListener('keydown', (e) => {
+    if (lb.hidden) return;
+    if (e.key === 'Escape') lbClose();
+    else if (lbList.length > 1 && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) { lbIndex = (lbIndex + (e.key === 'ArrowRight' ? 1 : -1) + lbList.length) % lbList.length; lbPaint(); }
+  });
+
+  // step navigation: the current section is highlighted, the line fills up to it
+  const steps = $$('.steps li');
+  const secs = steps.map((li) => document.getElementById(li.dataset.step));
+  function spy() {
+    const y = window.scrollY + window.innerHeight * 0.35;
+    let cur = 0;
+    secs.forEach((sec, i) => { if (sec && sec.offsetTop <= y) cur = i; });
+    if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 4) cur = secs.length - 1;
+    steps.forEach((li, i) => { li.classList.toggle('on', i === cur); li.classList.toggle('done', i < cur); });
+    const first = steps[0].querySelector('.n'), now = steps[cur].querySelector('.n');
+    $('.steps .fill').style.height = (now.getBoundingClientRect().top - first.getBoundingClientRect().top) + 'px';
+  }
+  window.addEventListener('scroll', spy, { passive: true });
+  window.addEventListener('resize', spy);
+  spy();
+
   let latest = null;
   fetch('https://api.github.com/repos/lyusufdeniz/frix-teamspeak-bot/releases/latest')
     .then((r) => (r.ok ? r.json() : null)).then((j) => { if (j && j.tag_name) { latest = j.tag_name; $('#version').textContent = tr('latest') + ': ' + latest; } })
