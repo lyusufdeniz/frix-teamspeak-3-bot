@@ -111,63 +111,19 @@
   .lb-body img { max-width: none; width: min(1920px, 100%); height: auto; border-radius: 10px; border: 1px solid var(--line2); cursor: zoom-out; }
   .lb-body img.full { width: 1920px; }
 
-  /* step navigation on the left */
-  .steps { position: fixed; left: 26px; top: 50%; transform: translateY(-50%); z-index: 9; display: none; }
-  .steps ol { list-style: none; margin: 0; padding: 0; position: relative; }
-  .steps ol::before { content: ""; position: absolute; left: 13px; top: 14px; bottom: 14px; width: 2px; background: var(--line2); border-radius: 2px; }
-  .steps .fill { position: absolute; left: 13px; top: 14px; width: 2px; height: 0; background: var(--accent); border-radius: 2px; transition: height .25s ease; }
-  .steps li { position: relative; }
-  .steps a { display: flex; align-items: center; gap: 12px; padding: 9px 0; color: var(--muted); font-size: .86rem; font-weight: 600; }
-  .steps a:hover { color: var(--text); text-decoration: none; }
-  .steps .n { position: relative; z-index: 1; width: 28px; height: 28px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--bg); border: 2px solid var(--line2); font: 700 .78rem var(--mono); color: var(--muted); transition: all .2s ease; }
-  .steps li.done .n { border-color: var(--accent); color: var(--accent-2); }
-  .steps li.on .n { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 5px rgba(91,141,239,.18); }
-  .steps li.on a { color: var(--text); }
-  .steps .lbl { white-space: nowrap; }
-  @media (min-width: 1280px) {
-    .steps { display: block; }
-    /* keep wide images clear of the step line */
-    .gallery-wrap { max-width: min(1400px, calc(100vw - 150px)); }
-    .shot-hero { max-width: min(1240px, calc(100vw - 150px)); }
-  }
-  @media (min-width: 1280px) and (max-width: 1559px) { .steps .lbl { display: none; } .steps { left: 16px; } }
-  @media (min-width: 1560px) {
-    /* labels are shown: wide images start after them */
-    .gallery-wrap { max-width: min(1400px, calc(100vw - 440px)); }
-    .shot-hero { max-width: min(1240px, calc(100vw - 440px)); }
-  }
-
-  .caption { color: var(--muted); font-size: .92rem; margin-top: 12px; }
-
-  /* install */
-  .install { display: grid; grid-template-columns: 220px 1fr; gap: 22px; }
-  .itabs { display: flex; flex-direction: column; gap: 6px; }
-  .itabs button { text-align: left; background: none; border: 1px solid transparent; color: var(--muted); padding: 11px 14px; border-radius: 10px; font: 600 .95rem var(--ui); cursor: pointer; display: flex; align-items: center; gap: 10px; }
-  .itabs button svg { width: 18px; height: 18px; }
-  .itabs button.on { background: var(--surface); border-color: var(--line2); color: var(--text); }
-  .ipane { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 24px; }
-  .ipane[hidden] { display: none; }
-  .ipane ol { margin: 0 0 14px; padding-left: 20px; }
-  .ipane li { margin: 6px 0; }
-  .ipane p { color: var(--muted); margin: 10px 0 0; font-size: .93rem; }
-  .code { position: relative; background: #121316; border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; overflow-x: auto; }
-  .code pre { margin: 0; font-size: .86rem; line-height: 1.65; color: #d7dbe5; }
-  .copy { position: absolute; top: 8px; right: 8px; background: var(--raised); border: 1px solid var(--line2); color: var(--muted); border-radius: 7px; padding: 4px 9px; font: 600 .74rem var(--ui); cursor: pointer; }
-  .copy:hover { color: var(--text); }
-  kbd, .ipane code { font-family: var(--mono); font-size: .86em; background: var(--raised); padding: 1px 6px; border-radius: 5px; color: var(--text); }
-
-  /* commands */
-  .cmds { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-  .cmd { background: var(--surface); border: 1px solid var(--line); border-radius: 11px; padding: 12px 14px; }
-  .cmd b { font: 700 .92rem var(--mono); color: var(--accent-2); }
-  .cmd span { display: block; color: var(--muted); font-size: .86rem; margin-top: 2px; }
-
-  /* footer */
-  footer { border-top: 1px solid var(--line); padding: 40px 0 60px; color: var(--muted); font-size: .9rem; }
-  footer .wrap { display: flex; flex-wrap: wrap; gap: 18px 30px; align-items: center; justify-content: space-between; }
-  .coffee { display: inline-flex; align-items: center; gap: 8px; background: #ffdd00; color: #1b1b1b; font-weight: 700; padding: 9px 16px; border-radius: 10px; }
-  .coffee:hover { text-decoration: none; filter: brightness(1.05); }
-
+  /* floating section menu at the bottom */
+  .dock { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 20; display: flex; align-items: center; gap: 2px;
+    padding: 5px; border-radius: 999px; background: rgba(30,31,36,.82); border: 1px solid var(--line2); backdrop-filter: blur(14px);
+    box-shadow: 0 14px 40px rgba(0,0,0,.45); max-width: calc(100vw - 24px); overflow-x: auto; scrollbar-width: none; }
+  .dock::-webkit-scrollbar { display: none; }
+  .dock a { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 999px; color: var(--muted); font: 600 .85rem var(--ui); white-space: nowrap; }
+  .dock a:hover { color: var(--text); text-decoration: none; background: rgba(255,255,255,.05); }
+  .dock a.on { color: #fff; background: var(--accent); }
+  .dock a svg { width: 16px; height: 16px; flex: none; }
+  .dock .sep { width: 1px; height: 20px; background: var(--line2); margin: 0 4px; flex: none; }
+  .dock a.docs { color: var(--accent-2); }
+  footer { padding-bottom: 110px; }
+  @media (max-width: 700px) { .dock a span { display: none; } .dock a { padding: 9px 12px; } }
   @media (max-width: 900px) {
     .gnav { display: none; }
     .grid { grid-template-columns: 1fr 1fr; }
@@ -199,15 +155,14 @@
   </div>
 </header>
 
-<nav class="steps" aria-label="Sections">
-  <span class="fill"></span>
-  <ol>
-    <li data-step="top"><a href="#top"><span class="n">1</span><span class="lbl" data-t="st.top">Overview</span></a></li>
-    <li data-step="features"><a href="#features"><span class="n">2</span><span class="lbl" data-t="nav.features">Features</span></a></li>
-    <li data-step="screens"><a href="#screens"><span class="n">3</span><span class="lbl" data-t="nav.screens">Screenshots</span></a></li>
-    <li data-step="install"><a href="#install"><span class="n">4</span><span class="lbl" data-t="nav.install">Install</span></a></li>
-    <li data-step="commands"><a href="#commands"><span class="n">5</span><span class="lbl" data-t="nav.commands">Commands</span></a></li>
-  </ol>
+<nav class="dock" aria-label="Sections">
+  <a href="#top" data-sec="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5"/></svg><span data-t="st.top">Overview</span></a>
+  <a href="#features" data-sec="features"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg><span data-t="nav.features">Features</span></a>
+  <a href="#screens" data-sec="screens"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="13" rx="2"/><path d="M8.5 21h7"/></svg><span data-t="nav.screens">Screenshots</span></a>
+  <a href="#install" data-sec="install"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m-5-5 5 5 5-5M5 19h14"/></svg><span data-t="nav.install">Install</span></a>
+  <a href="#commands" data-sec="commands"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 8 4 4-4 4M12.5 16H18"/></svg><span data-t="nav.commands">Commands</span></a>
+  <span class="sep"></span>
+  <a href="docs.html" class="docs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg><span data-t="nav.docs">Docs</span></a>
 </nav>
 
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true">
@@ -462,17 +417,15 @@ sudo bash install.sh</pre></div>
     else if (lbList.length > 1 && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) { lbIndex = (lbIndex + (e.key === 'ArrowRight' ? 1 : -1) + lbList.length) % lbList.length; lbPaint(); }
   });
 
-  // step navigation: the current section is highlighted, the line fills up to it
-  const steps = $$('.steps li');
-  const secs = steps.map((li) => document.getElementById(li.dataset.step));
+  // floating menu: the section in view is highlighted
+  const dockLinks = $$('.dock a[data-sec]');
+  const secs = dockLinks.map((a) => document.getElementById(a.dataset.sec));
   function spy() {
     const y = window.scrollY + window.innerHeight * 0.35;
     let cur = 0;
     secs.forEach((sec, i) => { if (sec && sec.offsetTop <= y) cur = i; });
     if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 4) cur = secs.length - 1;
-    steps.forEach((li, i) => { li.classList.toggle('on', i === cur); li.classList.toggle('done', i < cur); });
-    const first = steps[0].querySelector('.n'), now = steps[cur].querySelector('.n');
-    $('.steps .fill').style.height = (now.getBoundingClientRect().top - first.getBoundingClientRect().top) + 'px';
+    dockLinks.forEach((a, i) => a.classList.toggle('on', i === cur));
   }
   window.addEventListener('scroll', spy, { passive: true });
   window.addEventListener('resize', spy);

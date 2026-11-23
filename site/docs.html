@@ -37,26 +37,51 @@
   .lang button { background: none; border: 0; color: var(--muted); font: 600 .78rem var(--ui); padding: 6px 11px; cursor: pointer; }
   .lang button.on { background: var(--raised); color: var(--text); }
 
-  .layout { display: grid; grid-template-columns: 270px minmax(0, 1fr) 220px; gap: 40px; max-width: 1440px; margin: 0 auto; padding: 0 24px; }
-  /* step navigation */
-  .side { position: sticky; top: 64px; align-self: start; height: calc(100vh - 64px); overflow: auto; padding: 28px 0; }
-  .side h4 { margin: 0 0 14px; font: 700 .74rem var(--mono); color: var(--muted); letter-spacing: .12em; text-transform: uppercase; }
-  .steps { list-style: none; margin: 0; padding: 0; position: relative; }
-  .steps::before { content: ""; position: absolute; left: 13px; top: 16px; bottom: 16px; width: 2px; background: var(--line2); }
-  .steps .fill { position: absolute; left: 13px; top: 16px; width: 2px; background: var(--accent); transition: height .25s ease; }
-  .steps li { position: relative; }
-  .steps a { display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 0; color: var(--muted); font-weight: 600; font-size: .93rem; border-radius: 8px; }
-  .steps a:hover { color: var(--text); text-decoration: none; }
-  .steps .n { position: relative; z-index: 1; width: 28px; height: 28px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--bg); border: 2px solid var(--line2); font: 700 .76rem var(--mono); }
-  .steps li.done .n { border-color: var(--accent); color: var(--accent-2); }
-  .steps li.on .n { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 5px rgba(91,141,239,.18); }
-  .steps li.on a { color: var(--text); }
-  .side-foot { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--line); font-size: .88rem; display: flex; flex-direction: column; gap: 8px; }
-  .side-foot a { color: var(--muted); }
-  .side-foot a:hover { color: var(--text); }
+  .layout { display: grid; grid-template-columns: 260px minmax(0, 1fr) 220px; gap: 44px; max-width: 1440px; margin: 0 auto; padding: 0 24px; }
+
+  /* left sidebar: search + grouped page list */
+  .side { position: sticky; top: 64px; align-self: start; height: calc(100vh - 64px); overflow-y: auto; padding: 26px 8px 40px 0;
+    border-right: 1px solid var(--line); scrollbar-width: thin; }
+  .search { position: relative; margin: 0 12px 18px 0; }
+  .search input { width: 100%; background: var(--surface); border: 1px solid var(--line2); color: var(--text); border-radius: 9px;
+    padding: 8px 12px 8px 34px; font: 500 .88rem var(--ui); outline: none; }
+  .search input:focus { border-color: var(--accent); }
+  .search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--muted); pointer-events: none; }
+  .search kbd { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); font: 600 .68rem var(--mono); color: var(--muted);
+    border: 1px solid var(--line2); border-radius: 5px; padding: 0 5px; }
+  .grp { margin-bottom: 18px; }
+  .grp h5 { margin: 0 0 6px; padding-left: 12px; font: 700 .7rem var(--mono); color: var(--muted); letter-spacing: .12em; text-transform: uppercase; }
+  .side a.pg { display: block; padding: 6px 12px; margin-right: 12px; border-radius: 7px; color: #c3c5cd; font-size: .92rem; }
+  .side a.pg:hover { background: rgba(255,255,255,.04); color: var(--text); text-decoration: none; }
+  .side a.pg.on { background: rgba(91,141,239,.14); color: var(--accent-2); font-weight: 600; }
+  .side .sub { margin: 2px 12px 6px 18px; border-left: 1px solid var(--line); }
+  .side .sub a { display: block; padding: 3px 10px; font-size: .84rem; color: var(--muted); }
+  .side .sub a:hover { color: var(--text); text-decoration: none; }
+  .side .sub a.on { color: var(--text); }
+  .side .foot { border-top: 1px solid var(--line); margin: 6px 12px 0 0; padding-top: 14px; display: grid; gap: 6px; font-size: .84rem; }
+  .side .foot a { color: var(--muted); }
+  .side .foot a:hover { color: var(--text); }
+
+  /* search results */
+  .results { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 30; background: #1f2025; border: 1px solid var(--line2);
+    border-radius: 12px; box-shadow: 0 18px 44px rgba(0,0,0,.5); padding: 6px; max-height: 60vh; overflow: auto; }
+  .results[hidden] { display: none; }
+  .results a { display: block; padding: 8px 10px; border-radius: 8px; color: var(--text); font-size: .88rem; }
+  .results a:hover, .results a.sel { background: rgba(91,141,239,.14); text-decoration: none; }
+  .results a small { display: block; color: var(--muted); font-size: .76rem; }
+  .results mark { background: rgba(91,141,239,.35); color: inherit; border-radius: 3px; }
+  .results .none { padding: 10px; color: var(--muted); font-size: .86rem; }
+
+  /* mobile: menu button + drawer */
+  .menu-btn { display: none; background: none; border: 1px solid var(--line2); color: var(--text); border-radius: 9px; padding: 6px 9px; cursor: pointer; }
+  .menu-btn svg { width: 18px; height: 18px; display: block; }
+  .shade { display: none; }
 
   /* article */
   article { padding: 34px 0 80px; min-width: 0; }
+  .edit { display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 44px; padding-top: 16px; border-top: 1px solid var(--line); font-size: .86rem; }
+  .edit a { color: var(--muted); }
+  .edit a:hover { color: var(--text); }
   .crumb { color: var(--muted); font: 600 .78rem var(--mono); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }
   article h1 { font-size: 2.3rem; letter-spacing: -.02em; line-height: 1.15; margin: 0 0 18px; }
   article h2 { font-size: 1.5rem; letter-spacing: -.01em; margin: 46px 0 12px; padding-top: 14px; border-top: 1px solid var(--line); scroll-margin-top: 80px; }
@@ -77,7 +102,7 @@
   article blockquote { margin: 16px 0; padding: 10px 16px; border-left: 3px solid var(--accent); background: rgba(91,141,239,.08); border-radius: 0 8px 8px 0; }
   article blockquote p { margin: 0; }
   article hr { border: 0; border-top: 1px solid var(--line); margin: 30px 0; }
-  .pager { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 50px; }
+  .pager { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 22px; }
   .pager a { display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--line2); border-radius: 12px; padding: 14px 18px; color: var(--text); background: var(--surface); }
   .pager a:hover { border-color: var(--accent); text-decoration: none; }
   .pager a span { color: var(--muted); font-size: .8rem; }
@@ -91,21 +116,30 @@
   .toc a.on { color: var(--text); border-left-color: var(--accent); }
   .toc a:hover { color: var(--text); text-decoration: none; }
 
-  .mob { display: none; }
-  @media (max-width: 1180px) { .layout { grid-template-columns: 250px minmax(0, 1fr); } .toc { display: none; } }
-  @media (max-width: 860px) {
-    .layout { grid-template-columns: 1fr; }
-    .side { display: none; }
-    .mob { display: block; padding: 16px 0 0; }
-    .mob select { width: 100%; background: var(--surface); color: var(--text); border: 1px solid var(--line2); border-radius: 10px; padding: 10px 12px; font: 600 .95rem var(--ui); }
+  @media (max-width: 1200px) { .layout { grid-template-columns: 240px minmax(0, 1fr); } .toc { display: none; } }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .menu-btn { display: block; }
+    .side { position: fixed; top: 64px; left: 0; bottom: 0; height: auto; width: min(300px, 86vw); z-index: 25; background: var(--bg2);
+      padding: 20px 8px 40px 16px; transform: translateX(-102%); transition: transform .2s ease; }
+    body.open .side { transform: none; }
+    body.open .shade { display: block; position: fixed; inset: 64px 0 0; background: rgba(0,0,0,.5); z-index: 24; }
+    .results { width: auto; }
+    .search kbd { display: none; }
+  }
+  @media (max-width: 700px) {
     .nav nav { display: none; }
+    .nav .in { gap: 12px; }
     article h1 { font-size: 1.8rem; }
+    .pager { grid-template-columns: 1fr; }
+    .pager a.next { grid-column: 1; }
   }
 </style>
 </head>
 <body>
 <header class="nav">
   <div class="in">
+    <button type="button" class="menu-btn" id="menuBtn" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     <a class="brand" href="./"><img src="logo.svg" alt=""><span>frix<small>teamspeak bot</small></span></a>
     <span class="docs-badge">DOCS</span>
     <nav>
@@ -118,40 +152,47 @@
 </header>
 
 <div class="layout">
-  <aside class="side">
-    <h4 data-t="side.title">Documentation</h4>
-    <ol class="steps" id="steps"><span class="fill" id="fill"></span></ol>
-    <div class="side-foot">
-      <a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/issues" data-t="side.issue">Report a problem</a>
-      <a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/tree/main/site/docs" data-t="side.source">Edit these pages on GitHub</a>
+  <aside class="side" id="side">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Search docs" data-ph="search">
+      <kbd>/</kbd>
+      <div class="results" id="results" hidden></div>
+    </div>
+    <div id="pages"></div>
+    <div class="foot">
+      <a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/issues" target="_blank" rel="noopener" data-t="side.issue">Report a problem</a>
+      <a href="https://github.com/lyusufdeniz/frix-teamspeak-bot/releases/latest" target="_blank" rel="noopener" data-t="side.changes">Release notes</a>
     </div>
   </aside>
   <main>
-    <div class="mob"><select id="mobSel" aria-label="Page"></select></div>
     <article id="doc"><div class="loading">Loading…</div></article>
   </main>
   <aside class="toc" id="toc"></aside>
 </div>
+<div class="shade" id="shade"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <script>
 (() => {
+  // [id, English title, Turkish title, group]
   const PAGES = [
-    ['introduction', 'Introduction', 'Giriş'],
-    ['installation', 'Installation', 'Kurulum'],
-    ['panel', 'Web panel', 'Web panel'],
-    ['plugins', 'Plugins', 'Eklentiler'],
-    ['commands', 'Commands', 'Komutlar'],
-    ['customization', 'Texts & commands', 'Metinler ve komutlar'],
-    ['scripts', 'Scripts', 'Scriptler'],
-    ['administration', 'Administration', 'Yönetim'],
-    ['troubleshooting', 'Troubleshooting', 'Sorun giderme'],
+    ['introduction', 'Introduction', 'Giriş', 'start'],
+    ['installation', 'Installation', 'Kurulum', 'start'],
+    ['panel', 'Web panel', 'Web panel', 'guide'],
+    ['plugins', 'Plugins', 'Eklentiler', 'guide'],
+    ['commands', 'Commands', 'Komutlar', 'guide'],
+    ['customization', 'Texts & commands', 'Metinler ve komutlar', 'guide'],
+    ['scripts', 'Scripts', 'Scriptler', 'adv'],
+    ['administration', 'Administration', 'Yönetim', 'adv'],
+    ['troubleshooting', 'Troubleshooting', 'Sorun giderme', 'adv'],
   ];
+  const GROUPS = { start: ['Getting started', 'Başlarken'], guide: ['Guide', 'Kılavuz'], adv: ['Advanced', 'İleri düzey'] };
   const T = {
     tr: { 'nav.home': 'Ana sayfa', 'nav.download': 'İndir', 'side.title': 'Dokümantasyon', 'side.issue': 'Sorun bildir',
-      'side.source': 'Bu sayfaları GitHub\'da düzenle', prev: 'Önceki', next: 'Sonraki', onpage: 'Bu sayfada', copy: 'Kopyala', copied: 'Kopyalandı',
+      'side.source': 'Bu sayfayı GitHub\'da düzenle', 'side.changes': 'Sürüm notları', search: 'Dokümanlarda ara', noresult: 'Sonuç yok', prev: 'Önceki', next: 'Sonraki', onpage: 'Bu sayfada', copy: 'Kopyala', copied: 'Kopyalandı',
       loading: 'Yükleniyor…', fail: 'Sayfa yüklenemedi.', docs: 'Dokümantasyon' },
-    en: { prev: 'Previous', next: 'Next', onpage: 'On this page', copy: 'Copy', copied: 'Copied', loading: 'Loading…', fail: 'The page could not be loaded.', docs: 'Documentation' },
+    en: { 'side.source': 'Edit this page on GitHub', search: 'Search docs', noresult: 'No results', prev: 'Previous', next: 'Next', onpage: 'On this page', copy: 'Copy', copied: 'Copied', loading: 'Loading…', fail: 'The page could not be loaded.', docs: 'Documentation' },
   };
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
@@ -175,24 +216,102 @@
   }
 
   function paintNav() {
-    const i = PAGES.findIndex((x) => x[0] === page);
-    const ol = $('#steps');
-    ol.replaceChildren($('#fill') || Object.assign(document.createElement('span'), { className: 'fill', id: 'fill' }));
-    PAGES.forEach((p, k) => {
-      const li = document.createElement('li');
-      li.className = k === i ? 'on' : k < i ? 'done' : '';
-      li.innerHTML = '<a href="#' + p[0] + '"><span class="n">' + (k + 1) + '</span><span></span></a>';
-      li.querySelector('span:last-child').textContent = title(p);
-      ol.append(li);
+    const box = $('#pages');
+    box.replaceChildren();
+    Object.keys(GROUPS).forEach((g) => {
+      const wrap = document.createElement('div'); wrap.className = 'grp';
+      const h = document.createElement('h5'); h.textContent = GROUPS[g][lang === 'tr' ? 1 : 0]; wrap.append(h);
+      PAGES.filter((p) => p[3] === g).forEach((p) => {
+        const a = document.createElement('a'); a.className = 'pg' + (p[0] === page ? ' on' : ''); a.href = '#' + p[0]; a.textContent = title(p);
+        wrap.append(a);
+        if (p[0] === page) { const sub = document.createElement('div'); sub.className = 'sub'; sub.id = 'sub'; wrap.append(sub); }
+      });
+      box.append(wrap);
     });
-    requestAnimationFrame(() => {
-      const items = $$('#steps li .n');
-      if (items[i]) $('#fill').style.height = (items[i].getBoundingClientRect().top - items[0].getBoundingClientRect().top) + 'px';
-    });
-    const sel = $('#mobSel');
-    sel.replaceChildren(...PAGES.map((p, k) => { const o = document.createElement('option'); o.value = p[0]; o.textContent = (k + 1) + '. ' + title(p); return o; }));
-    sel.value = page;
   }
+  // sections of the open page under its sidebar entry
+  function paintSub() {
+    const sub = $('#sub'); if (!sub) return;
+    sub.replaceChildren(...$$('#doc h2').map((hh) => { const a = document.createElement('a'); a.href = '#' + page + ':' + hh.id; a.textContent = hh.textContent; a.dataset.id = hh.id; return a; }));
+  }
+  const closeDrawer = () => document.body.classList.remove('open');
+  $('#menuBtn').addEventListener('click', () => document.body.classList.toggle('open'));
+  $('#shade').addEventListener('click', closeDrawer);
+  $('#side').addEventListener('click', (e) => { if (e.target.closest('a')) closeDrawer(); });
+
+  // ---- search over every page of the current language
+  const q = $('#q'), results = $('#results');
+  let index = null, indexLang = null, sel = -1;
+  async function buildIndex() {
+    if (index && indexLang === lang) return index;
+    const l = lang;
+    const all = await Promise.all(PAGES.map(async (p) => {
+      const key = l + '/' + p[0];
+      if (cache[key] == null) { try { const r = await fetch('docs/' + key + '.md', { cache: 'no-cache' }); cache[key] = r.ok ? await r.text() : ''; } catch (_) { cache[key] = ''; } }
+      const out = []; let head = null, id = null, buf = [];
+      const used = {};
+      const flush = () => { if (buf.length || head) out.push({ p, head, id, text: buf.join(' ').replace(/[`*_>#|\[\]()]/g, ' ').replace(/\s+/g, ' ').trim() }); buf = []; };
+      cache[key].split('\n').forEach((line) => {
+        const m = /^(#{2,3})\s+(.*)$/.exec(line);
+        if (m) { flush(); head = m[2].replace(/[`*_]/g, ''); let sid = slug(head) || 'h'; if (used[sid]) sid += '-' + (++used[sid]); else used[sid] = 1; id = sid; }
+        else if (!/^#\s/.test(line)) buf.push(line);
+      });
+      flush();
+      return out;
+    }));
+    index = all.flat(); indexLang = l;
+    return index;
+  }
+  const esc = (t) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function hl(text, words) {
+    let h = esc(text);
+    words.forEach((w) => { h = h.replace(new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<mark>$1</mark>'); });
+    return h;
+  }
+  async function search() {
+    const term = q.value.trim().toLowerCase();
+    if (term.length < 2) { results.hidden = true; return; }
+    const words = term.split(/\s+/).filter(Boolean);
+    const idx = await buildIndex();
+    if (q.value.trim().toLowerCase() !== term) return;
+    const hits = [];
+    idx.forEach((e) => {
+      const t = title(e.p).toLowerCase(), hd = (e.head || '').toLowerCase(), body = e.text.toLowerCase();
+      if (!words.every((w) => t.includes(w) || hd.includes(w) || body.includes(w))) return;
+      const score = words.reduce((n, w) => n + (hd.includes(w) ? 5 : 0) + (t.includes(w) ? 3 : 0) + (body.includes(w) ? 1 : 0), 0);
+      let snip = '';
+      const at = body.indexOf(words[0]);
+      if (at >= 0) { const from = Math.max(0, at - 40); snip = (from ? '…' : '') + e.text.slice(from, at + 90) + '…'; }
+      hits.push({ e, score, snip });
+    });
+    hits.sort((x, y) => y.score - x.score);
+    sel = -1;
+    results.replaceChildren();
+    if (!hits.length) { const d = document.createElement('div'); d.className = 'none'; d.textContent = tr('noresult'); results.append(d); }
+    hits.slice(0, 12).forEach((h) => {
+      const a = document.createElement('a');
+      a.href = '#' + h.e.p[0] + (h.e.id ? ':' + h.e.id : '');
+      a.innerHTML = hl(h.e.head || title(h.e.p), words) + '<small>' + esc(title(h.e.p)) + (h.snip ? ' · ' + hl(h.snip, words) : '') + '</small>';
+      a.addEventListener('click', () => { results.hidden = true; q.value = ''; });
+      results.append(a);
+    });
+    results.hidden = false;
+  }
+  q.addEventListener('input', search);
+  q.addEventListener('focus', search);
+  q.addEventListener('keydown', (e) => {
+    const items = $$('a', results);
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault(); if (!items.length) return;
+      sel = (sel + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+      items.forEach((a, k) => a.classList.toggle('sel', k === sel)); items[sel].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') { const a = items[sel < 0 ? 0 : sel]; if (a) { a.click(); location.hash = a.getAttribute('href'); } }
+    else if (e.key === 'Escape') { results.hidden = true; q.blur(); }
+  });
+  document.addEventListener('click', (e) => { if (!e.target.closest('.search')) results.hidden = true; });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement !== q && !/input|textarea/i.test(document.activeElement.tagName)) { e.preventDefault(); q.focus(); }
+  });
 
   async function load(anchor) {
     const art = $('#doc');
@@ -205,7 +324,7 @@
     }
     const i = PAGES.findIndex((x) => x[0] === page);
     art.innerHTML = '<div class="crumb"></div>' + marked.parse(md);
-    art.firstChild.textContent = tr('docs') + ' · ' + (i + 1) + '/' + PAGES.length;
+    art.firstChild.textContent = GROUPS[PAGES[i][3]][lang === 'tr' ? 1 : 0] + ' › ' + title(PAGES[i]);
     // heading ids, copy buttons, internal links
     const used = {};
     $$('h2, h3', art).forEach((hh) => { let id = slug(hh.textContent) || 'h'; if (used[id]) id += '-' + (++used[id]); else used[id] = 1; hh.id = id; });
@@ -220,7 +339,11 @@
     const mk = (p, cls, label) => { const a = document.createElement('a'); a.className = cls; a.href = '#' + p[0]; a.innerHTML = '<span></span><strong></strong>'; a.firstChild.textContent = label; a.lastChild.textContent = title(p); return a; };
     if (i > 0) pager.append(mk(PAGES[i - 1], 'prev', '← ' + tr('prev')));
     if (i < PAGES.length - 1) pager.append(mk(PAGES[i + 1], 'next', tr('next') + ' →'));
-    art.append(pager);
+    const edit = document.createElement('div'); edit.className = 'edit';
+    edit.innerHTML = '<a target="_blank" rel="noopener"></a><a target="_blank" rel="noopener" href="https://github.com/lyusufdeniz/frix-teamspeak-bot/issues"></a>';
+    edit.children[0].href = 'https://github.com/lyusufdeniz/frix-teamspeak-bot/blob/main/site/docs/' + lang + '/' + page + '.md';
+    edit.children[0].textContent = '✎ ' + tr('side.source'); edit.children[1].textContent = tr('side.issue');
+    art.append(edit, pager);
     // on this page
     const toc = $('#toc');
     const h2s = $$('h2', art);
@@ -229,6 +352,7 @@
       const hd = document.createElement('h4'); hd.textContent = tr('onpage'); toc.append(hd);
       h2s.forEach((hh) => { const a = document.createElement('a'); a.href = '#' + page + ':' + hh.id; a.textContent = hh.textContent; a.dataset.id = hh.id; toc.append(a); });
     }
+    paintSub();
     document.title = title(PAGES[i]) + ' — Frix Docs';
     if (anchor && document.getElementById(anchor)) document.getElementById(anchor).scrollIntoView();
     else window.scrollTo(0, 0);
@@ -239,7 +363,7 @@
     const h2s = $$('#doc h2');
     let cur = null;
     h2s.forEach((hh) => { if (hh.getBoundingClientRect().top < 140) cur = hh.id; });
-    $$('#toc a').forEach((a) => a.classList.toggle('on', a.dataset.id === cur));
+    $$('#toc a, #sub a').forEach((a) => a.classList.toggle('on', a.dataset.id === cur));
   }
 
   function go() {
@@ -252,6 +376,7 @@
   function applyLang() {
     document.documentElement.lang = lang;
     $$('[data-t]').forEach((e) => { e.textContent = tr(e.dataset.t); });
+    q.placeholder = tr('search');
     $$('.lang button').forEach((b) => b.classList.toggle('on', b.dataset.lang === lang));
   }
 
@@ -259,7 +384,6 @@
     lang = b.dataset.lang; try { localStorage.setItem('frix.site.lang', lang); } catch (_) { /* */ }
     applyLang(); paintNav(); load(null);
   }));
-  $('#mobSel').addEventListener('change', (e) => { location.hash = e.target.value; });
   window.addEventListener('hashchange', go);
   window.addEventListener('scroll', spy, { passive: true });
 
