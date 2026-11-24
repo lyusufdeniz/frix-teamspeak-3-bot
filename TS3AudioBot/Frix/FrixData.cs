@@ -197,7 +197,9 @@ CREATE TABLE IF NOT EXISTS playlist_items (
 	public static string FormatDuration(long seconds)
 	{
 		var t = TimeSpan.FromSeconds(seconds);
-		return t.TotalHours >= 1 ? $"{(int)t.TotalHours} sa {t.Minutes} dk" : $"{t.Minutes} dk";
+		// Turkish panel: "sa/dk", every other language: "h/min"
+		var (h, m) = FrixText.Language == "tr" ? ("sa", "dk") : ("h", "min");
+		return t.TotalHours >= 1 ? $"{(int)t.TotalHours} {h} {t.Minutes} {m}" : $"{t.Minutes} {m}";
 	}
 
 	// ---------------------------------------------------------------- çalma listeleri

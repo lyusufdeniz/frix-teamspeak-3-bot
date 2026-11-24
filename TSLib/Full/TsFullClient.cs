@@ -224,8 +224,16 @@ public sealed partial class TsFullClient : TsBaseFunctions, IAudioActiveProducer
 				if (ctx != context)
 					Log.Debug("Stray packet from old packethandler");
 
-				if (msgProc.PushMessage(data) is { } notif)
-					InvokeEvent(notif);
+				// Frix: an exception here used to vanish (the task is discarded) and took the rest of the event with it
+				try
+				{
+					if (msgProc.PushMessage(data) is { } notif)
+						InvokeEvent(notif);
+				}
+				catch (Exception ex)
+				{
+					Log.Warn(ex, "Error while handling a server notification");
+				}
 			});
 			break;
 

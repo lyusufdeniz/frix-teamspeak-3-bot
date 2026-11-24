@@ -1,6 +1,7 @@
 name: Integration tests
 
-# Runs Frix against a real TeamSpeak server with fake users (tests/integration).
+# Runs Frix against a real TeamSpeak server with fake users (tests/integration):
+# the Linux build in Docker and the Windows build (Frix.exe) natively.
 on:
   push:
     branches: [main]
@@ -9,7 +10,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  teamspeak:
+  linux:
+    name: Linux (Docker)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -21,3 +23,28 @@ jobs:
           dotnet-version: 10.0.x
       - name: Run integration tests
         run: bash tests/integration/run.sh
+
+  windows:
+    name: Windows (Frix.exe)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - name: Start a TeamSpeak 3 server
+        shell: pwsh
+        run: |
+          $v = "3.13.7"
+          Invoke-WebRequest -UseBasicParsing -OutFile ts3.zip "https://files.teamspeak-services.com/releases/server/$v/teamspeak3-server_win64-$v.zip"
+          Expand-Archive ts3.zip -DestinationPath $env:RUNNER_TEMP
+          $dir = Join-Path $env:RUNNER_TEMP "teamspeak3-server_win64"
+          New-Item -ItemType File "$dir\.ts3server_license_accepted" | Out-Null
+          Start-Process -FilePath "$dir\ts3server.exe" -WorkingDirectory $dir -ArgumentList "license_accepted=1", "serveradmin_password=frixtest"
+          Start-Sleep 10
+      - name: Run integration tests
+        shell: pwsh
+        run: ./tests/integration/run-windows.ps1 -TsServer 127.0.0.1:9987 -QueryServer 127.0.0.1:10011

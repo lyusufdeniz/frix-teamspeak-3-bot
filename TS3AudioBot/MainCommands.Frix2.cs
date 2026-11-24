@@ -208,8 +208,10 @@ public static partial class MainCommands
 
 	[Command("dosya")]
 	[Usage("<ad>", "Panelden yüklenen müzik dosyalarından birini kuyruğa ekler")]
-	public static async Task<string> CommandDosya(PlayManager playManager, InvokerData invoker, string ad)
+	public static async Task<string> CommandDosya(ConfBot conf, PlayManager playManager, PlaylistManager pl, InvokerData invoker, string ad)
 	{
+		if (invoker is ClientCall cc && FrixPluginHost.Enabled<DjModePlugin>(conf.Name)?.CheckAdd(cc, pl) is { } djErr)
+			throw new CommandException(djErr, CommandExceptionReason.CommandError);
 		var item = FrixLibrary.Find(ad) ?? throw new CommandException(FrixText.Get("lib.notfound", ("query", FrixChat.Escape(ad))), CommandExceptionReason.CommandError);
 		await playManager.Enqueue(invoker, item.Resource());
 		return FrixText.Get("lib.added", ("title", FrixChat.Escape(item.Title)));

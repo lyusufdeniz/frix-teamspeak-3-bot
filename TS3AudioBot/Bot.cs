@@ -234,16 +234,18 @@ public sealed class Bot
 		ts3client.FrixSameChannel = () => config.Name is not { } bn2 || Frix.FrixPluginHost.Enabled<Frix.AutoReconnectPlugin>(bn2) is not { SameChannel: false };
 		ts3FullClient.OnEachClientEnterView += (s, e) =>
 		{
-			var host = plugins;
-			if (host != null)
-				_ = Task.Run(() => host.ClientEntered(e.ClientId, e.Name, e.Uid, e.SourceChannelId, e.TargetChannelId, (int)e.Reason, e.ClientType != ClientType.Full));
+			// read the client book here, on the bot's thread; the plugins run in the background
+			Frix.FrixPluginHost.RunInBackground(plugins?.PrepareClientEntered(e.ClientId, e.Name, e.Uid, e.SourceChannelId, e.TargetChannelId,
+				(int)e.Reason, e.ClientType != ClientType.Full), "enter");
 		};
 		ts3FullClient.OnEachClientMoved += (s, e) =>
 		{
-			var host = plugins;
-			if (host != null)
-				_ = Task.Run(() => host.ClientMoved(e.ClientId, e.TargetChannelId));
+			Frix.FrixPluginHost.TraceLog("event move {0} -> {1} (host {2})", e.ClientId, e.TargetChannelId, plugins != null);
+			Frix.FrixPluginHost.RunInBackground(plugins?.PrepareClientMoved(e.ClientId, e.TargetChannelId), "move");
 		};
+		// Frix: channels created after connecting must be subscribed too, or their move events never arrive
+		ts3FullClient.OnEachChannelCreated += (s, e) =>
+			_ = ts3FullClient.SendVoid(new TSLib.Commands.TsCommand("channelsubscribe") { { "cid", e.ChannelId } });
 		ts3client.OnAloneChanged += (s, e) =>
 		{
 			var host = plugins;
@@ -348,6 +350,11 @@ public sealed class Bot
 	{
 		EnableIdleTickWorker();
 		plugins?.OnConnected();
+
+		// Frix: without a channel subscription the server sends no move events for that channel, so the plugins
+		// (support, registration, channel guard, ...) would not see anyone entering it.
+		var sub = await ts3FullClient.SendVoid(new TSLib.Commands.TsCommand("channelsubscribeall"));
+		if (!sub.Ok) Log.Warn("Kanallara abone olunamadı: {0}", sub.Error.ErrorFormat());
 
 		var badges = config.Connect.Badges.Value;
 		if (!string.IsNullOrEmpty(badges))
@@ -732,12 +739,13 @@ public sealed class Bot
 				{
 					using (setStream)
 					{
-						var data = new MemoryStream();
-						await setStream.CopyToAsync(data);
+						var buffer = new MemoryStream();
+						await setStream.CopyToAsync(buffer);
+						var bytes = buffer.ToArray();
 						for (var attempt = 1; ; attempt++)
 						{
-							data.Position = 0;
-							var result = await ts3FullClient.UploadAvatar(data, cts.Token);
+							// the upload closes its stream, so every attempt gets a fresh one
+							var result = await ts3FullClient.UploadAvatar(new MemoryStream(bytes, writable: false), cts.Token);
 							if (result.Ok) break;
 							var err = result.Error.ErrorFormat();
 							// önceki yükleme sunucuda henüz kapanmadıysa kısa bir süre sonra bir kez daha dene

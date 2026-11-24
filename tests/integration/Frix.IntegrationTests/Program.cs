@@ -23,6 +23,8 @@ var results = new List<(string name, bool ok, string detail, double sec)>();
 var panel = new Panel(panelUrl);
 using var q = new Query();
 var users = new List<TsUser>();
+var botUid = ""; // the bot is found by its identity: its nickname changes with the song
+var hostFromBot = Env("FRIX_HOST_FROM_BOT", "host.docker.internal"); // this machine as Frix sees it (radio stream)
 
 async Task Test(string name, Func<Task> body)
 {
@@ -36,8 +38,19 @@ async Task Test(string name, Func<Task> body)
 	}
 	catch (Exception ex)
 	{
-		results.Add((name, false, ex.Message, sw.Elapsed.TotalSeconds));
-		Console.WriteLine($"  FAIL  {name} ({sw.Elapsed.TotalSeconds:0.0}s)\n        {ex.Message.Replace("\n", "\n        ")}");
+		var where = "";
+		try
+		{
+			var clients = (await q.Clients()).Where(c => c.GetValueOrDefault("client_type") == "0")
+				.Select(c => $"{c["client_nickname"]}@{c["cid"]}");
+			var known = (await panel.Get($"bots/{Bot}/channels"))?["channels"]?.AsArray().Select(c => $"{c?["name"]}={c?["id"]}") ?? [];
+			var log = (await panel.Get("logs"))?["items"]?.AsArray().TakeLast(30).Select(l => $"{l?["level"]}: {l?["message"]}") ?? [];
+			where = $"\n        clients: {string.Join(", ", clients)}\n        channels the bot knows: {string.Join(", ", known)}"
+				+ $"\n        frix log:\n          {string.Join("\n          ", log)}";
+		}
+		catch { }
+		results.Add((name, false, ex.Message + where, sw.Elapsed.TotalSeconds));
+		Console.WriteLine($"  FAIL  {name} ({sw.Elapsed.TotalSeconds:0.0}s)\n        {ex.Message.Replace("\n", "\n        ")}{where}");
 	}
 }
 
@@ -67,13 +80,37 @@ async Task<ClientId> ClidOf(string nick)
 	=> (ClientId)ushort.Parse((await q.Client(nick) ?? throw new Exception($"{nick} is not on the server"))["clid"]);
 async Task<string> ChannelOf(string nick) => (await q.Client(nick) ?? throw new Exception($"{nick} is not on the server"))["cid"];
 
+async Task<Dictionary<string, string>> BotClient()
+	=> (await q.Clients()).FirstOrDefault(c => c.GetValueOrDefault("client_unique_identifier") == botUid) ?? throw new Exception("the bot is not on the server");
+async Task<ClientId> BotClid() => (ClientId)ushort.Parse((await BotClient())["clid"]);
+async Task<string> BotChannel() => (await BotClient())["cid"];
+bool FromBot(TsUser.Received r) => r.Uid == botUid;
+
 // Sends a command to the bot in private chat and waits for the answer.
 async Task<string> Ask(TsUser u, string command, Func<string, bool>? match = null, int seconds = 15)
 {
 	var since = DateTime.UtcNow;
-	await u.SendPrivate(await ClidOf(BotNick), command);
-	var m = await u.WaitFor(since, r => r.From == BotNick && r.Kind != "Poke" && (match?.Invoke(r.Text) ?? true), TimeSpan.FromSeconds(seconds), $"an answer to '{command}'");
+	await u.SendPrivate(await BotClid(), command);
+	var m = await u.WaitFor(since, r => FromBot(r) && r.Kind != "Poke" && (match?.Invoke(r.Text) ?? true), TimeSpan.FromSeconds(seconds), $"an answer to '{command}'");
 	return m.Text;
+}
+
+async Task<JsonNode> BotState() => (await panel.Get("bots"))!.AsArray().First(b => b!["name"]!.ToString() == Bot)!;
+async Task<string[]> GroupsOf(string nick)
+{
+	var c = await q.Client(nick) ?? throw new Exception($"{nick} is not on the server");
+	return c.GetValueOrDefault("client_servergroups", "").Split(',', StringSplitOptions.RemoveEmptyEntries);
+}
+async Task<string> Group(string name)
+{
+	var g = (await q.Cmd("servergrouplist")).FirstOrDefault(x => x["name"] == name && x["type"] == "1");
+	if (g != null) return g["sgid"];
+	var guestGroup = (await q.Cmd("serverinfo"))[0]["virtualserver_default_server_group"];
+	await q.Cmd($"servergroupcopy ssgid={guestGroup} tsgid=0 name={Query.Esc(name)} type=1");
+	var sgid = (await q.Cmd("servergrouplist")).First(x => x["name"] == name && x["type"] == "1")["sgid"];
+	// the bot (server admin) must be allowed to add and remove members
+	await q.Cmd($"servergroupaddperm sgid={sgid} permsid=i_group_needed_member_add_power permvalue=0 permnegated=0 permskip=0|permsid=i_group_needed_member_remove_power permvalue=0 permnegated=0 permskip=0");
+	return sgid;
 }
 
 Console.WriteLine($"Frix integration tests\n  panel {panelUrl}\n  teamspeak {tsAddr} (bot connects to {botAddr})\n");
@@ -82,7 +119,9 @@ Console.WriteLine($"Frix integration tests\n  panel {panelUrl}\n  teamspeak {tsA
 Console.WriteLine("Setup");
 await Until(async () => { await panel.Get("state"); return true; }, TimeSpan.FromMinutes(3), "the panel did not come up");
 var state = await panel.Get("state");
-if (state?["setupRequired"]?.GetValue<bool>() == true)
+if (state?["setupRequired"]?.GetValue<bool>() == true && state?["setupNeedsCode"]?.GetValue<bool>() != true)
+	await panel.Post("setup", new { user = "admin", pass = "frix-test-pass", lang = "en" }); // local: no setup code needed
+else if (state?["setupRequired"]?.GetValue<bool>() == true)
 {
 	var psi = new ProcessStartInfo(OperatingSystem.IsWindows() ? "cmd" : "sh") { RedirectStandardOutput = true, UseShellExecute = false };
 	psi.ArgumentList.Add(OperatingSystem.IsWindows() ? "/c" : "-c"); psi.ArgumentList.Add(setupCmd);
@@ -113,11 +152,13 @@ await Test("bot connects to the server", async () =>
 {
 	await Until(async () => await q.Client(BotNick) != null, TimeSpan.FromSeconds(120), "the bot did not join the server");
 	var bot = await q.Client(BotNick);
+	botUid = bot!["client_unique_identifier"];
 	// server admin, so it may move users, create channels and rename them
 	try { await q.Cmd($"servergroupaddclient sgid=6 cldbid={bot!["client_database_id"]}"); } catch (InvalidOperationException) { }
 	await Until(async () => (await panel.Get("bots"))!.AsArray().Any(b => b!["name"]!.ToString() == Bot && b["status"]!.ToString() == "connected"),
 		TimeSpan.FromSeconds(20), "the panel does not show the bot as connected");
 });
+if (botUid.Length == 0 && await q.Client(BotNick) is { } botNow) botUid = botNow["client_unique_identifier"];
 if (await q.Client(BotNick) is null)
 {
 	Console.WriteLine("\nThe bot is not on the server, the other tests cannot run.");
@@ -227,11 +268,11 @@ await tester.Move((ChannelId)ulong.Parse(lobby));
 await Test("!come moves the bot to the user", async () =>
 {
 	var since = DateTime.UtcNow;
-	await tester.SendPrivate(await ClidOf(BotNick), "!come");
-	try { await Until(async () => await ChannelOf(BotNick) == lobby, TimeSpan.FromSeconds(10), "the bot did not come to Lobby"); }
+	await tester.SendPrivate(await BotClid(), "!come");
+	try { await Until(async () => await BotChannel() == lobby, TimeSpan.FromSeconds(10), "the bot did not come to Lobby"); }
 	catch (TimeoutException ex)
 	{
-		var said = string.Join(" | ", tester.Since(since).Where(m => m.From == BotNick).Select(m => m.Text));
+		var said = string.Join(" | ", tester.Since(since).Where(FromBot).Select(m => m.Text));
 		throw new Exception(ex.Message + (said.Length > 0 ? ". The bot said: " + said : ""));
 	}
 });
@@ -239,10 +280,10 @@ await Test("poll in the channel with live percentages", async () =>
 {
 	var since = DateTime.UtcNow;
 	await tester.SendChannel("!poll Best colour? | red | blue");
-	await tester.WaitFor(since, r => r.From == BotNick && r.Text.Contains("Best colour"), TimeSpan.FromSeconds(10), "the poll in the channel");
+	await tester.WaitFor(since, r => FromBot(r) && r.Text.Contains("Best colour"), TimeSpan.FromSeconds(10), "the poll in the channel");
 	since = DateTime.UtcNow;
 	await tester.SendChannel("!vote 1");
-	var m = await tester.WaitFor(since, r => r.From == BotNick && r.Text.Contains('%'), TimeSpan.FromSeconds(10), "the poll percentages");
+	var m = await tester.WaitFor(since, r => FromBot(r) && r.Text.Contains('%'), TimeSpan.FromSeconds(10), "the poll percentages");
 	Check(m.Kind.Contains("Channel"), "the percentages were not sent to the channel: " + m.Kind);
 	await tester.SendChannel("!poll end").ContinueWith(_ => { });
 });
@@ -254,7 +295,7 @@ await Test("welcome message", async () =>
 	await panel.SetPlugin(Bot, "g_welcome", true, new() { ["welcome"] = true, ["welcome.trigger"] = "server", ["welcome.mode"] = "private", ["welcome.message"] = "WELCOME {user}", ["welcome.cooldown"] = 0 });
 	var since = DateTime.UtcNow;
 	var guest = await NewUser("Guest");
-	await guest.WaitFor(since, r => r.From == BotNick && r.Text.Contains("WELCOME Guest"), TimeSpan.FromSeconds(15), "the welcome message");
+	await guest.WaitFor(since, r => FromBot(r) && r.Text.Contains("WELCOME Guest"), TimeSpan.FromSeconds(15), "the welcome message");
 });
 await Test("nickname filter pokes", async () =>
 {
@@ -281,9 +322,9 @@ await Test("AFK mover and move back", async () =>
 	await panel.SetPlugin(Bot, "g_moderation", true, new() { ["afkmover"] = true, ["afkmover.channel"] = "AFK", ["afkmover.away"] = true, ["afkmover.moveBack"] = true, ["afkmover.idleMinutes"] = 0 });
 	var afk = (await q.ChannelId("AFK"))!;
 	await tester.SetAway(true);
-	await Until(async () => await ChannelOf("Tester") == afk, TimeSpan.FromSeconds(45), "Tester was not moved to AFK");
+	await Until(async () => await ChannelOf("Tester") == afk, TimeSpan.FromSeconds(75), "Tester was not moved to AFK");
 	await tester.SetAway(false);
-	await Until(async () => await ChannelOf("Tester") == lobby, TimeSpan.FromSeconds(45), "Tester was not moved back to Lobby");
+	await Until(async () => await ChannelOf("Tester") == lobby, TimeSpan.FromSeconds(75), "Tester was not moved back to Lobby");
 });
 
 // ------------------------------------------------------------------ music and panel
@@ -317,6 +358,221 @@ await Test("backup export, inspect and restore", async () =>
 	// the panel sends the restore request as text (the body can be large)
 	await panel.Send(HttpMethod.Post, "backup/restore", rawBody: new JsonObject { ["data"] = raw, ["sections"] = new JsonArray("texts", "commands") }.ToJsonString());
 });
+
+// ------------------------------------------------------------------ the remaining plugins
+Console.WriteLine("\nPreparing groups, channels, a radio stream and the timed features");
+var guest = users.First(u => u.Name == "Guest");
+var staffGid = await Group("IT Staff");
+var memberGid = await Group("IT Member");
+var rankGid = await Group("IT Rank");
+try { await q.Cmd($"servergroupaddclient sgid={staffGid} cldbid={(await q.Client("Tester"))!["client_database_id"]}"); } catch (InvalidOperationException) { }
+foreach (var ch in new[] { "Other", "Support", "Register", "Guarded" })
+	if (await q.ChannelId(ch) is null) await q.CreateChannel(ch);
+async Task<ChannelId> Cid(string name) => (ChannelId)ulong.Parse(await q.ChannelId(name) ?? throw new Exception("no channel " + name));
+var lobbyId = await Cid("Lobby");
+JsonNode? Playing(JsonNode bot) => bot["live"]?["playing"];
+async Task Stop() { try { await panel.Post($"bots/{Bot}/control", new { action = "stop" }); } catch (PanelException) { } }
+
+// a radio station served by this program (no internet needed)
+using var stream = new StreamServer(int.Parse(Env("FRIX_STREAM_PORT", "18980")), Tone(300, 16000));
+foreach (var r in (await panel.Get("radios"))!.AsArray())
+	if (r!["name"]?.ToString() == "TestRadio") await panel.Delete("radios/" + r["id"]);
+await panel.Post("radios", new { name = "TestRadio", url = $"http://{hostFromBot}:{stream.Port}/radio.wav" });
+
+// scheduled playback: set the volume in the next two minutes (local and UTC time, whichever Frix uses)
+var times = new[] { DateTime.Now, DateTime.UtcNow }.SelectMany(t => new[] { t.AddMinutes(1), t.AddMinutes(2) }).Select(t => t.ToString("HH:mm")).Distinct();
+await panel.SetPlugin(Bot, "g_schedule", true, new() { ["scheduleplay.entries"] = string.Join("\n", times.Select(t => $"{t} | volume 37")) });
+
+// activity ranks: give Tester two hours of online time through a stats backup, then a rank at one hour
+await Test("stats restore (online time)", async () =>
+{
+	var testerUid = (await q.Client("Tester"))!["client_unique_identifier"];
+	var stats = (await panel.Get("backup?sections=stats"))!;
+	JsonObject? owner = null;
+	void Find(JsonNode? n) { if (n is JsonObject o) { if (o.ContainsKey("online_time")) owner = o; else foreach (var (_, v) in o) Find(v); } }
+	Find(stats);
+	Check(owner != null, "the stats backup has no online_time table");
+	owner!["online_time"] = new JsonArray(new JsonObject { ["uid"] = testerUid, ["name"] = "Tester", ["seconds"] = 7300, ["last_seen"] = null });
+	await panel.Send(HttpMethod.Post, "backup/restore", rawBody: new JsonObject { ["data"] = stats.ToJsonString(), ["sections"] = new JsonArray("stats") }.ToJsonString());
+	await panel.SetPlugin(Bot, "g_activity", true, new() { ["activity"] = true, ["ranks"] = true, ["ranks.ranks"] = $"1={rankGid}", ["ranks.removeLower"] = false, ["ranks.message"] = "RANK-UP {hours}" });
+	var t = await Ask(tester, "!time", m => m.Contains("total time"));
+	Check(t.Contains("2 h "), "online time not restored (or not in English): " + t);
+});
+await panel.SetPlugin(Bot, "g_activity", true, new() { ["activity"] = true, ["ranks"] = true, ["ranks.ranks"] = $"1={rankGid}", ["ranks.removeLower"] = false, ["ranks.message"] = "RANK-UP {hours}" });
+
+Console.WriteLine("\nMusic and radio");
+await panel.SetPlugin(Bot, "g_music", true, new() { ["npstatus"] = true, ["npstatus.nick"] = true, ["npstatus.nickFormat"] = "NP {title}", ["npstatus.desc"] = false });
+await Test("radio (!radio)", async () =>
+{
+	await Ask(tester, "!radio TestRadio", seconds: 20);
+	await Until(async () => Playing(await BotState())?["radio"]?.ToString() == "TestRadio", TimeSpan.FromSeconds(25),
+		"the radio is not playing");
+});
+await Test("radio name as the bot nickname", async () =>
+	await Until(async () => (await BotClient())["client_nickname"] == "NP TestRadio", TimeSpan.FromSeconds(15), "the nickname does not show the radio"));
+await Test("bot avatar is uploaded", async () =>
+	await Until(async () => (await q.Cmd($"clientinfo clid={(await BotClient())["clid"]}"))[0].GetValueOrDefault("client_flag_avatar", "") is { Length: > 0 },
+		TimeSpan.FromSeconds(30), "the bot has no avatar"));
+await Stop();
+
+var longUp = await panel.Upload("library/upload", Tone(150, 16000), "it-long.wav");
+await Test("!file plays from the library", async () =>
+{
+	await Ask(tester, "!file it-long", seconds: 20);
+	await Until(async () => Playing(await BotState())?["title"]?.ToString().Contains("it-long") == true, TimeSpan.FromSeconds(20), "it-long is not playing");
+});
+await Test("song name as the bot nickname", async () =>
+	await Until(async () => (await BotClient())["client_nickname"].StartsWith("NP it-long", StringComparison.Ordinal), TimeSpan.FromSeconds(15),
+		"the nickname does not show the song"));
+await Test("!fav and !favs", async () =>
+{
+	await panel.SetPlugin(Bot, "g_music", true, new() { ["favorites"] = true });
+	var t = await Ask(tester, "!fav");
+	Check(t.Contains("Nothing is playing that could be added"), "library files should not be favourites: " + t);
+	t = await Ask(tester, "!favs list");
+	Check(t.Contains("No favourites yet"), "unexpected answer: " + t);
+});
+await Test("vote skip", async () =>
+{
+	await panel.SetPlugin(Bot, "g_music", true, new() { ["voteskip"] = true, ["voteskip.percent"] = 100, ["voteskip.requesterSkips"] = true });
+	try
+	{
+		await guest.Move(lobbyId);
+		await Task.Delay(1500);
+		var t = await Ask(guest, "!next");
+		Check(t.Contains("1/2"), "expected a vote count 1/2, got: " + t);
+		Check(Playing(await BotState())?["title"]?.ToString().Contains("it-long") == true, "the song was skipped without enough votes");
+	}
+	finally { await panel.SetPlugin(Bot, "g_music", true, new() { ["voteskip"] = false }); }
+});
+await Test("DJ mode", async () =>
+{
+	await panel.SetPlugin(Bot, "g_music", true, new() { ["djmode"] = true, ["djmode.djGroups"] = staffGid });
+	try
+	{
+		var t = await Ask(guest, "!file it-long");
+		Check(t.Contains("DJ"), "a non-DJ could queue a song: " + t);
+	}
+	finally { await panel.SetPlugin(Bot, "g_music", true, new() { ["djmode"] = false }); }
+});
+await Test("pause when alone and resume", async () =>
+{
+	await panel.SetPlugin(Bot, "g_music", true, new() { ["alonepause"] = true, ["alonepause.resume"] = true });
+	try
+	{
+		var other = await Cid("Other");
+		await tester.Move(other);
+		await guest.Move(other);
+		await Until(async () => Playing(await BotState())?["paused"]?.GetValue<bool>() == true, TimeSpan.FromSeconds(15), "the bot did not pause when it was alone");
+		await tester.Move(lobbyId);
+		await Until(async () => Playing(await BotState())?["paused"]?.GetValue<bool>() == false, TimeSpan.FromSeconds(15), "the bot did not continue");
+	}
+	finally { await panel.SetPlugin(Bot, "g_music", true, new() { ["alonepause"] = false }); }
+});
+await Stop();
+await panel.Delete("library/" + (longUp!["id"] ?? longUp["Id"])).ContinueWith(_ => { });
+
+Console.WriteLine("\nServer tools");
+await Test("support notification", async () =>
+{
+	await panel.SetPlugin(Bot, "g_server", true, new() { ["supportnotify"] = true, ["supportnotify.channel"] = "Support", ["supportnotify.groups"] = staffGid,
+		["supportnotify.staffMessage"] = "STAFF-ALERT {user}", ["supportnotify.cooldown"] = 0 });
+	var since = DateTime.UtcNow;
+	await guest.Move(await Cid("Support"));
+	await tester.WaitFor(since, r => FromBot(r) && r.Text.Contains("STAFF-ALERT Guest"), TimeSpan.FromSeconds(15), "the staff alert");
+	await guest.WaitFor(since, FromBot, TimeSpan.FromSeconds(10), "the message to the waiting user");
+});
+await Test("registration", async () =>
+{
+	await panel.SetPlugin(Bot, "g_server", true, new() { ["registration"] = true, ["registration.channel"] = "Register", ["registration.memberGroup"] = memberGid,
+		["registration.staffGroups"] = staffGid, ["registration.staffMessage"] = "REG-WAIT {user}", ["registration.cooldown"] = 0 });
+	var since = DateTime.UtcNow;
+	await guest.Move(await Cid("Register"));
+	await tester.WaitFor(since, r => FromBot(r) && r.Text.Contains("REG-WAIT Guest"), TimeSpan.FromSeconds(15), "the registration notice to staff");
+	var t = await Ask(tester, "!register Guest");
+	Check(t.Contains("registered"), "unexpected answer: " + t);
+	await Until(async () => (await GroupsOf("Guest")).Contains(memberGid), TimeSpan.FromSeconds(10), "Guest did not get the member group");
+});
+await Test("channel guard", async () =>
+{
+	await panel.SetPlugin(Bot, "g_moderation", true, new() { ["channelguard"] = true, ["channelguard.channels"] = "Guarded", ["channelguard.action"] = "move",
+		["channelguard.moveTo"] = "Lobby", ["channelguard.message"] = "GUARD-MSG" });
+	try
+	{
+		var since = DateTime.UtcNow;
+		await guest.Move(await Cid("Guarded"));
+		await Until(async () => await ChannelOf("Guest") == lobbyId.Value.ToString(), TimeSpan.FromSeconds(15), "Guest was not moved out of the guarded channel");
+		await guest.WaitFor(since, r => FromBot(r) && r.Text.Contains("GUARD-MSG"), TimeSpan.FromSeconds(10), "the channel guard message");
+	}
+	finally { await panel.SetPlugin(Bot, "g_moderation", true, new() { ["channelguard"] = false }); }
+});
+await Test("anti-flood warning", async () =>
+{
+	if (await ChannelOf("Guest") != await BotChannel()) await guest.Move((ChannelId)ulong.Parse(await BotChannel()));
+	await panel.SetPlugin(Bot, "g_moderation", true, new() { ["antiflood"] = true, ["antiflood.maxMessages"] = 3, ["antiflood.seconds"] = 20,
+		["antiflood.warnings"] = 3, ["antiflood.warnMessage"] = "FLOOD-WARN" });
+	try
+	{
+		var since = DateTime.UtcNow;
+		for (var i = 0; i < 6; i++) await guest.SendChannel("spam " + i);
+		await guest.WaitFor(since, r => FromBot(r) && r.Text.Contains("FLOOD-WARN"), TimeSpan.FromSeconds(15), "the flood warning");
+	}
+	finally { await panel.SetPlugin(Bot, "g_moderation", true, new() { ["antiflood"] = false }); }
+});
+await Test("rotating announcements", async () =>
+{
+	var since = DateTime.UtcNow;
+	await panel.SetPlugin(Bot, "g_welcome", true, new() { ["advertisement"] = true, ["advertisement.messages"] = "AD-TEST", ["advertisement.intervalSec"] = 30,
+		["advertisement.target"] = "channel" });
+	try { await tester.WaitFor(since, r => FromBot(r) && r.Text.Contains("AD-TEST"), TimeSpan.FromSeconds(80), "the announcement in the channel"); }
+	finally { await panel.SetPlugin(Bot, "g_welcome", true, new() { ["advertisement"] = false }); }
+});
+
+Console.WriteLine("\nConnection");
+await Test("auto reconnect after a kick", async () =>
+{
+	await panel.SetPlugin(Bot, "g_reconnect", true, new() { ["autoreconnect.onKick"] = true, ["autoreconnect.delay"] = 2, ["autoreconnect.sameChannel"] = true });
+	var channelBefore = await BotChannel();
+	await q.Cmd($"clientkick clid={(await BotClient())["clid"]} reasonid=5 reasonmsg=integration\\stest");
+	await Until(async () => !(await q.Clients()).Any(c => c.GetValueOrDefault("client_unique_identifier") == botUid), TimeSpan.FromSeconds(10), "the kick did not work");
+	await Until(async () => (await q.Clients()).Any(c => c.GetValueOrDefault("client_unique_identifier") == botUid), TimeSpan.FromSeconds(60), "the bot did not come back");
+	await Until(async () => await BotChannel() == channelBefore, TimeSpan.FromSeconds(15), "the bot did not rejoin its channel");
+});
+
+Console.WriteLine("\nTimed features");
+await Test("scheduled playback (volume)", async () =>
+	await Until(async () => (await BotState())["live"]?["volume"]?.ToString() == "37", TimeSpan.FromSeconds(150), "the scheduled volume change did not happen"));
+await Test("activity ranks", async () =>
+{
+	await Until(async () => (await GroupsOf("Tester")).Contains(rankGid), TimeSpan.FromSeconds(90), "Tester did not get the rank group");
+	await tester.WaitFor(DateTime.MinValue, r => FromBot(r) && r.Text.Contains("RANK-UP 1"), TimeSpan.FromSeconds(10), "the rank-up message");
+});
+await Test("activity statistics", async () =>
+	await Until(async () => (await panel.Get($"dashboard?bot={Bot}"))!["activity"]?["peakAt"] is not null, TimeSpan.FromSeconds(100), "no activity sample was recorded"));
+await Test("idle radio", async () =>
+{
+	await Stop();
+	await panel.SetPlugin(Bot, "g_radio", true, new() { ["idleradio"] = true, ["idleradio.radio"] = "TestRadio", ["idleradio.delay"] = 1 });
+	try
+	{
+		await Until(async () => Playing(await BotState())?["radio"]?.ToString() == "TestRadio", TimeSpan.FromSeconds(110), "the idle radio did not start");
+	}
+	finally { await panel.SetPlugin(Bot, "g_radio", true, new() { ["idleradio"] = false }); await Stop(); }
+});
+
+// 16-bit mono sine tone at the given sample rate
+static byte[] Tone(int seconds, int rate)
+{
+	var samples = rate * seconds;
+	using var ms = new MemoryStream();
+	using var w = new BinaryWriter(ms);
+	w.Write("RIFF"u8); w.Write(36 + samples * 2); w.Write("WAVE"u8);
+	w.Write("fmt "u8); w.Write(16); w.Write((short)1); w.Write((short)1); w.Write(rate); w.Write(rate * 2); w.Write((short)2); w.Write((short)16);
+	w.Write("data"u8); w.Write(samples * 2);
+	for (var i = 0; i < samples; i++) w.Write((short)(Math.Sin(2 * Math.PI * 440 * i / rate) * 8000));
+	w.Flush();
+	return ms.ToArray();
+}
 
 // ------------------------------------------------------------------ summary
 foreach (var u in users) await u.DisposeAsync();

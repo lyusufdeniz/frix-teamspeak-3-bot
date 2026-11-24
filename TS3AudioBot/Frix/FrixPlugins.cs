@@ -252,43 +252,81 @@ public sealed class FrixPluginHost
 	public long? ConnectedSeconds => connectedAt == DateTime.MaxValue ? null : (long)(DateTime.UtcNow - connectedAt).TotalSeconds;
 	public void OnDisconnected() => connectedAt = DateTime.MaxValue;
 
-	private async Task Each(Func<FrixPlugin, Task> action)
+	/// <summary>FRIX_TRACE_PLUGINS=1 logs every plugin event (used by the integration tests).</summary>
+	public static readonly bool Trace = System.Environment.GetEnvironmentVariable("FRIX_TRACE_PLUGINS") == "1";
+	public static void TraceLog(string message, params object?[] args) { if (Trace) Log.Info("[trace] " + message, args); }
+
+	private async Task Each(Func<FrixPlugin, Task> action, string what = "")
 	{
 		foreach (var p in Plugins)
 		{
 			if (!p.Enabled) continue;
+			if (what.Length > 0) TraceLog("{0} -> {1}", what, p.Id);
 			// TeamSpeak komutları sadece botun kendi zamanlayıcısından gönderilebilir
 			// ("Cannot call from an outside thread"); bu yüzden her eklenti olayı orada çalışır.
-			try { await Ctx.RunOnBot(() => action(p)); }
+			try
+			{
+				var task = Ctx.RunOnBot(() => action(p));
+				// a plugin that never finishes must not keep the event from the plugins after it
+				if (await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(10))) != task)
+				{
+					Log.Warn("Eklenti 10 saniyedir yanıt vermiyor, sonrakilere geçiliyor: {0}", p.Id);
+					_ = task.ContinueWith(t => Log.Warn("Eklenti hatası ({0}): {1}", p.Id, t.Exception?.GetBaseException().Message), TaskContinuationOptions.OnlyOnFaulted);
+					continue;
+				}
+				await task;
+			}
 			catch (Exception ex) { Log.Warn("Eklenti hatası ({0}): {1}", p.Id, ex.Message); }
 		}
 	}
 
-	public Task ClientEntered(ClientId id, string name, Uid uid, ChannelId source, ChannelId target, int reason, bool isQuery)
+	// The TeamSpeak events arrive on the bot's own thread, where the client book may be read. The Prepare* methods
+	// read everything they need there (synchronously) and return the plugin work, which runs in the background.
+	// Reading the book from another thread while TSLib updates it broke the events for the rest of the session.
+
+	public Func<Task>? PrepareClientEntered(ClientId id, string name, Uid uid, ChannelId source, ChannelId target, int reason, bool isQuery)
 	{
 		// Bağlanırken mevcut kullanıcılar da "girdi" olarak gelir; ilk 15 saniyeyi yoksay
 		if (isQuery || DateTime.UtcNow - connectedAt < TimeSpan.FromSeconds(15) || id == Ctx.Full.ClientId)
-			return Task.CompletedTask;
-		var tasks = new List<Task>();
-		if (reason == 0 && source == ChannelId.Null)
-			tasks.Add(Each(p => p.OnClientConnected(id, name, uid)));
-		if (Ctx.Full.Book.OwnClient is { } me && target == me.Channel)
-			tasks.Add(Each(p => p.OnClientJoinedBotChannel(id, name, uid)));
-		tasks.Add(Each(p => p.OnClientEnteredChannel(id, name, uid, target)));
-		return Task.WhenAll(tasks);
+			return null;
+		var joinedBot = Ctx.Full.Book.OwnClient is { } me && target == me.Channel;
+		var connected = reason == 0 && source == ChannelId.Null;
+		return () =>
+		{
+			var tasks = new List<Task>();
+			if (connected) tasks.Add(Each(p => p.OnClientConnected(id, name, uid)));
+			if (joinedBot) tasks.Add(Each(p => p.OnClientJoinedBotChannel(id, name, uid)));
+			tasks.Add(Each(p => p.OnClientEnteredChannel(id, name, uid, target)));
+			return Task.WhenAll(tasks);
+		};
 	}
 
-	public Task ClientMoved(ClientId id, ChannelId target)
+	public Func<Task>? PrepareClientMoved(ClientId id, ChannelId target)
 	{
-		if (id == Ctx.Full.ClientId)
-			return Task.CompletedTask;
-		if (!Ctx.Full.Book.Clients.TryGetValue(id, out var c) || c.ClientType != ClientType.Full)
-			return Task.CompletedTask;
+		if (id == Ctx.Full.ClientId) return null;
+		var known = Ctx.Full.Book.Clients.TryGetValue(id, out var c);
+		TraceLog("move {0} -> {1}: known {2}, {3}", id, target, known, c?.ClientType);
+		if (!known || c!.ClientType != ClientType.Full) return null;
+		var name = c.Name;
 		var uid = c.Uid ?? Uid.Null;
-		var tasks = new List<Task> { Each(p => p.OnClientEnteredChannel(id, c.Name, uid, target)) };
-		if (Ctx.Full.Book.OwnClient is { } me && target == me.Channel)
-			tasks.Add(Each(p => p.OnClientJoinedBotChannel(id, c.Name, uid)));
-		return Task.WhenAll(tasks);
+		var joinedBot = Ctx.Full.Book.OwnClient is { } me && target == me.Channel;
+		return () =>
+		{
+			var tasks = new List<Task> { Each(p => p.OnClientEnteredChannel(id, name, uid, target), $"entered {name} {target}") };
+			if (joinedBot) tasks.Add(Each(p => p.OnClientJoinedBotChannel(id, name, uid)));
+			return Task.WhenAll(tasks);
+		};
+	}
+
+	/// <summary>Runs prepared plugin work in the background and logs instead of losing its errors.</summary>
+	public static void RunInBackground(Func<Task>? work, string what)
+	{
+		if (work is null) return;
+		_ = Task.Run(async () =>
+		{
+			try { await work(); }
+			catch (Exception ex) { Log.Warn(ex, "Eklenti olayı işlenemedi ({0})", what); }
+		});
 	}
 
 	private DateTime lastSeenAt = DateTime.MinValue;

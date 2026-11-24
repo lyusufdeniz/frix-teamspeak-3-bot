@@ -11,7 +11,7 @@ namespace Frix.IntegrationTests;
 /// <summary>A real TeamSpeak client acting as a user: sends chat, moves, sets away and records what it receives.</summary>
 public sealed class TsUser : IAsyncDisposable
 {
-	public sealed record Received(DateTime At, string Kind, string From, string Text);
+	public sealed record Received(DateTime At, string Kind, string From, string Text, string Uid);
 
 	private static int nextId = 100;
 	private readonly DedicatedTaskScheduler scheduler;
@@ -28,9 +28,9 @@ public sealed class TsUser : IAsyncDisposable
 		client.OnEachTextMessage += (_, m) =>
 		{
 			if (m.InvokerId == client.ClientId) return;
-			inbox.Enqueue(new Received(DateTime.UtcNow, m.Target.ToString(), m.InvokerName ?? "", m.Message ?? ""));
+			inbox.Enqueue(new Received(DateTime.UtcNow, m.Target.ToString(), m.InvokerName ?? "", m.Message ?? "", m.InvokerUid?.Value ?? ""));
 		};
-		client.OnEachClientPoke += (_, p) => inbox.Enqueue(new Received(DateTime.UtcNow, "Poke", p.InvokerName ?? "", p.Message ?? ""));
+		client.OnEachClientPoke += (_, p) => inbox.Enqueue(new Received(DateTime.UtcNow, "Poke", p.InvokerName ?? "", p.Message ?? "", p.InvokerUid?.Value ?? ""));
 	}
 
 	public async Task Connect(string address)

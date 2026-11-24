@@ -10,13 +10,19 @@ services:
     ports:
       - "19987:9987/udp"
       - "20011:10011"
+      - "30033:30033" # file transfer (avatars) when Frix runs outside Docker
 
   frix:
     build:
       context: ../..
       dockerfile: Dockerfile
     image: frix-it:dev
+    environment:
+      FRIX_TRACE_PLUGINS: "1" # plugin events in the log (shown when a test fails)
     ports:
       - "18913:58913"
+    # the test program serves a radio stream on the host
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - ts3
