@@ -42,6 +42,22 @@ public static class NativeMethods
 	{
 		if (!isPreloaded)
 		{
+			// Frix: Debian/Ubuntu "libopus0" only ships libopus.so.0 (the plain libopus.so comes with libopus-dev),
+			// so on Linux the versioned names are tried as well.
+			if (Tools.IsLinux)
+			{
+				try
+				{
+					NativeLibrary.SetDllImportResolver(typeof(NativeMethods).Assembly, (name, asm, path) =>
+					{
+						if (name != "libopus") return IntPtr.Zero;
+						foreach (var candidate in new[] { "libopus", "libopus.so", "libopus.so.0" })
+							if (NativeLibrary.TryLoad(candidate, asm, path, out var handle)) return handle;
+						return IntPtr.Zero;
+					});
+				}
+				catch (InvalidOperationException) { /* a resolver was already set */ }
+			}
 			wasPreloadSuccessful = NativeLibraryLoader.DirectLoadLibrary("libopus", () => opus_get_version_string());
 			isPreloaded = true;
 		}

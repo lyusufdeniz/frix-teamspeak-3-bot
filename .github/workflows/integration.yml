@@ -1,0 +1,21 @@
+name: Integration tests
+
+# Runs Frix against a real TeamSpeak server with fake users (tests/integration).
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["site/**", "site-redirect/**", "docs/**", "**.md"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  teamspeak:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - name: Run integration tests
+        run: bash tests/integration/run.sh

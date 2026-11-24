@@ -216,9 +216,12 @@ public static partial class MainCommands
 	}
 
 	[Command("gel")]
-	public static Task CommandGel(Ts3Client ts3Client, ClientCall invoker)
+	public static Task CommandGel(Ts3Client ts3Client, TSLib.Full.TsFullClient full, ClientCall invoker)
 	{
-		var channel = invoker.ChannelId ?? throw new CommandException(FrixText.Get("come.nochannel"), CommandExceptionReason.CommandError);
+		// private and server chat messages carry no channel: take it from the server state
+		var channel = invoker.ChannelId
+			?? (invoker.ClientId is { } id && full.Book.Clients.TryGetValue(id, out var c) ? (TSLib.ChannelId?)c.Channel : null)
+			?? throw new CommandException(FrixText.Get("come.nochannel"), CommandExceptionReason.CommandError);
 		return ts3Client.MoveTo(channel);
 	}
 

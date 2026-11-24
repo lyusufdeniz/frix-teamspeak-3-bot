@@ -1,0 +1,22 @@
+# Integration test environment: an empty TeamSpeak server and Frix built from this repository.
+# Started and stopped by run.ps1 / run.sh; the test program talks to both from the host.
+name: frix-it
+services:
+  ts3:
+    image: teamspeak:latest
+    environment:
+      TS3SERVER_LICENSE: accept
+    command: ts3server serveradmin_password=frixtest
+    ports:
+      - "19987:9987/udp"
+      - "20011:10011"
+
+  frix:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: frix-it:dev
+    ports:
+      - "18913:58913"
+    depends_on:
+      - ts3

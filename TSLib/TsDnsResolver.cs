@@ -120,9 +120,9 @@ public static class TsDnsResolver
 		// => from.de
 		// => subdomain.from.de
 		// => cool.subdomain.from.de
+		// Frix: a single-label host (a Docker service name, a LAN computer name) has no TSDNS records,
+		// but it can still be resolved normally below.
 		var domainSplit = uri.Host.Split('.');
-		if (domainSplit.Length <= 1)
-			return null;
 		var domainList = new List<string>();
 		for (int i = 1; i < Math.Min(domainSplit.Length, 4); i++)
 			domainList.Add(string.Join(".", domainSplit, domainSplit.Length - (i + 1), i + 1));
