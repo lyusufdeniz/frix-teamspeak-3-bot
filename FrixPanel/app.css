@@ -1229,9 +1229,9 @@ select option, select optgroup { background: var(--surface); color: var(--text);
 .sys-body .mem-list { min-width: 0; font-size: .8rem; gap: 4px 12px; }
 .act-body { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
 .chart-box.sm { height: 70px; flex: none; }
-.heat { display: flex; flex-direction: column; gap: 2px; }
-.heat-row { display: grid; grid-template-columns: 30px repeat(24, minmax(0, 1fr)); gap: 2px; align-items: center; }
-.heat-day { font-size: .64rem; color: var(--muted); }
+.heat { display: flex; flex-direction: column; gap: 2px; flex: none; }
+.heat-row { display: grid; grid-template-columns: 30px repeat(24, minmax(0, 1fr)); gap: 2px; align-items: center; line-height: 1; }
+.heat-day { font-size: .64rem; color: var(--muted); line-height: 1; }
 .heat-cell { height: 9px; border-radius: 2px; background: color-mix(in srgb, var(--accent) calc(var(--o) * 100%), var(--raised)); }
 .heat-h { font-size: .6rem; color: var(--muted); }
 .act-empty { margin: auto 0; }
@@ -1244,6 +1244,12 @@ select option, select optgroup { background: var(--surface); color: var(--text);
   .dash { flex: 1; min-height: 0; }
   .dash-row { flex: 1; }
   .dash-card { min-height: 0; }
+  /* the users line takes what the heat map leaves, so the card never clips the map */
+  .chart-box.sm { flex: 1 1 0; height: auto; min-height: 30px; max-height: 120px; }
+  .act-body .heat { flex: 2.4 1 0; min-height: 0; max-height: 150px; }
+  .act-body .heat-row:not(.heat-hours) { flex: 1 1 0; min-height: 0; align-items: stretch; }
+  .act-body .heat-row:not(.heat-hours) .heat-cell { height: auto; min-height: 4px; }
+  .act-body .heat-day { align-self: center; font-size: .58rem; }
 }
 @media (max-width: 1300px) { .tile-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 1000px) {
