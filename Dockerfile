@@ -14,7 +14,7 @@ RUN RID=$([ "$TARGETARCH" = "arm64" ] && echo linux-arm64 || echo linux-x64) \
  && mkdir -p /out/WebInterface && cp -r FrixPanel/. /out/WebInterface/ \
  && cp packaging/linux/frix.sh /out/ && chmod +x /out/frix.sh /out/TS3AudioBot \
  && mkdir -p /out/ytdlp && cp packaging/yt-dlp.conf /out/ytdlp/ \
- && cp README.md README.tr.md LICENSE /out/ 2>/dev/null || true
+ && { cp README.md README.tr.md LICENSE /out/ 2>/dev/null || true; }
 
 # ---------------------------------------------------------------- yt-dlp ve deno
 FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS tools
